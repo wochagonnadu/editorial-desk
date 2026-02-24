@@ -36,7 +36,27 @@ export interface DraftDetail {
     voiceScore?: string | number;
   } | null;
   factcheck_report?: { status: string; results: Array<Record<string, unknown>> } | null;
+  approval?: ApprovalStatusData | null;
   comments: Array<{ id: string; text: string; createdAt: string }>;
+}
+
+export interface ApprovalStepView {
+  step_order: number;
+  status: 'waiting' | 'pending' | 'approved' | 'changes_requested';
+  deadline_at?: string | null;
+  approver?: { name: string; email?: string | null };
+}
+
+export interface ApprovalStatusData {
+  flow_type: 'sequential' | 'parallel';
+  status: 'pending' | 'active' | 'completed' | 'cancelled';
+  steps: ApprovalStepView[];
+}
+
+export interface ApprovalConfigPayload {
+  flow_type: 'sequential' | 'parallel';
+  deadline_hours: number;
+  steps: Array<{ approver_type: 'user' | 'expert'; approver_id: string }>;
 }
 
 export interface PipelineEvent {

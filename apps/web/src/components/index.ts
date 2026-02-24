@@ -4,4 +4,6 @@
 // RELEVANT: apps/web/src/App.tsx,apps/web/src/components/AddExpertForm.tsx,apps/web/src/components/PipelineControls.tsx
 
 export * from './AddExpertForm';
+export * from './ApprovalConfig';
+export * from './ApprovalStatus';
 export * from './PipelineControls';

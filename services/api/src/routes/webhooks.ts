@@ -8,6 +8,7 @@ import { AppError } from '../core/errors';
 import { finalizeOnboardingVoiceTest } from '../core/onboarding-finalize';
 import { parseOnboardingReplyAddress, processReply } from '../core/onboarding';
 import type { RouteDeps } from './deps';
+import { processApprovalClick } from './webhooks-click';
 
 interface InboundPayload {
   from?: string;
@@ -23,6 +24,7 @@ const assertSecret = (actual: string | undefined) => {
 
 export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
+  const approvalClick = processApprovalClick(deps);
 
   router.post('/email/inbound', async (context) => {
     assertSecret(context.req.header('x-webhook-secret'));
@@ -40,6 +42,13 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
     deps.logger.info('webhook.inbound_processed', { expert_id: token.expertId, step: token.step });
     return context.json({ ok: true });
   });
+
+  router.post('/email/click', async (context) => {
+    assertSecret(context.req.header('x-webhook-secret'));
+    return approvalClick(context);
+  });
+
+  router.get('/email/click', approvalClick);
 
   return router;
 };

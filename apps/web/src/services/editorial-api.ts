@@ -3,7 +3,7 @@
 // WHY:  Isolates US2 network calls from page components
 // RELEVANT: apps/web/src/pages/TopicsPage.tsx,apps/web/src/components/PipelineControls.tsx
 
-import type { DraftCard, DraftDetail, PipelineEvent, TopicItem } from './editorial-types';
+import type { ApprovalConfigPayload, DraftCard, DraftDetail, PipelineEvent, TopicItem } from './editorial-types';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000/api/v1';
 const authHeaders = (token: string): Record<string, string> => ({ authorization: `Bearer ${token}` });
@@ -63,6 +63,9 @@ export const editorialApi = {
   },
   addComment(token: string, draftId: string, text: string): Promise<Record<string, unknown>> {
     return request(token, `/drafts/${draftId}/comments`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }) });
+  },
+  sendForReview(token: string, draftId: string, payload: ApprovalConfigPayload): Promise<{ approval_flow_id: string; status: string; notifications_sent: number }> {
+    return request(token, `/drafts/${draftId}/send-for-review`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
   },
   confirmClaim(token: string, draftId: string, claimId: string): Promise<Record<string, unknown>> {
     return request(token, `/drafts/${draftId}/claims/${claimId}/expert-confirm`, { method: 'POST' });

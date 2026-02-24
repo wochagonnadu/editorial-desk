@@ -26,3 +26,10 @@
 .error {
   color: #b42318;
 }
+
+.approval-step {
+  padding: 8px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}

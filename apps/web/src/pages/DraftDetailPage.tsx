@@ -5,6 +5,8 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { ApprovalConfig } from '../components/ApprovalConfig';
+import { ApprovalStatus } from '../components/ApprovalStatus';
 import { PipelineControls } from '../components/PipelineControls';
 import { useAuth } from '../context/AuthContext';
 import { editorialApi } from '../services/editorial-api';
@@ -43,6 +45,8 @@ export const DraftDetailPage = () => {
       <p>Voice score: {draft.current_version?.voiceScore ?? '-'}</p>
       <article className="card"><h3>Current version</h3><p>{draft.current_version?.content ?? 'No content yet'}</p></article>
       <article className="card"><h3>Factcheck</h3><pre>{JSON.stringify(draft.factcheck_report, null, 2)}</pre></article>
+      <ApprovalStatus approval={draft.approval} />
+      <ApprovalConfig token={token} draftId={id} onDone={load} />
       <form className="card" onSubmit={submitComment}><h3>Add comment</h3><input value={commentText} onChange={(event) => setCommentText(event.target.value)} /><button type="submit">Save comment</button></form>
       <article className="card"><h3>Versions</h3><pre>{JSON.stringify(versions, null, 2)}</pre></article>
       <PipelineControls token={token} draftId={id} onDone={load} />

@@ -4,6 +4,7 @@
 // RELEVANT: services/api/src/app.ts,specs/001-virtual-newsroom-mvp/plan.md,services/api/src/core/audit.ts
 
 export * from './audit';
+export * from './approval';
 export * from './errors';
 export * from './drafts';
 export * from './factcheck';

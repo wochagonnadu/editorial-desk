@@ -1,7 +1,7 @@
 // PATH: services/api/src/app.ts
 // WHAT: Builds the API app instance and base routes
 // WHY:  Reusable app factory for local dev and Vercel runtime
-// RELEVANT: services/api/api/index.ts,services/api/src/routes/index.ts,services/api/src/providers/db/pool.ts
+// RELEVANT: services/api/api/index.ts,services/api/src/routes/index.ts,services/api/src/routes/cron.ts
 
 import { Hono } from 'hono';
 import { toErrorResponse } from './core/errors';
@@ -9,6 +9,7 @@ import { createDbClient } from './providers/db';
 import { createEmailPort } from './providers/email';
 import { createContentPort } from './providers/llm';
 import { createLogger } from './providers/logger';
+import { buildCronRoutes } from './routes/cron';
 import { buildApiRouter } from './routes';
 
 export const createApp = (): Hono => {
@@ -28,6 +29,7 @@ export const createApp = (): Hono => {
   });
 
   app.route('/api/v1', buildApiRouter(deps));
+  app.route('/api/cron', buildCronRoutes(deps));
 
   app.onError((error, context) => {
     logger.error('api.unhandled_error', { message: error.message });

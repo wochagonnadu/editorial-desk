@@ -3,10 +3,10 @@
 // WHY:  Supports Kanban and detail pages with consistent payloads
 // RELEVANT: services/api/src/routes/drafts.ts,apps/web/src/pages/DraftsPage.tsx
 
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { AppError } from '../../core/errors';
-import { commentTable, draftTable, draftVersionTable, expertTable, factcheckReportTable, topicTable } from '../../providers/db';
+import { approvalFlowTable, approvalStepTable, commentTable, draftTable, draftVersionTable, expertTable, factcheckReportTable, topicTable, userTable } from '../../providers/db';
 import { getAuthUser } from '../auth-middleware';
 import type { RouteDeps } from '../deps';
 
@@ -54,8 +54,28 @@ export const getDraftDetail = (deps: RouteDeps) => async (context: Context) => {
   const [currentVersion] = draft.currentVersionId ? await deps.db.select().from(draftVersionTable).where(eq(draftVersionTable.id, draft.currentVersionId)).limit(1) : [];
   const [factcheck] = currentVersion ? await deps.db.select().from(factcheckReportTable).where(eq(factcheckReportTable.draftVersionId, currentVersion.id)).limit(1) : [];
   const comments = currentVersion ? await deps.db.select().from(commentTable).where(eq(commentTable.draftVersionId, currentVersion.id)) : [];
+  const [approvalFlow] = await deps.db.select().from(approvalFlowTable).where(eq(approvalFlowTable.draftId, draft.id)).limit(1);
 
-  return context.json({ id: draft.id, status: draft.status, topic, expert, current_version: currentVersion, factcheck_report: factcheck, comments });
+  let approval: Record<string, unknown> | null = null;
+  if (approvalFlow) {
+    const steps = await deps.db.select().from(approvalStepTable).where(eq(approvalStepTable.approvalFlowId, approvalFlow.id)).orderBy(asc(approvalStepTable.stepOrder));
+    approval = {
+      flow_type: approvalFlow.flowType,
+      status: approvalFlow.status,
+      steps: await Promise.all(steps.map(async (step) => {
+        const [user] = step.approverType === 'user' ? await deps.db.select().from(userTable).where(eq(userTable.id, step.approverId)).limit(1) : [];
+        const [approverExpert] = step.approverType === 'expert' ? await deps.db.select().from(expertTable).where(eq(expertTable.id, step.approverId)).limit(1) : [];
+        return {
+          step_order: step.stepOrder,
+          status: step.status,
+          deadline_at: step.deadlineAt,
+          approver: { name: user?.name ?? approverExpert?.name ?? 'Unknown', email: user?.email ?? approverExpert?.email ?? null },
+        };
+      })),
+    };
+  }
+
+  return context.json({ id: draft.id, status: draft.status, topic, expert, current_version: currentVersion, factcheck_report: factcheck, approval, comments });
 };
 
 export const getDraftVersions = (deps: RouteDeps) => async (context: Context) => {
