@@ -18,25 +18,31 @@ export class AppError extends Error {
 
 export const toErrorResponse = (context: Context, error: unknown): Response => {
   if (error instanceof AppError) {
-    return context.json(
-      {
+    return new Response(
+      JSON.stringify({
         error: {
           code: error.code,
           message: error.message,
           details: error.details,
         },
+      }),
+      {
+        status: error.status,
+        headers: { 'content-type': 'application/json' },
       },
-      error.status,
     );
   }
 
-  return context.json(
-    {
+  return new Response(
+    JSON.stringify({
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Unexpected error',
       },
+    }),
+    {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
     },
-    500,
   );
 };

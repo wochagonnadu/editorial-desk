@@ -64,7 +64,14 @@ export class DrizzleDraftStore implements DraftStore {
       .orderBy(desc(draftVersionTable.versionNumber))
       .limit(1);
     const nextVersion = (latest?.versionNumber ?? 0) + 1;
-    const [row] = await this.db.insert(draftVersionTable).values({ ...input, versionNumber: nextVersion }).returning();
+    const [row] = await this.db
+      .insert(draftVersionTable)
+      .values({
+        ...input,
+        versionNumber: nextVersion,
+        voiceScore: input.voiceScore === undefined ? undefined : input.voiceScore.toFixed(2),
+      })
+      .returning();
     await this.db
       .update(draftTable)
       .set({ currentVersionId: row.id, updatedAt: new Date() })

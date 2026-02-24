@@ -3,7 +3,7 @@
 // WHY:  Centralizes fidelity behavior required by Constitution II
 // RELEVANT: services/api/src/core/onboarding-finalize.ts,services/api/src/routes/drafts.ts
 
-import { and, desc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import type { Database } from '../providers/db';
 import { draftTable, draftVersionTable, expertTable, voiceProfileTable } from '../providers/db';
 

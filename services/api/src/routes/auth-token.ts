@@ -3,9 +3,10 @@
 // WHY:  Avoids duplicated token logic across routes and middleware
 // RELEVANT: services/api/src/routes/auth.ts,services/api/src/routes/auth-middleware.ts
 
+import type { JWTPayload } from 'jose';
 import { SignJWT, jwtVerify } from 'jose';
 
-export interface SessionPayload {
+export interface SessionPayload extends JWTPayload {
   userId: string;
   companyId: string;
   role: 'owner' | 'manager';
