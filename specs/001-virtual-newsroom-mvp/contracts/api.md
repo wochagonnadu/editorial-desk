@@ -252,8 +252,65 @@ RELEVANT: specs/001-virtual-newsroom-mvp/data-model.md,specs/001-virtual-newsroo
 }
 ```
 
-### POST /drafts/:id/approval-flow
-Настроить маршрут согласования.
+### POST /drafts/:id/comments
+Добавить комментарий (read-only UI, но комментарии можно оставлять).
+Используется для инструкций к revision (см. POST /drafts/:id/revise).
+
+**Request**:
+```json
+{
+  "text": "Перефразировать вывод",
+  "position_start": 1200,
+  "position_end": 1350
+}
+```
+
+### POST /drafts/:id/claims/:claim_id/expert-confirm
+Эксперт подтверждает спорный claim (FR-025).
+
+---
+
+## Draft Pipeline (Step-by-Step)
+
+Pipeline orchestration на фронтенде. UI последовательно вызывает каждый шаг.
+Каждый шаг идемпотентен — повторный вызов безопасен.
+
+### POST /drafts/:id/generate
+Генерация текста драфта по теме + voice profile эксперта.
+Streaming response (SSE). Создаёт новую DraftVersion.
+
+**Request**:
+```json
+{ "topic_id": "uuid" }
+```
+
+**Response** `200` (streaming, `text/event-stream`):
+```
+data: {"type":"chunk","text":"Первый абзац статьи..."}
+data: {"type":"chunk","text":" продолжение текста..."}
+data: {"type":"done","version_id":"uuid","version_number":1,"voice_score":0.85}
+```
+
+**Errors**: `400` expert not confirmed, `404` topic/draft not found, `503` LLM unavailable.
+
+**Constraint**: Must complete within 25s (Vercel streaming limit).
+
+### POST /drafts/:id/factcheck
+Запуск factcheck для текущей версии драфта.
+Streaming response — результаты по каждому claim.
+
+**Response** `200` (streaming, `text/event-stream`):
+```
+data: {"type":"claim","claim_id":"uuid","text":"Инфаркт — причина 30% смертей","risk_level":"high"}
+data: {"type":"verdict","claim_id":"uuid","verdict":"confirmed","evidence":[{"source":"...","snippet":"..."}]}
+data: {"type":"done","report_id":"uuid","overall_risk_score":0.15,"disclaimer_type":"medical"}
+```
+
+**Errors**: `400` no current version, `409` stale version.
+
+### POST /drafts/:id/send-for-review
+Отправляет драфт на согласование: создаёт ApprovalFlow, отправляет email уведомления.
+Синхронный вызов.
 
 **Request**:
 ```json
@@ -267,20 +324,56 @@ RELEVANT: specs/001-virtual-newsroom-mvp/data-model.md,specs/001-virtual-newsroo
 }
 ```
 
-### POST /drafts/:id/comments
-Добавить комментарий (read-only UI, но комментарии можно оставлять).
+**Response** `200`:
+```json
+{ "approval_flow_id": "uuid", "status": "active", "notifications_sent": 2 }
+```
+
+**Errors**: `400` factcheck not completed, `409` stale version.
+
+### POST /drafts/:id/revise
+Генерация новой версии на основе комментариев/правок.
+Streaming response. Создаёт новую DraftVersion (version_number +1).
 
 **Request**:
 ```json
-{
-  "text": "Перефразировать вывод",
-  "position_start": 1200,
-  "position_end": 1350
-}
+{ "instructions": "Уточнить статистику в 3-м абзаце, смягчить вывод" }
 ```
 
-### POST /drafts/:id/claims/:claim_id/expert-confirm
-Эксперт подтверждает спорный claim (FR-025).
+**Response** `200` (streaming, `text/event-stream`):
+```
+data: {"type":"chunk","text":"Обновлённый текст..."}
+data: {"type":"done","version_id":"uuid","version_number":2,"voice_score":0.88}
+```
+
+---
+
+## Cron Endpoints (Vercel Cron Jobs)
+
+Вызываются Vercel Cron по расписанию. Защищены `CRON_SECRET` header.
+2 бесплатных cron job'а на Vercel free tier.
+
+### GET /api/cron/reminders
+Отправляет напоминания по просроченным согласованиям (deadline expired).
+Запускается раз в сутки.
+
+**Auth**: `Authorization: Bearer {CRON_SECRET}`
+
+**Response** `200`:
+```json
+{ "reminders_sent": 3 }
+```
+
+### GET /api/cron/digest
+Формирует и отправляет дайджест владельцу: статистика за период, задержки.
+Запускается раз в неделю (или месяц — настраивается).
+
+**Auth**: `Authorization: Bearer {CRON_SECRET}`
+
+**Response** `200`:
+```json
+{ "digests_sent": 2 }
+```
 
 ---
 

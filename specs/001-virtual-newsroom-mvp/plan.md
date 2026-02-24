@@ -13,22 +13,23 @@ RELEVANT: specs/001-virtual-newsroom-mvp/spec.md,.specify/memory/constitution.md
 ## Summary
 
 Editorial AI platform for SMBs in high-liability verticals (clinics, law, education).
-Monorepo with web dashboard, API service, and background worker. Core flows: expert
+Monorepo with web dashboard and API service (Vercel serverless). Core flows: expert
 voice onboarding via email, draft generation with factchecking, multi-step approval
 workflow with immutable versioning, and append-only audit trail. Email-first expert
-experience; web UI is read-only for draft content (only AI edits text).
+experience; web UI is read-only for draft content (only AI edits text). Pipeline
+orchestration on frontend — each step is a separate streaming API call.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x, Node.js 20 LTS
-**Primary Dependencies**: Hono (API), React 19 + Vite (web), Drizzle ORM, pg-boss (queue), Vercel AI SDK, email-провайдер через адаптер (TBD), pnpm + Turborepo (monorepo)
+**Primary Dependencies**: Hono + @hono/vercel (API), React 19 + Vite (web), Drizzle ORM, Vercel AI SDK + @openrouter/ai-sdk-provider, email-провайдер через адаптер (TBD), pnpm + Turborepo (monorepo)
 **Storage**: PostgreSQL 16 (Supabase managed, MCP для dev). No Redis for MVP.
 **Testing**: Vitest. Unit tests for domain logic (80%) + integration for critical API flows (20%).
-**Target Platform**: Linux server (Docker on Railway), Supabase (managed Postgres), web browser (SPA)
-**Project Type**: Monorepo web service (API + SPA + background worker)
-**Performance Goals**: API p95 ≤500ms reads / ≤1s writes. Draft generation ≤60s. Email delivery ≤30s. Factcheck ≤15s/claim.
-**Constraints**: Email-first UX, read-only web UI for drafts, no auto-publication, single language per company
-**Scale/Scope**: MVP — 5–10 companies, ~50–100 experts, ~500 drafts/month. Infra cost ~$35-70/month.
+**Target Platform**: Vercel (free Hobby tier) — SPA static hosting + Serverless Functions + 2 Cron Jobs. Supabase (managed Postgres free tier).
+**Project Type**: Monorepo web service (API serverless + SPA). No background worker.
+**Performance Goals**: API p95 ≤500ms reads / ≤1s writes. Draft generation ≤25s (streaming, Vercel limit). Email delivery ≤30s. Factcheck ≤15s/claim.
+**Constraints**: Email-first UX, read-only web UI for drafts, no auto-publication, single language per company, 25s streaming limit (Vercel free tier), 2 cron jobs max
+**Scale/Scope**: MVP — 5–10 companies, ~50–100 experts, ~500 drafts/month. Infra cost $0/month.
 
 ## Constitution Check (Pre-Phase 0)
 
@@ -48,23 +49,23 @@ experience; web UI is read-only for draft content (only AI edits text).
 
 **Gate Result**: PASS — no violations. Proceeding to Phase 0.
 
-## Constitution Check (Post-Phase 1 Design)
+## Constitution Check (Post-Infrastructure Simplification)
 
-*Re-check after data model, API contracts, webhooks, and quickstart are written.*
+*Re-check after dropping worker, switching to Vercel/OpenRouter, $0 target.*
 
 | # | Principle | Status | Notes |
 |---|-----------|--------|-------|
-| I | Editorial Framing | PASS | API endpoints: "drafts", "approval", "experts", "topics". No forbidden words in contracts or data model. Kanban: Drafting/Factcheck/Needs Review/Approved/Revisions. |
-| II | Voice Fidelity | PASS | VoiceProfile 1:1 with Expert, 5-step OnboardingSequence, voice_score on DraftVersion, confirmed status gate in Expert state machine. |
-| III | Factual Accuracy & Compliance | PASS | Claim entity with risk_level, FactcheckReport 1:1 with DraftVersion, expert_confirmed verdict, disclaimer_type field, statistics-without-source reject rule. |
-| IV | Immutable Versioning & Audit Trail | PASS | DraftVersion + ApprovalDecision + AuditLog: all NO UPDATE/NO DELETE. ApprovalDecision bound to draft_version_id. STALE_VERSION error (409) in API. Stale-version check in webhook processing. |
-| V | Email-First Expert Experience | PASS | Inbound webhook with reply-to token routing. Magic link with TTL + revocation in Notification. Click webhook for approve/request_changes. Web-doc as optional upgrade. |
-| VI | Simplicity & 80/20 | PASS | Monorepo matches constitution structure. All files have 4-line headers. Single DB, no Redis. No extra dependencies. |
-| VII | Observability & Idempotency | PASS | AuditLog with standardized actions. Notification status tracking (queued→delivered→opened→replied). Kanban visible via GET /drafts. Token-based email routing enables safe retries. |
+| I | Editorial Framing | PASS | Pipeline step endpoints use editorial vocab: "drafts", "generate", "factcheck", "revise", "send-for-review". No forbidden words. |
+| II | Voice Fidelity | PASS | VoiceProfile, 5-step onboarding, voice_score — unchanged. OpenRouter models tested for Russian text quality. |
+| III | Factual Accuracy & Compliance | PASS | Factcheck as separate streaming step. Claims, risk levels, expert-confirmed — all preserved. Each step idempotent. |
+| IV | Immutable Versioning & Audit Trail | PASS | Data model unchanged. DraftVersion + ApprovalDecision + AuditLog: all NO UPDATE/NO DELETE. STALE_VERSION (409) in pipeline steps. |
+| V | Email-First Expert Experience | PASS | Email sent inline from API handler (no worker needed). Inbound webhook within 10s serverless limit. Magic links preserved. |
+| VI | Simplicity & 80/20 | PASS* | *Simpler than before*: 2 units vs 3, no pg-boss, $0/month. Constitution text mentions `/services/worker` — deviation logged in Complexity Tracking. Amendment recommended. |
+| VII | Observability & Idempotency | PASS | Each pipeline step idempotent (safe to retry). AuditLog, Notification tracking, Kanban statuses — all preserved. Cron endpoints for reminders/digests. |
 
-**Security & Compliance**: PASS — No patient data fields. Role-based access. Magic links with TTL + revocation. Append-only audit log. Webhook auth via shared secret.
+**Security & Compliance**: PASS — unchanged from Post-Phase 1 check.
 
-**Gate Result**: PASS — no violations detected. Phase 1 design artifacts are fully compliant with constitution v1.0.0.
+**Gate Result**: PASS — all 7 principles satisfied. Architecture is strictly simpler. One notation: Constitution VI mentions `/services/worker` directory — needs a PATCH amendment to reflect current architecture.
 
 ## Project Structure
 
@@ -92,34 +93,25 @@ apps/
     └── tests/
 
 services/
-├── api/                 # REST API, auth, domain logic
-│   ├── src/
-│   │   ├── models/
-│   │   ├── services/
-│   │   └── routes/
-│   └── tests/
-└── worker/              # Workflow orchestrator + agent executors
+└── api/                 # REST API (Vercel Serverless via @hono/vercel), domain logic
     ├── src/
-    │   ├── agents/
-    │   ├── workflows/
-    │   └── jobs/
+    │   ├── models/
+    │   ├── services/     # LLM calls, email, factcheck — всё inline
+    │   └── routes/
+    ├── api/              # Vercel serverless entry point
     └── tests/
 
 packages/
 └── shared/              # Domain types, schemas, shared utilities
     └── src/
-
-infra/                   # Docker, migrations, IaC
 ```
 
-**Structure Decision**: Monorepo with 3 deployable units (web, api, worker) + shared
-package, as specified in PRD §13.2 and Constitution Principle VI. Structure follows
-`/apps/web`, `/services/api`, `/services/worker`, `/packages/shared`, `/infra`, `/specs`.
+**Structure Decision**: Monorepo with 2 deployable units (web SPA + API serverless) +
+shared package. Worker убран — pg-boss несовместим с Vercel serverless. Pipeline
+orchestration на фронтенде, scheduled tasks через Vercel Cron Jobs (2 бесплатных).
 
 ## Complexity Tracking
 
-No violations detected. Table intentionally empty.
-
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| (none)    |            |                                     |
+| Constitution VI mentions `/services/worker` but worker was removed | Vercel serverless (10s/25s limit) incompatible with pg-boss long-running process | Keeping worker would require second hosting platform ($15-35/month), contradicts $0 target. Inline processing + Vercel Cron is strictly simpler. Recommend PATCH amendment to constitution. |

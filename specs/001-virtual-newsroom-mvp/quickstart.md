@@ -11,9 +11,10 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md,specs/001-virtual-newsroom-mvp/
 
 - Node.js 20 LTS
 - pnpm 9+
+- Vercel CLI (`npm i -g vercel`)
 - Supabase account (free tier для dev) или локальный PostgreSQL 16
 - Email-провайдер с inbound webhook support (Postmark, Resend и т.п.)
-- Anthropic API key
+- OpenRouter API key (бесплатные модели)
 
 ## Setup
 
@@ -23,7 +24,7 @@ pnpm install
 
 # 2. Скопировать .env и заполнить ключи
 cp .env.example .env
-# Заполнить: DATABASE_URL (Supabase или локальный PG), EMAIL_*, ANTHROPIC_API_KEY
+# Заполнить: DATABASE_URL (Supabase или локальный PG), EMAIL_*, OPENROUTER_API_KEY
 
 # 3. Применить миграции
 pnpm --filter api run db:migrate
@@ -34,8 +35,9 @@ pnpm dev
 
 `pnpm dev` запускает через Turborepo:
 - `apps/web` — React SPA на http://localhost:5173
-- `services/api` — Hono API на http://localhost:3000
-- `services/worker` — pg-boss worker (фоновые задачи)
+- `services/api` — Hono API на http://localhost:3000 (через `@hono/node-server` локально)
+
+Для эмуляции Vercel-окружения можно использовать `vercel dev` вместо `pnpm dev`.
 
 ## Environment Variables
 
@@ -49,8 +51,8 @@ EMAIL_API_KEY=xxx
 EMAIL_INBOUND_ADDRESS=reply@inbound.newsroom.dev
 EMAIL_WEBHOOK_SECRET=xxx
 
-# LLM (Anthropic)
-ANTHROPIC_API_KEY=sk-ant-xxx
+# LLM (OpenRouter — бесплатные модели)
+OPENROUTER_API_KEY=sk-or-v1-xxx
 
 # Auth
 JWT_SECRET=dev-secret-change-in-prod
@@ -66,34 +68,37 @@ API_URL=http://localhost:3000
 ```
 editorial_ai/
 ├── apps/web/              # React + Vite SPA
-├── services/api/          # Hono REST API
-├── services/worker/       # pg-boss background worker
+├── services/api/          # Hono REST API (Vercel Serverless)
 ├── packages/shared/       # Domain types, schemas
-├── infra/                 # Docker, migrations
 ├── specs/                 # Spec Kit outputs
 ├── turbo.json             # Turborepo config
 ├── pnpm-workspace.yaml    # Workspace definition
+├── vercel.json            # Vercel deployment config
 └── .env.example           # Environment template
 ```
 
 ## Key Commands
 
 ```bash
-pnpm dev                   # Запустить все сервисы
+pnpm dev                   # Запустить все сервисы (Turborepo)
 pnpm build                 # Собрать все пакеты
 pnpm test                  # Запустить Vitest во всех пакетах
 pnpm lint                  # ESLint + type check
 pnpm --filter api test     # Тесты только для API
 pnpm --filter web dev      # Только frontend
+vercel dev                 # Эмуляция Vercel-окружения (опционально)
 ```
 
 ## Development Flow
 
 1. **Типы и схемы** → `packages/shared/src/`
 2. **API endpoints** → `services/api/src/routes/`
-3. **Background jobs** → `services/worker/src/jobs/`
-4. **Agent logic** → `services/worker/src/agents/`
-5. **UI pages** → `apps/web/src/pages/`
+3. **LLM-вызовы (generation, factcheck)** → `services/api/src/services/`
+4. **UI pages** → `apps/web/src/pages/`
+
+Pipeline orchestration живёт на фронтенде: UI последовательно вызывает
+шаги (generate → factcheck → send for review). Каждый шаг — отдельный
+streaming API call.
 
 Shared types импортируются как `@newsroom/shared` из всех пакетов.
 
