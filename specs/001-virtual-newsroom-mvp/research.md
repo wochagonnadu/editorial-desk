@@ -82,14 +82,21 @@ runner с минимальной конфигурацией (один `turbo.jso
 
 ## 5. Database
 
-**Decision**: PostgreSQL 16
+**Decision**: PostgreSQL 16 через Supabase (managed)
 
 **Rationale**: Покрывает все потребности без компромиссов. JSONB с GIN-индексами
 для гибких полей (Voice Profiles, Factcheck Reports). BRIN-индексы для append-only
 audit trail. Immutable versioning — стандартный паттерн (INSERT-only). pg-boss
 позволяет использовать Postgres ещё и как очередь задач.
 
+Supabase как хостинг: managed PostgreSQL без операционной нагрузки. Free tier
+(500MB, 2 проекта) достаточен для MVP. Supabase MCP даёт агенту прямой доступ
+к схеме и данным во время разработки. Мы используем Supabase **только как
+managed Postgres** — без Auth, Storage, Realtime и Edge Functions (YAGNI).
+
 **Alternatives considered**:
+- Railway managed Postgres — хороший, но Supabase даёт MCP-интеграцию и бесплатный
+  tier. При масштабировании оба варианта сопоставимы.
 - MySQL — нет нативного JSONB с индексами, нет BRIN. Функционально слабее.
 - SQLite — нет concurrent writes, нет LISTEN/NOTIFY. Миграция на Postgres
   неизбежна — лучше сразу.
@@ -151,35 +158,43 @@ real-time collaboration, >10K jobs/hour.
 
 ## 9. Email Service
 
-**Decision**: Postmark (outbound + inbound)
+**Decision**: Абстрагированный email-провайдер через адаптер (EmailProvider interface)
 
-**Rationale**: Лучшая deliverability (~99%) — только transactional email, IP-пулы
-не загрязнены спамерами. Inbound parsing — first-class фича, не afterthought.
-Структурированный JSON webhook. `StrippedTextReply` убирает quoted text.
-TypeScript SDK чистый. ~$15/month при MVP-масштабе.
+**Rationale**: Email — ключевая интеграция (Constitution V), но конкретный провайдер
+не влияет на архитектуру. Вводим интерфейс `EmailProvider` в `packages/shared`:
+`sendEmail()`, `parseInbound()`. Конкретная реализация (Postmark, Resend, SES) —
+отдельный адаптер, выбирается перед запуском. Это не over-abstraction, потому что
+интерфейс простой (2-3 метода), а замена провайдера — реальный сценарий.
 
-**Alternatives considered**:
-- Resend — отличная DX, но inbound parsing незрелый. Dealbreaker для email-first
-  продукта.
-- SendGrid — deliverability деградировала. SDK bloated. Overkill.
-- AWS SES — дёшево, но нет inbound parsing. Нужен SES→SNS→Lambda→S3 pipeline +
-  MIME parsing руками. Огромный DIY overhead.
+Требования к провайдеру при выборе:
+- Inbound email parsing (webhook, не IMAP polling)
+- Delivery/open/click tracking через webhooks
+- Высокая deliverability для transactional email
+- TypeScript SDK или простой REST API
+
+**Candidates** (для выбора перед запуском):
+- Postmark — лучшая deliverability, зрелый inbound parsing. ~$15/month.
+- Resend — отличная DX, React Email. Inbound менее зрелый. ~$20/month.
+- AWS SES — дёшево, но нет inbound parsing (нужен SES→SNS→Lambda pipeline).
 
 ---
 
 ## 10. Inbound Email Pattern
 
-**Decision**: Postmark webhook + reply-to address routing с embedded tokens
+**Decision**: Webhook + reply-to address routing с embedded tokens (provider-agnostic)
 
 **Rationale**: Каждое исходящее письмо получает уникальный reply-to:
 `reply+{token}@inbound.newsroom.com`. Токен кодирует: draft ID, version, expert ID.
-Postmark парсит email и POST'ит JSON на webhook. Система извлекает токен из
+Провайдер парсит email и POST'ит JSON на webhook. Система извлекает токен из
 адреса, декодирует контекст, определяет действие.
 
 Формат: `reply+d_42_v_3_exp_17@inbound.newsroom.com`
 
 Токен в адресе (не в теле) — выживает форварды, цитирование, манглинг HTML.
 Версионный mismatch — сравнение токена с текущей версией в БД.
+
+Webhook handler принимает provider-specific payload через адаптер и преобразует
+в internal `InboundEmail` тип. Бизнес-логика работает только с internal типом.
 
 ---
 
@@ -254,11 +269,12 @@ UI layout и email formatting — ручной QA при 5-10 клиентах.
 
 ## 15. Deployment
 
-**Decision**: Railway
+**Decision**: Railway (API + worker + web) + Supabase (Postgres)
 
-**Rationale**: Монорепо → 3 сервиса в одном проекте, каждый со своим Dockerfile.
-Managed PostgreSQL ($1/GB). Private networking. Auto-TLS. Preview environments
-per PR. Ориентировочно $20-40/month.
+**Rationale**: Монорепо → 3 сервиса в одном Railway проекте, каждый со своим
+Dockerfile. Private networking. Auto-TLS. Preview environments per PR.
+PostgreSQL живёт в Supabase (managed, free tier для MVP). Ориентировочно
+~$15-35/month за Railway (compute only, без DB).
 
 **Alternatives considered**:
 - Fly.io — отличный, но DX усложнился (fly.toml per service, volume management).
@@ -276,7 +292,7 @@ per PR. Ориентировочно $20-40/month.
 |--------|--------|-----------|
 | API response (p95) | ≤500ms reads, ≤1s writes | Dashboard должен быть отзывчивым |
 | Draft generation | ≤60s total | LLM 10-30s + post-processing. Progress indicator в UI |
-| Email delivery | ≤30s trigger→inbox | Postmark SLA 1-5s. System enqueue ≤2s |
+| Email delivery | ≤30s trigger→inbox | Provider SLA typically 1-10s. System enqueue ≤2s |
 | Page load | ≤2s initial, ≤500ms navigation | SPA с code splitting |
 | Factcheck per claim | ≤15s per claim, ≤3min per article | Параллельная проверка claims |
 | Email inbound processing | ≤10s receipt→status update | Webhook → parse → DB write |
@@ -291,16 +307,16 @@ per PR. Ориентировочно $20-40/month.
 | API | Hono | — |
 | Frontend | React 19 + Vite | — |
 | Monorepo | pnpm + Turborepo | — |
-| Database | PostgreSQL 16 | ~$5 (Railway) |
+| Database | PostgreSQL 16 (Supabase managed) | $0 (free tier) |
 | ORM | Drizzle | — |
 | Queue | pg-boss | — (в Postgres) |
 | Redis | Не нужен | $0 |
-| Email | Postmark | ~$15 |
+| Email | Адаптер (провайдер TBD) | ~$15-20 |
 | LLM | Anthropic Claude (Sonnet + Haiku) | ~$5-15 |
 | LLM Gateway | Vercel AI SDK | — (OSS) |
 | Testing | Vitest | — |
-| Deployment | Railway | ~$20-40 |
-| **Итого инфраструктура** | | **~$45-75/мес** |
+| Deployment | Railway (compute) + Supabase (DB) | ~$15-35 |
+| **Итого инфраструктура** | | **~$35-70/мес** |
 
-Итоговая архитектура: TypeScript монорепо, один PostgreSQL, два внешних сервиса
-(Postmark + Anthropic). Минимум движущихся частей.
+Итоговая архитектура: TypeScript монорепо, один PostgreSQL (Supabase), два внешних
+сервиса (email-провайдер через адаптер + Anthropic). Минимум движущихся частей.

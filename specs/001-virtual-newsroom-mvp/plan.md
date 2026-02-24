@@ -21,14 +21,14 @@ experience; web UI is read-only for draft content (only AI edits text).
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x, Node.js 20 LTS
-**Primary Dependencies**: Hono (API), React 19 + Vite (web), Drizzle ORM, pg-boss (queue), Vercel AI SDK, Postmark (email), pnpm + Turborepo (monorepo)
-**Storage**: PostgreSQL 16 (single DB — data + queue + audit). No Redis for MVP.
+**Primary Dependencies**: Hono (API), React 19 + Vite (web), Drizzle ORM, pg-boss (queue), Vercel AI SDK, email-провайдер через адаптер (TBD), pnpm + Turborepo (monorepo)
+**Storage**: PostgreSQL 16 (Supabase managed, MCP для dev). No Redis for MVP.
 **Testing**: Vitest. Unit tests for domain logic (80%) + integration for critical API flows (20%).
-**Target Platform**: Linux server (Docker on Railway), web browser (SPA)
+**Target Platform**: Linux server (Docker on Railway), Supabase (managed Postgres), web browser (SPA)
 **Project Type**: Monorepo web service (API + SPA + background worker)
 **Performance Goals**: API p95 ≤500ms reads / ≤1s writes. Draft generation ≤60s. Email delivery ≤30s. Factcheck ≤15s/claim.
 **Constraints**: Email-first UX, read-only web UI for drafts, no auto-publication, single language per company
-**Scale/Scope**: MVP — 5–10 companies, ~50–100 experts, ~500 drafts/month. Infra cost ~$45-75/month.
+**Scale/Scope**: MVP — 5–10 companies, ~50–100 experts, ~500 drafts/month. Infra cost ~$35-70/month.
 
 ## Constitution Check (Pre-Phase 0)
 

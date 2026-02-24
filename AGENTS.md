@@ -183,6 +183,8 @@ build: сборка/CI
 ## Active Technologies
 - TypeScript 5.x, Node.js 20 LTS + Hono (API), React 19 + Vite (web), Drizzle ORM, pg-boss (queue), Vercel AI SDK, Postmark (email), pnpm + Turborepo (monorepo) (001-virtual-newsroom-mvp)
 - PostgreSQL 16 (single DB — data + queue + audit). No Redis for MVP. (001-virtual-newsroom-mvp)
+- TypeScript 5.x, Node.js 20 LTS + Hono (API), React 19 + Vite (web), Drizzle ORM, pg-boss (queue), Vercel AI SDK, email-провайдер через адаптер (TBD), pnpm + Turborepo (monorepo) (001-virtual-newsroom-mvp)
+- PostgreSQL 16 (Supabase managed, MCP для dev). No Redis for MVP. (001-virtual-newsroom-mvp)
 
 ## Recent Changes
 - 001-virtual-newsroom-mvp: Added TypeScript 5.x, Node.js 20 LTS + Hono (API), React 19 + Vite (web), Drizzle ORM, pg-boss (queue), Vercel AI SDK, Postmark (email), pnpm + Turborepo (monorepo)

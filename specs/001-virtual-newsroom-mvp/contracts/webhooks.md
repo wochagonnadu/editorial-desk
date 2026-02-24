@@ -1,111 +1,113 @@
 <!--
 PATH: specs/001-virtual-newsroom-mvp/contracts/webhooks.md
-WHAT: Inbound webhook contracts for email parsing and external integrations
-WHY: Defines how external services (Postmark) communicate with the API
+WHAT: Webhook contracts for email processing (provider-agnostic) and external integrations
+WHY: Defines internal types and webhook handlers independent of email provider
 RELEVANT: specs/001-virtual-newsroom-mvp/contracts/api.md,specs/001-virtual-newsroom-mvp/research.md
 -->
 
 # Webhook Contracts: Virtual Newsroom MVP
 
+Email-провайдер абстрагирован через адаптер. Webhook handler принимает
+provider-specific payload, адаптер преобразует в internal типы ниже.
+
 ---
 
-## Postmark Inbound Email Webhook
+## Internal Types (provider-agnostic)
 
-**Endpoint**: `POST /webhooks/email/inbound`
-**Auth**: Shared secret in header `X-Webhook-Secret`
+Бизнес-логика работает только с этими типами. Каждый email-провайдер
+реализует адаптер `parseInbound(raw) → InboundEmail`.
 
-Postmark отправляет JSON при получении ответа на email.
+```typescript
+// packages/shared/src/email/types.ts
 
-**Incoming payload** (упрощённая Postmark Inbound schema):
-```json
-{
-  "From": "ivanov@clinic.com",
-  "To": "reply+d_42_v_3_exp_17@inbound.newsroom.com",
-  "Subject": "Re: Ваш черновик готов к согласованию",
-  "TextBody": "Текст ответа эксперта...",
-  "StrippedTextReply": "Только новый текст без цитирования",
-  "HtmlBody": "<html>...</html>",
-  "MessageID": "postmark-message-id",
-  "Date": "2026-02-24T10:30:00Z"
+interface InboundEmail {
+  from: string                    // sender email
+  to: string                     // reply-to address with token
+  subject: string
+  textBody: string               // stripped reply (без цитирования)
+  rawBody: string                // полный текст
+  providerMessageId: string      // ID из провайдера для дедупликации
+  receivedAt: Date
+}
+
+interface DeliveryEvent {
+  providerMessageId: string
+  recipient: string
+  deliveredAt: Date
+}
+
+interface OpenEvent {
+  providerMessageId: string
+  firstOpen: boolean
+  openedAt: Date
+}
+
+interface ClickEvent {
+  providerMessageId: string
+  url: string                    // кликнутая ссылка
+  clickedAt: Date
 }
 ```
 
-**Token parsing** из `To` адреса:
+---
+
+## Inbound Email Webhook
+
+**Endpoint**: `POST /webhooks/email/inbound`
+**Auth**: Shared secret в header `X-Webhook-Secret`
+
+Провайдер отправляет JSON при получении ответа на email.
+Webhook handler: `rawPayload → adapter.parseInbound() → InboundEmail → processInbound()`.
+
+**Token parsing** из `to` адреса:
 ```
 reply+d_{draft_id}_v_{version}_exp_{expert_id}@inbound.newsroom.com
 ```
 
 **Processing logic**:
-1. Извлечь токен из `To` → получить draft_id, version, expert_id
-2. Проверить: expert_id совпадает с `From` email
-3. Проверить: version == current_version (stale detection, FR-015)
-4. Если stale → ответить email: «Актуальна версия vN, вот ссылка»
-5. Если OK → распарсить действие из `StrippedTextReply`
-6. Записать в AuditLog
+1. Адаптер парсит provider-specific payload → `InboundEmail`
+2. Извлечь токен из `to` → получить draft_id, version, expert_id
+3. Проверить: expert_id совпадает с `from` email
+4. Проверить: version == current_version (stale detection, FR-015)
+5. Если stale → ответить email: «Актуальна версия vN, вот ссылка»
+6. Если OK → распарсить действие из `textBody`
+7. Записать в AuditLog
 
-**Response**: `200 OK` (Postmark требует 200, иначе ретрай)
+**Response**: `200 OK` (провайдеры ретраят при не-200)
 
 ---
 
-## Postmark Delivery Webhook
+## Delivery Webhook
 
 **Endpoint**: `POST /webhooks/email/delivery`
-**Auth**: Shared secret in header `X-Webhook-Secret`
+**Auth**: Shared secret в header `X-Webhook-Secret`
 
 Трекинг статуса доставки email.
 
-**Incoming payload**:
-```json
-{
-  "RecordType": "Delivery",
-  "MessageID": "postmark-message-id",
-  "DeliveredAt": "2026-02-24T10:30:05Z",
-  "Recipient": "ivanov@clinic.com"
-}
-```
-
-**Processing**: Обновить `Notification.status` → `delivered`.
+**Processing**: `rawPayload → adapter.parseDelivery() → DeliveryEvent`
+→ обновить `Notification.status` → `delivered`.
 
 ---
 
-## Postmark Open Webhook
+## Open Webhook
 
 **Endpoint**: `POST /webhooks/email/open`
 
 Трекинг открытия email (опционально для analytics).
 
-**Incoming payload**:
-```json
-{
-  "RecordType": "Open",
-  "MessageID": "postmark-message-id",
-  "FirstOpen": true,
-  "ReceivedAt": "2026-02-24T10:31:00Z"
-}
-```
-
-**Processing**: Обновить `Notification.status` → `opened`.
+**Processing**: `rawPayload → adapter.parseOpen() → OpenEvent`
+→ обновить `Notification.status` → `opened`.
 
 ---
 
-## Postmark Click Webhook
+## Click Webhook
 
 **Endpoint**: `POST /webhooks/email/click`
 
 Обработка кликов на кнопки в email (Approve / Request Changes).
 
-**Incoming payload**:
-```json
-{
-  "RecordType": "Click",
-  "MessageID": "postmark-message-id",
-  "OriginalLink": "https://app.newsroom.com/action?token=xyz&action=approve&draft=42&version=3",
-  "ClickLocation": "HTML",
-  "ReceivedAt": "2026-02-24T10:32:00Z"
-}
-```
+**Processing**: `rawPayload → adapter.parseClick() → ClickEvent`
 
-**Processing**:
 1. Извлечь `action`, `draft`, `version` из URL query
 2. Валидировать `token` (TTL, not revoked)
 3. Stale-version check
@@ -130,3 +132,36 @@ reply+d_{draft_id}_v_{version}_exp_{expert_id}@inbound.newsroom.com
 - `401` — token не найден
 - `410` Gone — token expired или revoked (с инструкцией запросить новый)
 - `409` — stale version (если token был для старой версии)
+
+---
+
+## Email Adapter Interface
+
+```typescript
+// packages/shared/src/email/provider.ts
+
+interface EmailProvider {
+  // Отправка email
+  sendEmail(params: {
+    to: string
+    from: string
+    replyTo: string           // reply+token@inbound...
+    subject: string
+    html: string
+    textBody?: string
+    metadata?: Record<string, string>
+  }): Promise<{ messageId: string }>
+
+  // Парсинг webhook payloads
+  parseInbound(raw: unknown): InboundEmail
+  parseDelivery(raw: unknown): DeliveryEvent
+  parseOpen(raw: unknown): OpenEvent
+  parseClick(raw: unknown): ClickEvent
+
+  // Верификация webhook signature
+  verifyWebhookSignature(headers: Headers, body: string): boolean
+}
+```
+
+Конкретная реализация (PostmarkAdapter, ResendAdapter) живёт в
+`services/api/src/adapters/email/`. Выбор через `EMAIL_PROVIDER` env var.

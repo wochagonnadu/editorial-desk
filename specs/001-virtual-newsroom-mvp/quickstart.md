@@ -11,8 +11,8 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md,specs/001-virtual-newsroom-mvp/
 
 - Node.js 20 LTS
 - pnpm 9+
-- PostgreSQL 16 (local или Docker)
-- Postmark account (бесплатный план для dev)
+- Supabase account (free tier для dev) или локальный PostgreSQL 16
+- Email-провайдер с inbound webhook support (Postmark, Resend и т.п.)
 - Anthropic API key
 
 ## Setup
@@ -23,15 +23,12 @@ pnpm install
 
 # 2. Скопировать .env и заполнить ключи
 cp .env.example .env
-# Заполнить: DATABASE_URL, POSTMARK_SERVER_TOKEN, ANTHROPIC_API_KEY
+# Заполнить: DATABASE_URL (Supabase или локальный PG), EMAIL_*, ANTHROPIC_API_KEY
 
-# 3. Поднять PostgreSQL (если через Docker)
-docker compose up -d postgres
-
-# 4. Применить миграции
+# 3. Применить миграции
 pnpm --filter api run db:migrate
 
-# 5. Запустить все сервисы
+# 4. Запустить все сервисы
 pnpm dev
 ```
 
@@ -43,13 +40,14 @@ pnpm dev
 ## Environment Variables
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/newsroom_dev
+# Database (Supabase managed или локальный PostgreSQL)
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres
 
-# Email (Postmark)
-POSTMARK_SERVER_TOKEN=xxx
-POSTMARK_INBOUND_ADDRESS=reply@inbound.newsroom.dev
-POSTMARK_WEBHOOK_SECRET=xxx
+# Email (provider-agnostic — заполнить для выбранного провайдера)
+EMAIL_PROVIDER=postmark          # postmark | resend | ses
+EMAIL_API_KEY=xxx
+EMAIL_INBOUND_ADDRESS=reply@inbound.newsroom.dev
+EMAIL_WEBHOOK_SECRET=xxx
 
 # LLM (Anthropic)
 ANTHROPIC_API_KEY=sk-ant-xxx
@@ -102,9 +100,10 @@ Shared types импортируются как `@newsroom/shared` из всех 
 ## Email Development
 
 Для локальной разработки email:
-- Outbound: Postmark sandbox (не отправляет реальные письма)
-- Inbound: ngrok или Postmark's inbound testing tool
+- Outbound: sandbox-режим выбранного провайдера (не отправляет реальные письма)
+- Inbound: ngrok или inbound testing tool провайдера
 - Тестирование webhook: `curl -X POST http://localhost:3000/webhooks/email/inbound -d @test-payload.json`
+- Email-адаптер выбирается через `EMAIL_PROVIDER` env var
 
 ## Database
 
