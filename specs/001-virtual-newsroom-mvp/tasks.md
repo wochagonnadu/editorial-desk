@@ -39,11 +39,11 @@ packages/shared/src/    # Domain types, port interfaces
 
 **Purpose**: Monorepo init, package scaffolds, dev tooling
 
-- [ ] T001 Init pnpm monorepo with `pnpm-workspace.yaml`, Turborepo `turbo.json` (3 packages: `apps/web`, `services/api`, `packages/shared`)
-- [ ] T002 [P] Scaffold `packages/shared` — tsconfig, package.json, `src/types/` and `src/ports/` dirs, barrel exports
-- [ ] T003 [P] Scaffold `services/api` — Hono + `@hono/vercel`, tsconfig, Vercel config (`vercel.json`), entry point `api/index.ts`
-- [ ] T004 [P] Scaffold `apps/web` — React 19 + Vite, tsconfig, basic `App.tsx` shell with router placeholder
-- [ ] T005 [P] Configure shared tooling — ESLint flat config, Prettier, `.env.example` with all required vars
+- [X] T001 Init pnpm monorepo with `pnpm-workspace.yaml`, Turborepo `turbo.json` (3 packages: `apps/web`, `services/api`, `packages/shared`)
+- [X] T002 [P] Scaffold `packages/shared` — tsconfig, package.json, `src/types/` and `src/ports/` dirs, barrel exports
+- [X] T003 [P] Scaffold `services/api` — Hono + `@hono/vercel`, tsconfig, Vercel config (`vercel.json`), entry point `api/index.ts`
+- [X] T004 [P] Scaffold `apps/web` — React 19 + Vite, tsconfig, basic `App.tsx` shell with router placeholder
+- [X] T005 [P] Configure shared tooling — ESLint flat config, Prettier, `.env.example` with all required vars
 
 ---
 

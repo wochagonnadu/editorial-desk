@@ -1,0 +1,21 @@
+{
+  "name": "@newsroom/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --import tsx api/index.ts",
+    "lint": "eslint . --ext .ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node -e \"console.log('api: no tests yet')\""
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@hono/vercel": "^1.14.4",
+    "hono": "^4.7.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
+  }
+}
