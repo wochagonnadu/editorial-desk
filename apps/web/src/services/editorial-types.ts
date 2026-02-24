@@ -63,3 +63,26 @@ export interface PipelineEvent {
   type: string;
   [key: string]: unknown;
 }
+
+export interface DraftVersionItem {
+  id: string;
+  versionNumber?: number;
+  version_number?: number;
+  createdAt?: string;
+  created_at?: string;
+  voiceScore?: string | number | null;
+  voice_score?: string | number | null;
+  diffFromPrevious?: Record<string, unknown> | null;
+  diff_from_previous?: Record<string, unknown> | null;
+}
+
+export interface AuditEntry {
+  id: string;
+  actor: { type: string; id?: string | null; name: string };
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  draft_version_id?: string | null;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+}

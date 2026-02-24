@@ -9,6 +9,7 @@ import { finalizeOnboardingVoiceTest } from '../core/onboarding-finalize';
 import { parseOnboardingReplyAddress, processReply } from '../core/onboarding';
 import type { RouteDeps } from './deps';
 import { processApprovalClick } from './webhooks-click';
+import { processDraftInbound } from './webhooks-inbound-draft';
 
 interface InboundPayload {
   from?: string;
@@ -29,6 +30,10 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
   router.post('/email/inbound', async (context) => {
     assertSecret(context.req.header('x-webhook-secret'));
     const body = (await context.req.json()) as InboundPayload;
+
+    const draftResult = await processDraftInbound(deps, body);
+    if (draftResult.handled) return context.json({ ok: true, stale: draftResult.stale });
+
     const to = body.to ?? '';
     const token = parseOnboardingReplyAddress(to);
     if (!token) return context.json({ ok: true, ignored: true });

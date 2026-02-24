@@ -3,7 +3,7 @@
 // WHY:  Isolates US2 network calls from page components
 // RELEVANT: apps/web/src/pages/TopicsPage.tsx,apps/web/src/components/PipelineControls.tsx
 
-import type { ApprovalConfigPayload, DraftCard, DraftDetail, PipelineEvent, TopicItem } from './editorial-types';
+import type { ApprovalConfigPayload, AuditEntry, DraftCard, DraftDetail, DraftVersionItem, PipelineEvent, TopicItem } from './editorial-types';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000/api/v1';
 const authHeaders = (token: string): Record<string, string> => ({ authorization: `Bearer ${token}` });
@@ -55,7 +55,7 @@ export const editorialApi = {
   getDraft(token: string, draftId: string): Promise<DraftDetail> {
     return request(token, `/drafts/${draftId}`);
   },
-  getDraftVersions(token: string, draftId: string): Promise<{ data: Array<Record<string, unknown>> }> {
+  getDraftVersions(token: string, draftId: string): Promise<{ data: DraftVersionItem[] }> {
     return request(token, `/drafts/${draftId}/versions`);
   },
   createDraft(token: string, topicId: string): Promise<{ id: string }> {
@@ -69,6 +69,15 @@ export const editorialApi = {
   },
   confirmClaim(token: string, draftId: string, claimId: string): Promise<Record<string, unknown>> {
     return request(token, `/drafts/${draftId}/claims/${claimId}/expert-confirm`, { method: 'POST' });
+  },
+  getAudit(token: string, query?: { entity_type?: string; entity_id?: string; limit?: number; offset?: number }): Promise<{ data: AuditEntry[]; total: number; limit: number; offset: number }> {
+    const search = new URLSearchParams();
+    if (query?.entity_type) search.set('entity_type', query.entity_type);
+    if (query?.entity_id) search.set('entity_id', query.entity_id);
+    if (typeof query?.limit === 'number') search.set('limit', String(query.limit));
+    if (typeof query?.offset === 'number') search.set('offset', String(query.offset));
+    const suffix = search.size > 0 ? `?${search.toString()}` : '';
+    return request(token, `/audit${suffix}`);
   },
   async runPipelineStep(token: string, draftId: string, step: 'generate' | 'factcheck' | 'revise', body?: Record<string, unknown>, onEvent?: (event: PipelineEvent) => void): Promise<PipelineEvent[]> {
     const response = await fetch(`${API_BASE}/drafts/${draftId}/${step}`, { method: 'POST', headers: { ...authHeaders(token), 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) });

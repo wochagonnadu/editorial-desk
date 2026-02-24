@@ -7,3 +7,4 @@ export * from './AddExpertForm';
 export * from './ApprovalConfig';
 export * from './ApprovalStatus';
 export * from './PipelineControls';
+export * from './VersionDiff';

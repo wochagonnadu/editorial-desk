@@ -6,7 +6,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import { DraftDetailPage, DraftsPage, ExpertDetailPage, ExpertsPage, TopicsPage } from './pages';
+import { AuditPage, DraftDetailPage, DraftsPage, ExpertDetailPage, ExpertsPage, TopicsPage } from './pages';
 import { apiClient } from './services/api';
 
 const Placeholder = ({ label }: { label: string }) => <section><h1>{label}</h1></section>;
@@ -72,7 +72,7 @@ const App = () => {
           <Route path="/drafts" element={<DraftsPage />} />
           <Route path="/drafts/:id" element={<DraftDetailPage />} />
           <Route path="/approvals" element={<Placeholder label="Approvals" />} />
-          <Route path="/audit" element={<Placeholder label="Audit" />} />
+          <Route path="/audit" element={<AuditPage />} />
         </Routes>
       </main>
     </div>

@@ -162,11 +162,11 @@ packages/shared/src/    # Domain types, port interfaces
 
 ### Implementation for User Story 4
 
-- [ ] T045 [US4] Stale-version detection in inbound webhook — extend `POST /webhooks/email/inbound` processing: compare token version vs current_version. If stale → auto-reply email: "Актуальна версия vN, вот ссылка". Log stale attempt in AuditLog
-- [ ] T046 [US4] Audit routes in `services/api/src/routes/audit.ts` — `GET /audit` with filters (?entity_type, ?entity_id, ?limit, ?offset). Paginated, ordered by created_at desc. Role-based: managers see company, owners see everything
-- [ ] T047 [US4] Magic link access in `services/api/src/routes/docs.ts` — `GET /docs/:draft_id?token={magic_link_token}`: validate TTL, not revoked, return read-only draft version view. Errors: 401/410/409 per webhooks.md
-- [ ] T048 [P] [US4] Version diff display in `apps/web/src/components/VersionDiff.tsx` — show diff between versions (added/removed/changed). Used in DraftDetailPage version history tab
-- [ ] T049 [P] [US4] Audit log page in `apps/web/src/pages/AuditPage.tsx` — filterable audit log table: actor, action, entity, version, timestamp. Linked from draft detail (see approval chain for specific content)
+- [X] T045 [US4] Stale-version detection in inbound webhook — extend `POST /webhooks/email/inbound` processing: compare token version vs current_version. If stale → auto-reply email: "Актуальна версия vN, вот ссылка". Log stale attempt in AuditLog
+- [X] T046 [US4] Audit routes in `services/api/src/routes/audit.ts` — `GET /audit` with filters (?entity_type, ?entity_id, ?limit, ?offset). Paginated, ordered by created_at desc. Role-based: managers see company, owners see everything
+- [X] T047 [US4] Magic link access in `services/api/src/routes/docs.ts` — `GET /docs/:draft_id?token={magic_link_token}`: validate TTL, not revoked, return read-only draft version view. Errors: 401/410/409 per webhooks.md
+- [X] T048 [P] [US4] Version diff display in `apps/web/src/components/VersionDiff.tsx` — show diff between versions (added/removed/changed). Used in DraftDetailPage version history tab
+- [X] T049 [P] [US4] Audit log page in `apps/web/src/pages/AuditPage.tsx` — filterable audit log table: actor, action, entity, version, timestamp. Linked from draft detail (see approval chain for specific content)
 
 **Checkpoint**: Immutable versioning + stale detection + audit trail + magic links. US4 fully functional.
 

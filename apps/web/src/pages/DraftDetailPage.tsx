@@ -8,15 +8,16 @@ import { useParams } from 'react-router-dom';
 import { ApprovalConfig } from '../components/ApprovalConfig';
 import { ApprovalStatus } from '../components/ApprovalStatus';
 import { PipelineControls } from '../components/PipelineControls';
+import { VersionDiff } from '../components/VersionDiff';
 import { useAuth } from '../context/AuthContext';
 import { editorialApi } from '../services/editorial-api';
-import type { DraftDetail } from '../services/editorial-types';
+import type { DraftDetail, DraftVersionItem } from '../services/editorial-types';
 
 export const DraftDetailPage = () => {
   const { id = '' } = useParams();
   const { token } = useAuth();
   const [draft, setDraft] = useState<DraftDetail | null>(null);
-  const [versions, setVersions] = useState<Array<Record<string, unknown>>>([]);
+  const [versions, setVersions] = useState<DraftVersionItem[]>([]);
   const [commentText, setCommentText] = useState('');
 
   const load = async () => {
@@ -48,7 +49,7 @@ export const DraftDetailPage = () => {
       <ApprovalStatus approval={draft.approval} />
       <ApprovalConfig token={token} draftId={id} onDone={load} />
       <form className="card" onSubmit={submitComment}><h3>Add comment</h3><input value={commentText} onChange={(event) => setCommentText(event.target.value)} /><button type="submit">Save comment</button></form>
-      <article className="card"><h3>Versions</h3><pre>{JSON.stringify(versions, null, 2)}</pre></article>
+      <VersionDiff versions={versions} />
       <PipelineControls token={token} draftId={id} onDone={load} />
     </section>
   );

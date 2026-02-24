@@ -33,3 +33,14 @@
   border-radius: 8px;
   margin-bottom: 8px;
 }
+
+.version-row,
+.audit-row {
+  padding: 8px;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.audit-table {
+  max-height: 420px;
+  overflow: auto;
+}
