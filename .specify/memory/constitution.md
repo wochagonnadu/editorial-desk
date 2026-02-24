@@ -114,7 +114,7 @@ Experts MUST be able to complete all critical actions via email
 without learning a new interface.
 
 - Onboarding (voice profiling) MUST happen entirely through email.
-- Approval actions (Approve / Request Changes / Forward) MUST be
+- Approval actions (Approve / Request Changes) MUST be
   available as one-click buttons in the email body.
 - Every email MUST include a magic link to the web document for
   users who prefer a richer UI.
@@ -219,4 +219,6 @@ recovery become impossible at scale.
 
 **PATCH 1.0.1** (2026-02-24): Principle VI — removed `/services/worker` and `/infra` from monorepo structure. Worker replaced by inline processing + Vercel Cron. No `/infra` dir needed for $0 Vercel+Supabase stack. See plan.md Complexity Tracking.
 
-**Version**: 1.0.1 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-24
+**PATCH 1.0.2** (2026-02-24): Principle V — removed "Forward" from approval actions list. Forward to reviewer descoped from MVP (FR-012); managers configure reviewers via web UI. Avoids mandating unimplemented feature.
+
+**Version**: 1.0.2 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-24

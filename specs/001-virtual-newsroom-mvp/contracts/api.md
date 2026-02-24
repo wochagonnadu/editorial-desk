@@ -29,7 +29,11 @@ RELEVANT: specs/001-virtual-newsroom-mvp/data-model.md,specs/001-virtual-newsroo
 ```
 
 **First login (implicit registration)**: If email is not found in the system, a new Company + User (owner) is created. The magic link email includes a welcome message with next steps (FR-001).
+
+### GET /auth/verify
 Верифицирует magic link, возвращает JWT.
+
+**Query**: `?token={magic_link_token}`
 
 **Response** `200`:
 ```json
@@ -140,6 +144,24 @@ RELEVANT: specs/001-virtual-newsroom-mvp/data-model.md,specs/001-virtual-newsroo
     "expert": { "id": "uuid", "name": "Др. Иванов" }
   }]
 }
+```
+
+### POST /topics
+Создать тему вручную (контент-менеджер).
+
+**Request**:
+```json
+{
+  "title": "Что ожидать от первого приёма кардиолога",
+  "description": "Разбор типичных вопросов пациентов",
+  "expert_id": "uuid",
+  "source_type": "manual"
+}
+```
+
+**Response** `201`:
+```json
+{ "id": "uuid", "status": "proposed" }
 ```
 
 ### POST /topics/:id/approve
@@ -274,6 +296,21 @@ RELEVANT: specs/001-virtual-newsroom-mvp/data-model.md,specs/001-virtual-newsroo
 
 Pipeline orchestration на фронтенде. UI последовательно вызывает каждый шаг.
 Каждый шаг идемпотентен — повторный вызов безопасен.
+
+### POST /drafts
+Создать драфт из одобренной темы. Инициализирует Draft без контента — текст генерируется отдельно через POST /drafts/:id/generate.
+
+**Request**:
+```json
+{ "topic_id": "uuid" }
+```
+
+**Response** `201`:
+```json
+{ "id": "uuid", "topic_id": "uuid", "expert_id": "uuid", "status": "drafting", "current_version": null }
+```
+
+**Errors**: `400` topic not approved or expert not confirmed, `409` draft already exists for this topic.
 
 ### POST /drafts/:id/generate
 Генерация текста драфта по теме + voice profile эксперта.

@@ -56,7 +56,7 @@ packages/shared/src/    # Domain types, port interfaces
 - [ ] T006 [P] [FOUND] Define domain entity types in `packages/shared/src/types/` — Company, User, Expert, VoiceProfile, OnboardingSequence, Topic, Draft, DraftVersion, Claim, FactcheckReport, ApprovalFlow, ApprovalStep, ApprovalDecision, Comment, Notification, AuditLog (one type file per entity group, barrel export)
 - [ ] T007 [P] [FOUND] Define port interfaces in `packages/shared/src/ports/` — `EmailPort`, `ContentPort`, `DraftStore`, `ExpertStore` (per webhooks.md and plan.md contracts)
 - [ ] T008 [P] [FOUND] Define email internal types in `packages/shared/src/email/` — `InboundEmail`, `DeliveryEvent`, `OpenEvent`, `ClickEvent`, `EmailProvider` interface (per contracts/webhooks.md)
-- [ ] T009 [FOUND] Drizzle schema + migration setup in `services/api/src/providers/db/` — `schema.ts` (all 14 entities per data-model.md), `drizzle.config.ts`, connection pool. Run first migration against Supabase
+- [ ] T009 [FOUND] Drizzle schema + migration setup in `services/api/src/providers/db/` — `schema.ts` (all 16 entities per data-model.md), `drizzle.config.ts`, connection pool. Run first migration against Supabase
 - [ ] T010 [FOUND] Implement DB provider — Drizzle repos implementing `DraftStore` and `ExpertStore` ports in `services/api/src/providers/db/` (basic CRUD: create, findById, list with filters)
 - [ ] T011 [P] [FOUND] Auth routes in `services/api/src/routes/auth.ts` — `POST /auth/login` (send magic link), `GET /auth/verify` (validate token, return JWT), implicit company registration: first login for unknown email → create Company + User (owner) with onboarding defaults (FR-001). Auth middleware for protected routes
 - [ ] T012 [P] [FOUND] Email provider adapter in `services/api/src/providers/email.ts` — implement `EmailPort` interface with stub/console adapter (real provider TBD). Token generation for reply-to addresses
@@ -133,7 +133,7 @@ packages/shared/src/    # Domain types, port interfaces
 **Independent Test**: Create draft, configure 2-step sequential approval, send for review, complete cycle via email clicks, verify audit entries
 
 **Entities**: ApprovalFlow, ApprovalStep, ApprovalDecision
-**Endpoints**: `POST /drafts/:id/send-for-review`, `GET /api/cron/reminders`
+**Endpoints**: `POST /drafts/:id/send-for-review`, `GET /api/cron/daily`
 **FRs covered**: FR-011, FR-012, FR-014, FR-017, FR-018
 
 ### Implementation for User Story 3
