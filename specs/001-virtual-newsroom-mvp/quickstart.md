@@ -27,7 +27,7 @@ cp .env.example .env
 # Заполнить: DATABASE_URL (Supabase или локальный PG), EMAIL_*, OPENROUTER_API_KEY
 
 # 3. Применить миграции
-pnpm --filter api run db:migrate
+pnpm --filter @newsroom/api run db:migrate
 
 # 4. Запустить все сервисы
 pnpm dev
@@ -73,7 +73,7 @@ editorial_ai/
 ├── specs/                 # Spec Kit outputs
 ├── turbo.json             # Turborepo config
 ├── pnpm-workspace.yaml    # Workspace definition
-├── vercel.json            # Vercel deployment config
+├── services/api/vercel.json # Vercel config для API
 └── .env.example           # Environment template
 ```
 
@@ -84,8 +84,8 @@ pnpm dev                   # Запустить все сервисы (Turborepo
 pnpm build                 # Собрать все пакеты
 pnpm test                  # Запустить Vitest во всех пакетах
 pnpm lint                  # ESLint + type check
-pnpm --filter api test     # Тесты только для API
-pnpm --filter web dev      # Только frontend
+pnpm --filter @newsroom/api test # Тесты только для API
+pnpm --filter @newsroom/web dev  # Только frontend
 vercel dev                 # Эмуляция Vercel-окружения (опционально)
 ```
 
@@ -116,11 +116,33 @@ Shared types и порты импортируются как `@newsroom/shared` 
 
 ```bash
 # Создать миграцию
-pnpm --filter api run db:generate
+pnpm --filter @newsroom/api run db:generate
 
 # Применить миграции
-pnpm --filter api run db:migrate
+pnpm --filter @newsroom/api run db:migrate
 
 # Drizzle Studio (визуальный просмотр данных)
-pnpm --filter api run db:studio
+pnpm --filter @newsroom/api run db:studio
 ```
+
+## Vercel Deploy (API)
+
+1. Создай отдельный Vercel project для API и укажи **Root Directory = `services/api`**.
+2. Проверь, что `services/api/vercel.json` подхватился (rewrites + 2 cron job).
+3. В Project Environment Variables добавь:
+   - `DATABASE_URL`
+   - `EMAIL_PROVIDER`, `EMAIL_API_KEY`, `EMAIL_INBOUND_ADDRESS`, `EMAIL_WEBHOOK_SECRET`
+   - `OPENROUTER_API_KEY`
+   - `JWT_SECRET`, `MAGIC_LINK_TTL_HOURS`, `CRON_SECRET`
+   - `APP_URL`, `API_URL`
+4. Для cron-запросов передавай заголовок `Authorization: Bearer ${CRON_SECRET}`.
+
+## Validation Notes (Phase 9)
+
+- `pnpm check` должен проходить без ошибок (typecheck + lint).
+- `pnpm test` должен запускать unit/integration suite, включая `services/api/tests`.
+- Минимальный smoke перед деплоем:
+  1) `GET /health`
+  2) `GET /api/cron/daily` без токена -> 401
+  3) `POST /api/v1/webhooks/email/inbound` без `x-webhook-secret` -> 401
+  4) `GET /api/v1/reports/monthly` под manager JWT -> 403

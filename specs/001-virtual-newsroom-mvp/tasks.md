@@ -220,11 +220,11 @@ packages/shared/src/    # Domain types, port interfaces
 
 **Purpose**: Testing, security hardening, cleanup
 
-- [ ] T060 [P] Unit tests for core domain logic in `services/api/tests/` — voice score calculation, draft state machine, approval flow transitions, stale-version detection, claim extraction mocks
-- [ ] T061 [P] Integration tests for critical API flows in `services/api/tests/` — create expert → onboarding → generate draft → factcheck → approve cycle (3-5 key flows)
-- [ ] T062 [P] Security review — validate role-based access (expert/manager/owner per FR-023), magic link TTL + revocation, CRON_SECRET protection, webhook signature verification, no patient data (FR-024)
-- [ ] T063 [P] Vercel deployment config — `vercel.json` with function routes, env vars setup, cron schedule config (reminders daily, digest monthly), build pipeline for monorepo
-- [ ] T064 Run quickstart.md validation — follow quickstart.md end-to-end on clean checkout, fix any gaps
+- [X] T060 [P] Unit tests for core domain logic in `services/api/tests/` — voice score calculation, draft state machine, approval flow transitions, stale-version detection, claim extraction mocks
+- [X] T061 [P] Integration tests for critical API flows in `services/api/tests/` — create expert → onboarding → generate draft → factcheck → approve cycle (3-5 key flows)
+- [X] T062 [P] Security review — validate role-based access (expert/manager/owner per FR-023), magic link TTL + revocation, CRON_SECRET protection, webhook signature verification, no patient data (FR-024)
+- [X] T063 [P] Vercel deployment config — `vercel.json` with function routes, env vars setup, cron schedule config (reminders daily, digest monthly), build pipeline for monorepo
+- [X] T064 Run quickstart.md validation — follow quickstart.md end-to-end on clean checkout, fix any gaps
 
 ---
 

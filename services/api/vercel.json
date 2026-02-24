@@ -1,10 +1,23 @@
 {
   "version": 2,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build",
   "functions": {
     "api/index.ts": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node",
+      "maxDuration": 25
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/digest",
+      "schedule": "0 8 1 * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
