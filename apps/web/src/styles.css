@@ -43,6 +43,23 @@ body {
   padding: 28px;
 }
 
+.login-panel {
+  min-height: 100vh;
+  display: grid;
+  gap: 12px;
+  place-content: center;
+}
+
+.login-panel form {
+  display: flex;
+  gap: 8px;
+}
+
+input,
+button {
+  padding: 8px 10px;
+}
+
 @media (max-width: 768px) {
   .layout {
     grid-template-columns: 1fr;

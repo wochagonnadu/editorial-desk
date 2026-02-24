@@ -53,19 +53,19 @@ packages/shared/src/    # Domain types, port interfaces
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 [P] [FOUND] Define domain entity types in `packages/shared/src/types/` — Company, User, Expert, VoiceProfile, OnboardingSequence, Topic, Draft, DraftVersion, Claim, FactcheckReport, ApprovalFlow, ApprovalStep, ApprovalDecision, Comment, Notification, AuditLog (one type file per entity group, barrel export)
-- [ ] T007 [P] [FOUND] Define port interfaces in `packages/shared/src/ports/` — `EmailPort`, `ContentPort`, `DraftStore`, `ExpertStore` (per webhooks.md and plan.md contracts)
-- [ ] T008 [P] [FOUND] Define email internal types in `packages/shared/src/email/` — `InboundEmail`, `DeliveryEvent`, `OpenEvent`, `ClickEvent`, `EmailProvider` interface (per contracts/webhooks.md)
+- [X] T006 [P] [FOUND] Define domain entity types in `packages/shared/src/types/` — Company, User, Expert, VoiceProfile, OnboardingSequence, Topic, Draft, DraftVersion, Claim, FactcheckReport, ApprovalFlow, ApprovalStep, ApprovalDecision, Comment, Notification, AuditLog (one type file per entity group, barrel export)
+- [X] T007 [P] [FOUND] Define port interfaces in `packages/shared/src/ports/` — `EmailPort`, `ContentPort`, `DraftStore`, `ExpertStore` (per webhooks.md and plan.md contracts)
+- [X] T008 [P] [FOUND] Define email internal types in `packages/shared/src/email/` — `InboundEmail`, `DeliveryEvent`, `OpenEvent`, `ClickEvent`, `EmailProvider` interface (per contracts/webhooks.md)
 - [ ] T009 [FOUND] Drizzle schema + migration setup in `services/api/src/providers/db/` — `schema.ts` (all 16 entities per data-model.md), `drizzle.config.ts`, connection pool. Run first migration against Supabase
-- [ ] T010 [FOUND] Implement DB provider — Drizzle repos implementing `DraftStore` and `ExpertStore` ports in `services/api/src/providers/db/` (basic CRUD: create, findById, list with filters)
-- [ ] T011 [P] [FOUND] Auth routes in `services/api/src/routes/auth.ts` — `POST /auth/login` (send magic link), `GET /auth/verify` (validate token, return JWT), implicit company registration: first login for unknown email → create Company + User (owner) with onboarding defaults (FR-001). Auth middleware for protected routes
-- [ ] T012 [P] [FOUND] Email provider adapter in `services/api/src/providers/email.ts` — implement `EmailPort` interface with stub/console adapter (real provider TBD). Token generation for reply-to addresses
-- [ ] T013 [P] [FOUND] LLM provider adapter in `services/api/src/providers/llm.ts` — implement `ContentPort` via Vercel AI SDK + `@openrouter/ai-sdk-provider`. Wrapper for `streamText()` and `generateObject()`
-- [ ] T014 [P] [FOUND] Error handling and audit logging — unified error format (per api.md Error Format), `logAudit()` helper in `services/api/src/core/audit.ts`, AuditLog insert via DB provider
-- [ ] T066 [P] [FOUND] Structured logger setup in `services/api/src/providers/logger.ts` — lightweight structured logger (JSON to stdout, compatible with Vercel logs). Context: request_id, company_id, actor. Used across all routes and core modules (Constitution VII). No external dependency — simple wrapper over console with JSON serialization
-- [ ] T015 [P] [FOUND] Company route in `services/api/src/routes/companies.ts` — `GET /companies/me` returning current user's company
-- [ ] T016 [P] [FOUND] SPA shell in `apps/web/src/` — React Router layout with sidebar nav (Experts, Calendar, Drafts, Approvals, Audit), auth context, API client service (`services/api.ts`)
-- [ ] T017 [FOUND] API router assembly in `services/api/src/routes/index.ts` — mount all route groups under `/api/v1`, apply auth middleware, wire providers (poor man's DI)
+- [X] T010 [FOUND] Implement DB provider — Drizzle repos implementing `DraftStore` and `ExpertStore` ports in `services/api/src/providers/db/` (basic CRUD: create, findById, list with filters)
+- [X] T011 [P] [FOUND] Auth routes in `services/api/src/routes/auth.ts` — `POST /auth/login` (send magic link), `GET /auth/verify` (validate token, return JWT), implicit company registration: first login for unknown email → create Company + User (owner) with onboarding defaults (FR-001). Auth middleware for protected routes
+- [X] T012 [P] [FOUND] Email provider adapter in `services/api/src/providers/email.ts` — implement `EmailPort` interface with stub/console adapter (real provider TBD). Token generation for reply-to addresses
+- [X] T013 [P] [FOUND] LLM provider adapter in `services/api/src/providers/llm.ts` — implement `ContentPort` via Vercel AI SDK + `@openrouter/ai-sdk-provider`. Wrapper for `streamText()` and `generateObject()`
+- [X] T014 [P] [FOUND] Error handling and audit logging — unified error format (per api.md Error Format), `logAudit()` helper in `services/api/src/core/audit.ts`, AuditLog insert via DB provider
+- [X] T066 [P] [FOUND] Structured logger setup in `services/api/src/providers/logger.ts` — lightweight structured logger (JSON to stdout, compatible with Vercel logs). Context: request_id, company_id, actor. Used across all routes and core modules (Constitution VII). No external dependency — simple wrapper over console with JSON serialization
+- [X] T015 [P] [FOUND] Company route in `services/api/src/routes/companies.ts` — `GET /companies/me` returning current user's company
+- [X] T016 [P] [FOUND] SPA shell in `apps/web/src/` — React Router layout with sidebar nav (Experts, Calendar, Drafts, Approvals, Audit), auth context, API client service (`services/api.ts`)
+- [X] T017 [FOUND] API router assembly in `services/api/src/routes/index.ts` — mount all route groups under `/api/v1`, apply auth middleware, wire providers (poor man's DI)
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
 

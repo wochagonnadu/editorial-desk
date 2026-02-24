@@ -10,6 +10,10 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@newsroom/shared": ["packages/shared/src/index.ts"],
+      "@newsroom/shared/*": ["packages/shared/src/*"]
+    }
   }
 }

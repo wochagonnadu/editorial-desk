@@ -6,6 +6,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "node --import tsx api/index.ts",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
     "lint": "eslint . --ext .ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node -e \"console.log('api: no tests yet')\""
@@ -13,9 +16,16 @@
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "@hono/vercel": "^1.14.4",
-    "hono": "^4.7.2"
+    "@newsroom/shared": "workspace:*",
+    "@openrouter/ai-sdk-provider": "^0.3.0",
+    "ai": "^4.1.38",
+    "drizzle-orm": "^0.40.0",
+    "hono": "^4.7.2",
+    "jose": "^5.9.6",
+    "pg": "^8.13.3"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.30.4",
     "tsx": "^4.19.3"
   }
 }
