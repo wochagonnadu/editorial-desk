@@ -1,0 +1,28 @@
+/* PATH: apps/web/src/editorial.css */
+/* WHAT: Styles for topics and draft lifecycle pages */
+/* WHY:  Keeps feature-specific styling outside base shell styles */
+/* RELEVANT: apps/web/src/pages/DraftsPage.tsx,apps/web/src/components/PipelineControls.tsx */
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.events {
+  max-height: 160px;
+  overflow: auto;
+  font-size: 12px;
+  background: #f4f7fa;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.error {
+  color: #b42318;
+}
