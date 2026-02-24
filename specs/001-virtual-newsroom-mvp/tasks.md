@@ -58,10 +58,11 @@ packages/shared/src/    # Domain types, port interfaces
 - [ ] T008 [P] [FOUND] Define email internal types in `packages/shared/src/email/` — `InboundEmail`, `DeliveryEvent`, `OpenEvent`, `ClickEvent`, `EmailProvider` interface (per contracts/webhooks.md)
 - [ ] T009 [FOUND] Drizzle schema + migration setup in `services/api/src/providers/db/` — `schema.ts` (all 14 entities per data-model.md), `drizzle.config.ts`, connection pool. Run first migration against Supabase
 - [ ] T010 [FOUND] Implement DB provider — Drizzle repos implementing `DraftStore` and `ExpertStore` ports in `services/api/src/providers/db/` (basic CRUD: create, findById, list with filters)
-- [ ] T011 [P] [FOUND] Auth routes in `services/api/src/routes/auth.ts` — `POST /auth/login` (send magic link), `GET /auth/verify` (validate token, return JWT). Auth middleware for protected routes
+- [ ] T011 [P] [FOUND] Auth routes in `services/api/src/routes/auth.ts` — `POST /auth/login` (send magic link), `GET /auth/verify` (validate token, return JWT), implicit company registration: first login for unknown email → create Company + User (owner) with onboarding defaults (FR-001). Auth middleware for protected routes
 - [ ] T012 [P] [FOUND] Email provider adapter in `services/api/src/providers/email.ts` — implement `EmailPort` interface with stub/console adapter (real provider TBD). Token generation for reply-to addresses
 - [ ] T013 [P] [FOUND] LLM provider adapter in `services/api/src/providers/llm.ts` — implement `ContentPort` via Vercel AI SDK + `@openrouter/ai-sdk-provider`. Wrapper for `streamText()` and `generateObject()`
 - [ ] T014 [P] [FOUND] Error handling and audit logging — unified error format (per api.md Error Format), `logAudit()` helper in `services/api/src/core/audit.ts`, AuditLog insert via DB provider
+- [ ] T066 [P] [FOUND] Structured logger setup in `services/api/src/providers/logger.ts` — lightweight structured logger (JSON to stdout, compatible with Vercel logs). Context: request_id, company_id, actor. Used across all routes and core modules (Constitution VII). No external dependency — simple wrapper over console with JSON serialization
 - [ ] T015 [P] [FOUND] Company route in `services/api/src/routes/companies.ts` — `GET /companies/me` returning current user's company
 - [ ] T016 [P] [FOUND] SPA shell in `apps/web/src/` — React Router layout with sidebar nav (Experts, Calendar, Drafts, Approvals, Audit), auth context, API client service (`services/api.ts`)
 - [ ] T017 [FOUND] API router assembly in `services/api/src/routes/index.ts` — mount all route groups under `/api/v1`, apply auth middleware, wire providers (poor man's DI)
@@ -78,12 +79,12 @@ packages/shared/src/    # Domain types, port interfaces
 
 **Entities**: Expert, VoiceProfile, OnboardingSequence, Notification
 **Endpoints**: `POST /experts`, `GET /experts`, `GET /experts/:id`, `GET /experts/:id/onboarding`
-**FRs covered**: FR-002, FR-003, FR-004, FR-005, FR-023
+**FRs covered**: FR-002, FR-003, FR-004, FR-005, FR-023, SC-007
 
 ### Implementation for User Story 1
 
 - [ ] T018 [P] [US1] Expert CRUD routes in `services/api/src/routes/experts.ts` — `POST /experts` (create + trigger onboarding), `GET /experts` (list with ?status filter), `GET /experts/:id` (detail with VP status)
-- [ ] T019 [P] [US1] Onboarding route in `services/api/src/routes/experts.ts` — `GET /experts/:id/onboarding` (5-step progress)
+- [ ] T019 [US1] Onboarding route in `services/api/src/routes/experts.ts` — `GET /experts/:id/onboarding` (5-step progress)
 - [ ] T020 [US1] Core voice logic in `services/api/src/core/voice.ts` — `buildVoiceProfile(responses)`: aggregate 5 email responses into `profile_data` JSONB. `calculateVoiceScore(profile, text)`: compare draft against profile. `generateVoiceTest(profile)`: create ~200 word test draft
 - [ ] T021 [US1] Core onboarding logic in `services/api/src/core/onboarding.ts` — `startOnboarding(expert)`: create 5 OnboardingSequence records, send email 1. `processReply(step, responseData)`: parse response, store, advance to next step. `checkStalled(expert)`: detect 3 missed reminders → notify manager
 - [ ] T022 [US1] Onboarding email templates (5 emails) — plain text/HTML templates for each step: 1) self-description, 2) audience & phrases, 3) draft review, 4) Q&A, 5) myths/boundaries. Store as template functions in `services/api/src/core/email-templates/onboarding.ts`
@@ -92,6 +93,7 @@ packages/shared/src/    # Domain types, port interfaces
 - [ ] T025 [P] [US1] Expert list page in `apps/web/src/pages/ExpertsPage.tsx` — table/cards with name, role, status, onboarding progress bar, VP status badge
 - [ ] T026 [P] [US1] Expert detail page in `apps/web/src/pages/ExpertDetailPage.tsx` — expert info, onboarding step-by-step tracker, VP status, voice test result (if exists)
 - [ ] T027 [US1] Add expert form in `apps/web/src/components/AddExpertForm.tsx` — name, role_title, email, domain (select), public_text_urls (optional list). Calls `POST /experts`
+- [ ] T065 [US1] Expert voice self-rating in `services/api/src/core/voice.ts` — `recordSelfRating(expert, draft, score)`: expert rates voice fidelity 1–10 via email button/link. If score < 7 (threshold) → offer unlimited revisions. Store rating in DraftVersion metadata. Route: `POST /drafts/:id/voice-rating` in `services/api/src/routes/drafts.ts`. Email template with 1–10 scale buttons in `services/api/src/core/email-templates/rating.ts` (Constitution II, SC-007)
 
 **Checkpoint**: Expert can be added, receives 5 emails, Voice Profile built and confirmed. US1 fully functional.
 
@@ -110,14 +112,14 @@ packages/shared/src/    # Domain types, port interfaces
 ### Implementation for User Story 2
 
 - [ ] T028 [P] [US2] Topic routes in `services/api/src/routes/topics.ts` — `GET /topics` (list with ?status, ?expert_id), `POST /topics` (manual creation by manager, source_type='manual')
-- [ ] T029 [US2] Core drafts logic in `services/api/src/core/drafts.ts` — `createDraft(topic, expert)`: init Draft + first DraftVersion. `createVersion(draft, content)`: immutable version insert with version_number increment and diff. Draft status state machine transitions (drafting → factcheck → needs_review → approved / revisions)
-- [ ] T030 [US2] Core factcheck logic in `services/api/src/core/factcheck.ts` — `extractClaims(text)`: LLM call via ContentPort, returns typed claims with risk_level. `verifyHighRiskClaims(claims)`: LLM verification with evidence. `buildReport(draftVersion, claims, verdicts)`: assemble FactcheckReport. `rejectUnSourcedStats(claims)`: FR-009. `addDisclaimer(domain)`: FR-010
+- [ ] T029 [US2] Core drafts logic in `services/api/src/core/drafts.ts` — `createDraft(topic, expert)`: init Draft + first DraftVersion. `createVersion(draft, content)`: immutable version insert with version_number increment and diff. Draft status state machine transitions (drafting → factcheck → needs_review → approved / revisions). All state transitions idempotent — calling same transition twice is safe (Constitution VII). Failed step leaves draft in current status (compensation = skip + retry)
+- [ ] T030 [US2] Core factcheck logic in `services/api/src/core/factcheck.ts` — `extractClaims(text)`: LLM call via ContentPort, returns typed claims with risk_level. `verifyHighRiskClaims(claims)`: LLM verification with evidence. `buildReport(draftVersion, claims, verdicts)`: assemble FactcheckReport. `rejectUnSourcedStats(claims)`: FR-009. `addDisclaimer(domain)`: FR-010. `flagDangerousAdvice(claims)`: detect dangerous advice and categorical promises (Constitution III), block draft from proceeding if found — return actionable flags in FactcheckReport
 - [ ] T031 [US2] Draft pipeline routes in `services/api/src/routes/drafts.ts` — `POST /drafts/:id/generate` (streaming SSE, creates DraftVersion), `POST /drafts/:id/factcheck` (streaming SSE, extracts claims + verifies), `POST /drafts/:id/revise` (streaming SSE, new version from instructions)
 - [ ] T032 [US2] Draft CRUD routes in `services/api/src/routes/drafts.ts` — `GET /drafts` (list with Kanban statuses), `GET /drafts/:id` (detail: current version, factcheck, approval, comments), `GET /drafts/:id/versions` (version history with diffs)
-- [ ] T033 [P] [US2] Comment and expert-confirm routes in `services/api/src/routes/drafts.ts` — `POST /drafts/:id/comments` (add comment to current version), `POST /drafts/:id/claims/:claim_id/expert-confirm` (mark claim as expert-confirmed, FR-025, with audit log)
+- [ ] T033 [US2] Comment and expert-confirm routes in `services/api/src/routes/drafts.ts` — `POST /drafts/:id/comments` (add comment to current version), `POST /drafts/:id/claims/:claim_id/expert-confirm` (mark claim as expert-confirmed, FR-025, with audit log)
 - [ ] T034 [P] [US2] Drafts Kanban page in `apps/web/src/pages/DraftsPage.tsx` — Kanban board with columns: Drafting, Factcheck, Needs Review, Approved, Revisions. Cards show title, expert, voice_score, factcheck status
 - [ ] T035 [US2] Draft detail page in `apps/web/src/pages/DraftDetailPage.tsx` — current version text (read-only), summary, voice_score, factcheck report (claims list with verdicts/evidence), comments list, version history, pipeline action buttons (Generate → Factcheck → Send for Review)
-- [ ] T036 [US2] Pipeline UI orchestration in `apps/web/src/components/PipelineControls.tsx` — sequential step runner: Generate (streaming progress) → Factcheck (streaming claims) → Ready. Each step calls API, shows progress, handles errors. Revise button with instructions textarea
+- [ ] T036 [US2] Pipeline UI orchestration in `apps/web/src/components/PipelineControls.tsx` — sequential step runner: Generate (streaming progress) → Factcheck (streaming claims) → Ready. Each step calls API, shows progress, handles errors with compensation: failed step → show error + Retry button (safe because all steps are idempotent, Constitution VII). Revise button with instructions textarea. Pipeline state persisted in Draft.status so user can resume after page reload
 - [ ] T037 [P] [US2] Topics page in `apps/web/src/pages/TopicsPage.tsx` — topic list with status filter, create topic form (manual), approve/reject buttons for proposed topics
 
 **Checkpoint**: Full draft lifecycle works: create topic → generate draft → factcheck → view report. US2 fully functional.
@@ -140,7 +142,7 @@ packages/shared/src/    # Domain types, port interfaces
 - [ ] T039 [US3] Send-for-review route in `services/api/src/routes/drafts.ts` — `POST /drafts/:id/send-for-review`: validate factcheck completed, create ApprovalFlow, send email notifications to first step (sequential) or all (parallel). Draft status → needs_review
 - [ ] T040 [US3] Approval email templates in `services/api/src/core/email-templates/approval.ts` — approval request email (draft summary + Approve / Request Changes buttons with magic link tokens), reminder email, consolidated feedback email
 - [ ] T041 [US3] Click webhook for approval actions in `services/api/src/routes/webhooks.ts` — `POST /webhooks/email/click`: parse action URL (approve/request_changes), validate token TTL, stale-version check, call `recordDecision()`, advance flow. Send consolidated feedback if all steps done with changes
-- [ ] T042 [US3] Cron reminders endpoint in `services/api/src/routes/cron.ts` — `GET /api/cron/reminders`: find ApprovalSteps past deadline, send reminder emails, increment reminder_count, escalate after N reminders (notify manager). Protected by CRON_SECRET
+- [ ] T042 [US3] Daily cron dispatcher in `services/api/src/routes/cron.ts` — `GET /api/cron/daily`: runs all daily/weekly checks in one handler: (1) approval reminders — find overdue ApprovalSteps, send reminders, escalate; (2) weekly topic proposals — if day == Monday, call `suggestTopics()` + send email to managers (US5/T052 logic). Single cron job covers both. Protected by CRON_SECRET
 - [ ] T043 [P] [US3] Approval config UI in `apps/web/src/components/ApprovalConfig.tsx` — form to configure approval route: flow_type (sequential/parallel), add steps (select user/expert), set deadline_hours. Used from DraftDetailPage
 - [ ] T044 [P] [US3] Approval status display in `apps/web/src/components/ApprovalStatus.tsx` — visual step tracker showing each approver, their status (waiting/pending/approved/changes_requested), deadline countdown. Embedded in DraftDetailPage
 
@@ -184,7 +186,7 @@ packages/shared/src/    # Domain types, port interfaces
 
 - [ ] T050 [US5] Core topic suggestion logic in `services/api/src/core/topics.ts` — `suggestTopics(company, experts)`: LLM call via ContentPort, generate topic cards based on company domain/services, expert profiles, FAQs, myths, seasonal relevance. Return structured Topic proposals
 - [ ] T051 [US5] Topic approve/reject routes in `services/api/src/routes/topics.ts` — `POST /topics/:id/approve` (status → approved, topic enters draft pipeline), `POST /topics/:id/reject` (status → rejected, with reason). Extend existing topics routes
-- [ ] T052 [US5] Weekly proposal email — extend cron or add logic to send weekly email to managers with proposed topics (topic cards + Approve / Reject buttons with magic links). Template in `services/api/src/core/email-templates/topics.ts`
+- [ ] T052 [US5] Weekly proposal email template + logic — `sendWeeklyProposals(company)` in `services/api/src/core/topics.ts`: generate proposals, send email to managers. Called from daily cron dispatcher (T042) on Mondays. Template in `services/api/src/core/email-templates/topics.ts`
 - [ ] T053 [US5] Topic email webhook processing — extend `POST /webhooks/email/click` to handle topic approve/reject clicks from email buttons
 - [ ] T054 [P] [US5] Calendar view in `apps/web/src/pages/CalendarPage.tsx` — editorial calendar showing topics by week/month, assigned experts, status. Simple table/grid view (not full calendar widget)
 
@@ -260,9 +262,9 @@ Phase 1 → Phase 2 → Phase 3 (US1) → Phase 4 (US2) → Phase 5 (US3) → Ph
 
 **Phase 2** — All [P] tasks (T006-T008, T011-T016) in parallel; then T009 → T010 → T017
 
-**Phase 3** — T018+T019 in parallel, then T020 → T021 → T022 → T023 → T024, frontend T025+T026+T027 in parallel after backend done
+**Phase 3** — T018 → T019 (same file), then T020 → T021 → T022 → T023 → T024, frontend T025+T026+T027 in parallel after backend done
 
-**Phase 4** — T028 can start immediately; T029+T030 in parallel, then T031+T032 → T033; frontend T034+T035+T037 in parallel, then T036
+**Phase 4** — T028 can start immediately; T029+T030 in parallel, then T031 → T032 → T033 (same file, sequential); frontend T034+T035+T037 in parallel, then T036
 
 **Phase 5** — T038 → T039 → T040 → T041 → T042; frontend T043+T044 in parallel
 

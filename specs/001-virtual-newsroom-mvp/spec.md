@@ -64,7 +64,7 @@ Once an expert has a confirmed Voice Profile and a topic is assigned, the system
 
 ### User Story 3 — Approval Workflow (Priority: P3)
 
-Drafts with completed factchecking enter an approval workflow. The content manager configures who must approve (sequential or parallel routing). Approvers receive email notifications with one-click actions (Approve / Request Changes / Forward). The system tracks versions, consolidates feedback from multiple reviewers, and sends auto-reminders to unresponsive approvers.
+Drafts with completed factchecking enter an approval workflow. The content manager configures who must approve (sequential or parallel routing). Approvers receive email notifications with one-click actions (Approve / Request Changes). The system tracks versions, consolidates feedback from multiple reviewers, and sends auto-reminders to unresponsive approvers.
 
 **Why this priority**: Approval workflow is the coordination engine that replaces manual "chasing experts." It is a Tier 1 requirement and the primary pain point for content managers.
 
@@ -191,13 +191,13 @@ The business owner receives a monthly digest showing: how many drafts were creat
 
 - **FR-008**: System MUST verify high-risk claims and produce a Factcheck Report with evidence and verdicts.
 
-- **FR-009**: System MUST reject statistics without cited sources.
+- **FR-009**: System MUST reject statistics without cited sources. System MUST flag and block dangerous advice and categorical promises before any approver sees the draft.
 
 - **FR-010**: System MUST append domain-specific disclaimers (medical, legal, financial) automatically.
 
 - **FR-011**: System MUST support sequential and parallel approval routing, configurable by the content manager.
 
-- **FR-012**: System MUST provide one-click email actions (Approve / Request Changes / Forward to reviewer).
+- **FR-012**: System MUST provide one-click email actions (Approve / Request Changes). Forward to reviewer is deferred to post-MVP — managers add reviewers via the web UI approval configuration instead.
 
 - **FR-013**: System MUST create a new immutable version on every draft edit, with stored diffs.
 

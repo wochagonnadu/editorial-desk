@@ -164,4 +164,4 @@ interface EmailProvider {
 ```
 
 Конкретная реализация (PostmarkAdapter, ResendAdapter) живёт в
-`services/api/src/adapters/email/`. Выбор через `EMAIL_PROVIDER` env var.
+`services/api/src/providers/email.ts`. Выбор через `EMAIL_PROVIDER` env var.

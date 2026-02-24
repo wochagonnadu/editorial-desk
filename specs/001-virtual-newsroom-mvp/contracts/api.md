@@ -28,7 +28,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/data-model.md,specs/001-virtual-newsroo
 { "message": "Login link sent to email" }
 ```
 
-### GET /auth/verify?token={token}
+**First login (implicit registration)**: If email is not found in the system, a new Company + User (owner) is created. The magic link email includes a welcome message with next steps (FR-001).
 Верифицирует magic link, возвращает JWT.
 
 **Response** `200`:
@@ -346,6 +346,23 @@ data: {"type":"chunk","text":"Обновлённый текст..."}
 data: {"type":"done","version_id":"uuid","version_number":2,"voice_score":0.88}
 ```
 
+### POST /drafts/:id/voice-rating
+Эксперт оценивает голосовое соответствие черновика (1–10). Constitution II: при score < 7 предлагаются неограниченные ревизии.
+
+**Request**:
+```json
+{ "score": 8 }
+```
+
+**Response** `200`:
+```json
+{ "recorded": true, "below_threshold": false }
+```
+
+При score < 7: `{ "recorded": true, "below_threshold": true, "revision_offered": true }`
+
+**Errors**: `400` invalid score (not 1-10), `404` draft not found, `403` only the assigned expert can rate.
+
 ---
 
 ## Cron Endpoints (Vercel Cron Jobs)
@@ -353,8 +370,8 @@ data: {"type":"done","version_id":"uuid","version_number":2,"voice_score":0.88}
 Вызываются Vercel Cron по расписанию. Защищены `CRON_SECRET` header.
 2 бесплатных cron job'а на Vercel free tier.
 
-### GET /api/cron/reminders
-Отправляет напоминания по просроченным согласованиям (deadline expired).
+### GET /api/cron/daily
+Daily dispatcher: (1) отправляет напоминания по просроченным согласованиям (deadline expired), (2) по понедельникам — генерирует и отправляет еженедельные предложения тем менеджерам.
 Запускается раз в сутки.
 
 **Auth**: `Authorization: Bearer {CRON_SECRET}`

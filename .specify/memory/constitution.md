@@ -139,7 +139,7 @@ abstractions, no premature optimization, no speculative features.
 - Features not in the current MVP tier MUST NOT be implemented
   "just in case."
 - Monorepo structure: `/apps/web`, `/services/api`,
-  `/services/worker`, `/packages/shared`, `/infra`, `/specs`.
+  `/packages/shared`, `/specs`.
 
 **Rationale**: Small startup with limited resources. Over-engineering
 kills velocity. The 80/20 rule maximizes value per line of code.
@@ -215,4 +215,8 @@ recovery become impossible at scale.
   specific and project-structure guidance that supplements this
   constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-24
+### Amendment Log
+
+**PATCH 1.0.1** (2026-02-24): Principle VI — removed `/services/worker` and `/infra` from monorepo structure. Worker replaced by inline processing + Vercel Cron. No `/infra` dir needed for $0 Vercel+Supabase stack. See plan.md Complexity Tracking.
+
+**Version**: 1.0.1 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-24
