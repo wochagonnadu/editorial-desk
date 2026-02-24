@@ -1,0 +1,349 @@
+<!--
+PATH: specs/001-virtual-newsroom-mvp/contracts/api.md
+WHAT: REST API contract for Virtual Newsroom MVP
+WHY: Defines endpoints between web SPA and API service before coding
+RELEVANT: specs/001-virtual-newsroom-mvp/data-model.md,specs/001-virtual-newsroom-mvp/spec.md
+-->
+
+# API Contract: Virtual Newsroom MVP
+
+**Base URL**: `/api/v1`
+**Auth**: Bearer JWT (email-based login) or magic link token
+**Format**: JSON, UTF-8
+
+---
+
+## Auth
+
+### POST /auth/login
+Отправляет magic link на email для входа.
+
+**Request**:
+```json
+{ "email": "manager@clinic.com" }
+```
+
+**Response** `200`:
+```json
+{ "message": "Login link sent to email" }
+```
+
+### GET /auth/verify?token={token}
+Верифицирует magic link, возвращает JWT.
+
+**Response** `200`:
+```json
+{ "token": "jwt...", "user": { "id": "uuid", "email": "...", "role": "manager", "company_id": "uuid" } }
+```
+
+**Errors**: `401` invalid/expired token.
+
+---
+
+## Companies
+
+### GET /companies/me
+Текущая компания пользователя.
+
+**Response** `200`:
+```json
+{
+  "id": "uuid",
+  "name": "Клиника доктора Иванова",
+  "domain": "medical",
+  "language": "ru"
+}
+```
+
+---
+
+## Experts
+
+### GET /experts
+Список экспертов компании.
+
+**Query**: `?status=active` (опционально)
+
+**Response** `200`:
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "name": "Др. Иванов",
+    "role_title": "Кардиолог",
+    "email": "ivanov@clinic.com",
+    "domain": "medical",
+    "status": "active",
+    "voice_profile_status": "confirmed",
+    "onboarding_progress": 5
+  }]
+}
+```
+
+### POST /experts
+Добавить эксперта и запустить onboarding.
+
+**Request**:
+```json
+{
+  "name": "Др. Иванов",
+  "role_title": "Кардиолог",
+  "email": "ivanov@clinic.com",
+  "domain": "medical",
+  "public_text_urls": ["https://ivanov-blog.ru"]
+}
+```
+
+**Response** `201`:
+```json
+{ "id": "uuid", "status": "pending" }
+```
+
+### GET /experts/:id
+Детали эксперта с Voice Profile status.
+
+### GET /experts/:id/onboarding
+Прогресс onboarding-последовательности (5 шагов).
+
+**Response** `200`:
+```json
+{
+  "expert_id": "uuid",
+  "steps": [
+    { "step_number": 1, "status": "replied", "sent_at": "...", "replied_at": "..." },
+    { "step_number": 2, "status": "sent", "sent_at": "...", "reminder_count": 1 },
+    { "step_number": 3, "status": "pending" },
+    { "step_number": 4, "status": "pending" },
+    { "step_number": 5, "status": "pending" }
+  ]
+}
+```
+
+---
+
+## Topics
+
+### GET /topics
+Список тем компании.
+
+**Query**: `?status=proposed&expert_id=uuid` (опционально)
+
+**Response** `200`:
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "title": "Что ожидать от первого приёма кардиолога",
+    "description": "...",
+    "source_type": "faq",
+    "status": "proposed",
+    "expert": { "id": "uuid", "name": "Др. Иванов" }
+  }]
+}
+```
+
+### POST /topics/:id/approve
+Менеджер одобряет тему → тема уходит в draft pipeline.
+
+**Response** `200`:
+```json
+{ "id": "uuid", "status": "approved" }
+```
+
+### POST /topics/:id/reject
+Менеджер отклоняет тему.
+
+**Request**:
+```json
+{ "reason": "Уже писали на эту тему" }
+```
+
+---
+
+## Drafts
+
+### GET /drafts
+Список драфтов с Kanban-статусами.
+
+**Query**: `?status=needs_review&expert_id=uuid` (опционально)
+
+**Response** `200`:
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "topic": { "id": "uuid", "title": "..." },
+    "expert": { "id": "uuid", "name": "Др. Иванов" },
+    "status": "needs_review",
+    "current_version": 3,
+    "voice_score": 0.87,
+    "factcheck_status": "completed",
+    "updated_at": "..."
+  }]
+}
+```
+
+### GET /drafts/:id
+Детали драфта: текущая версия, factcheck report, approval status.
+
+**Response** `200`:
+```json
+{
+  "id": "uuid",
+  "status": "needs_review",
+  "topic": { "id": "uuid", "title": "..." },
+  "expert": { "id": "uuid", "name": "Др. Иванов" },
+  "current_version": {
+    "id": "uuid",
+    "version_number": 3,
+    "content": "Полный текст статьи...",
+    "summary": "Краткое содержание...",
+    "voice_score": 0.87,
+    "created_at": "..."
+  },
+  "factcheck_report": {
+    "status": "completed",
+    "overall_risk_score": 0.15,
+    "disclaimer_type": "medical",
+    "results": [{
+      "claim_id": "uuid",
+      "text": "Инфаркт — причина 30% смертей",
+      "risk_level": "high",
+      "verdict": "confirmed",
+      "evidence": [{ "source": "https://...", "snippet": "..." }]
+    }]
+  },
+  "approval": {
+    "flow_type": "sequential",
+    "status": "active",
+    "steps": [{
+      "step_order": 1,
+      "approver": { "name": "Менеджер Петрова" },
+      "status": "approved"
+    }, {
+      "step_order": 2,
+      "approver": { "name": "Др. Иванов" },
+      "status": "pending",
+      "deadline_at": "..."
+    }]
+  },
+  "comments": [{
+    "author": "Менеджер Петрова",
+    "text": "Уточнить статистику в 3-м абзаце",
+    "created_at": "..."
+  }]
+}
+```
+
+### GET /drafts/:id/versions
+История версий с diff'ами.
+
+**Response** `200`:
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "version_number": 3,
+    "voice_score": 0.87,
+    "diff_from_previous": { "added": 12, "removed": 5, "changes": [...] },
+    "created_by": "revision",
+    "created_at": "..."
+  }]
+}
+```
+
+### POST /drafts/:id/approval-flow
+Настроить маршрут согласования.
+
+**Request**:
+```json
+{
+  "flow_type": "sequential",
+  "deadline_hours": 48,
+  "steps": [
+    { "approver_type": "user", "approver_id": "uuid" },
+    { "approver_type": "expert", "approver_id": "uuid" }
+  ]
+}
+```
+
+### POST /drafts/:id/comments
+Добавить комментарий (read-only UI, но комментарии можно оставлять).
+
+**Request**:
+```json
+{
+  "text": "Перефразировать вывод",
+  "position_start": 1200,
+  "position_end": 1350
+}
+```
+
+### POST /drafts/:id/claims/:claim_id/expert-confirm
+Эксперт подтверждает спорный claim (FR-025).
+
+---
+
+## Audit
+
+### GET /audit
+Журнал действий. Для владельца и менеджера.
+
+**Query**: `?entity_type=draft&entity_id=uuid&limit=50&offset=0`
+
+**Response** `200`:
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "actor": { "name": "Др. Иванов", "type": "expert" },
+    "action": "approval.granted",
+    "entity_type": "draft",
+    "entity_id": "uuid",
+    "draft_version_id": "uuid",
+    "metadata": { "version_number": 3 },
+    "created_at": "..."
+  }],
+  "total": 142
+}
+```
+
+---
+
+## Reports
+
+### GET /reports/monthly
+Месячный дайджест для владельца (P6).
+
+**Query**: `?month=2026-02`
+
+**Response** `200`:
+```json
+{
+  "period": "2026-02",
+  "drafts_created": 12,
+  "drafts_approved": 8,
+  "drafts_pending": 4,
+  "avg_approval_days": 3.2,
+  "delays": [{ "expert": "Др. Иванов", "draft_title": "...", "days_delayed": 5 }]
+}
+```
+
+---
+
+## Error Format
+
+Все ошибки возвращаются в едином формате:
+
+```json
+{
+  "error": {
+    "code": "STALE_VERSION",
+    "message": "Current version is v3, your action references v1",
+    "details": { "current_version": 3, "referenced_version": 1 }
+  }
+}
+```
+
+Стандартные коды: `400` validation, `401` auth, `403` forbidden (role-based),
+`404` not found, `409` conflict (stale version), `422` business rule violation.
