@@ -6,6 +6,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { ExpertDetailPage, ExpertsPage } from './pages';
 import { apiClient } from './services/api';
 
 const Placeholder = ({ label }: { label: string }) => <section><h1>{label}</h1></section>;
@@ -65,7 +66,8 @@ const App = () => {
       <main className="content">
         <Routes>
           <Route path="/" element={<Placeholder label="Home" />} />
-          <Route path="/experts" element={<Placeholder label="Experts" />} />
+          <Route path="/experts" element={<ExpertsPage />} />
+          <Route path="/experts/:id" element={<ExpertDetailPage />} />
           <Route path="/calendar" element={<Placeholder label="Calendar" />} />
           <Route path="/drafts" element={<Placeholder label="Drafts" />} />
           <Route path="/approvals" element={<Placeholder label="Approvals" />} />

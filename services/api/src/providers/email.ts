@@ -39,7 +39,7 @@ export const createEmailPort = (logger: Logger): EmailPort => ({
   },
   async sendEmail(input: SendEmailInput) {
     const messageId = randomUUID();
-    const replyTo = input.replyToContext ? buildReplyAddress(input.replyToContext) : undefined;
+    const replyTo = input.replyTo ?? (input.replyToContext ? buildReplyAddress(input.replyToContext) : undefined);
     logger.info('email.send', { message_id: messageId, to: input.to, subject: input.subject, reply_to: replyTo });
     return { messageId };
   },

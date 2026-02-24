@@ -5,3 +5,6 @@
 
 export * from './audit';
 export * from './errors';
+export * from './onboarding';
+export * from './onboarding-finalize';
+export * from './voice';

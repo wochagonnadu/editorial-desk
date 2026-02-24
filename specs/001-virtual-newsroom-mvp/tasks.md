@@ -83,17 +83,17 @@ packages/shared/src/    # Domain types, port interfaces
 
 ### Implementation for User Story 1
 
-- [ ] T018 [P] [US1] Expert CRUD routes in `services/api/src/routes/experts.ts` — `POST /experts` (create + trigger onboarding), `GET /experts` (list with ?status filter), `GET /experts/:id` (detail with VP status)
-- [ ] T019 [US1] Onboarding route in `services/api/src/routes/experts.ts` — `GET /experts/:id/onboarding` (5-step progress)
-- [ ] T020 [US1] Core voice logic in `services/api/src/core/voice.ts` — `buildVoiceProfile(responses)`: aggregate 5 email responses into `profile_data` JSONB. `calculateVoiceScore(profile, text)`: compare draft against profile. `generateVoiceTest(profile)`: create ~200 word test draft
-- [ ] T021 [US1] Core onboarding logic in `services/api/src/core/onboarding.ts` — `startOnboarding(expert)`: create 5 OnboardingSequence records, send email 1. `processReply(step, responseData)`: parse response, store, advance to next step. `checkStalled(expert)`: detect 3 missed reminders → notify manager
-- [ ] T022 [US1] Onboarding email templates (5 emails) — plain text/HTML templates for each step: 1) self-description, 2) audience & phrases, 3) draft review, 4) Q&A, 5) myths/boundaries. Store as template functions in `services/api/src/core/email-templates/onboarding.ts`
-- [ ] T023 [US1] Inbound email processing for onboarding replies in `services/api/src/routes/webhooks.ts` — `POST /webhooks/email/inbound`: parse reply-to token, match to OnboardingSequence step, call `processReply()`, advance sequence
-- [ ] T024 [US1] Voice test flow — after step 5 replied: `buildVoiceProfile()` → `generateVoiceTest()` → create Draft + DraftVersion (voice_test type) → send approval email to expert. Expert approves via email → VP status = confirmed, Expert status = active
-- [ ] T025 [P] [US1] Expert list page in `apps/web/src/pages/ExpertsPage.tsx` — table/cards with name, role, status, onboarding progress bar, VP status badge
-- [ ] T026 [P] [US1] Expert detail page in `apps/web/src/pages/ExpertDetailPage.tsx` — expert info, onboarding step-by-step tracker, VP status, voice test result (if exists)
-- [ ] T027 [US1] Add expert form in `apps/web/src/components/AddExpertForm.tsx` — name, role_title, email, domain (select), public_text_urls (optional list). Calls `POST /experts`
-- [ ] T065 [US1] Expert voice self-rating in `services/api/src/core/voice.ts` — `recordSelfRating(expert, draft, score)`: expert rates voice fidelity 1–10 via email button/link. If score < 7 (threshold) → offer unlimited revisions. Store rating in DraftVersion metadata. Route: `POST /drafts/:id/voice-rating` in `services/api/src/routes/drafts.ts`. Email template with 1–10 scale buttons in `services/api/src/core/email-templates/rating.ts` (Constitution II, SC-007)
+- [X] T018 [P] [US1] Expert CRUD routes in `services/api/src/routes/experts.ts` — `POST /experts` (create + trigger onboarding), `GET /experts` (list with ?status filter), `GET /experts/:id` (detail with VP status)
+- [X] T019 [US1] Onboarding route in `services/api/src/routes/experts.ts` — `GET /experts/:id/onboarding` (5-step progress)
+- [X] T020 [US1] Core voice logic in `services/api/src/core/voice.ts` — `buildVoiceProfile(responses)`: aggregate 5 email responses into `profile_data` JSONB. `calculateVoiceScore(profile, text)`: compare draft against profile. `generateVoiceTest(profile)`: create ~200 word test draft
+- [X] T021 [US1] Core onboarding logic in `services/api/src/core/onboarding.ts` — `startOnboarding(expert)`: create 5 OnboardingSequence records, send email 1. `processReply(step, responseData)`: parse response, store, advance to next step. `checkStalled(expert)`: detect 3 missed reminders → notify manager
+- [X] T022 [US1] Onboarding email templates (5 emails) — plain text/HTML templates for each step: 1) self-description, 2) audience & phrases, 3) draft review, 4) Q&A, 5) myths/boundaries. Store as template functions in `services/api/src/core/email-templates/onboarding.ts`
+- [X] T023 [US1] Inbound email processing for onboarding replies in `services/api/src/routes/webhooks.ts` — `POST /webhooks/email/inbound`: parse reply-to token, match to OnboardingSequence step, call `processReply()`, advance sequence
+- [X] T024 [US1] Voice test flow — after step 5 replied: `buildVoiceProfile()` → `generateVoiceTest()` → create Draft + DraftVersion (voice_test type) → send approval email to expert. Expert approves via email → VP status = confirmed, Expert status = active
+- [X] T025 [P] [US1] Expert list page in `apps/web/src/pages/ExpertsPage.tsx` — table/cards with name, role, status, onboarding progress bar, VP status badge
+- [X] T026 [P] [US1] Expert detail page in `apps/web/src/pages/ExpertDetailPage.tsx` — expert info, onboarding step-by-step tracker, VP status, voice test result (if exists)
+- [X] T027 [US1] Add expert form in `apps/web/src/components/AddExpertForm.tsx` — name, role_title, email, domain (select), public_text_urls (optional list). Calls `POST /experts`
+- [X] T065 [US1] Expert voice self-rating in `services/api/src/core/voice.ts` — `recordSelfRating(expert, draft, score)`: expert rates voice fidelity 1–10 via email button/link. If score < 7 (threshold) → offer unlimited revisions. Store rating in DraftVersion metadata. Route: `POST /drafts/:id/voice-rating` in `services/api/src/routes/drafts.ts`. Email template with 1–10 scale buttons in `services/api/src/core/email-templates/rating.ts` (Constitution II, SC-007)
 
 **Checkpoint**: Expert can be added, receives 5 emails, Voice Profile built and confirmed. US1 fully functional.
 
