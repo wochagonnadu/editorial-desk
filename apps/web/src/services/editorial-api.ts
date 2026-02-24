@@ -48,6 +48,12 @@ export const editorialApi = {
   createTopic(token: string, payload: { title: string; description?: string; expert_id?: string }): Promise<{ id: string; status: string }> {
     return request(token, '/topics', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...payload, source_type: 'manual' }) });
   },
+  approveTopic(token: string, topicId: string): Promise<{ id: string; status: string }> {
+    return request(token, `/topics/${topicId}/approve`, { method: 'POST' });
+  },
+  rejectTopic(token: string, topicId: string, reason?: string): Promise<{ id: string; status: string }> {
+    return request(token, `/topics/${topicId}/reject`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reason }) });
+  },
   getDrafts(token: string, status?: string): Promise<{ data: DraftCard[] }> {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';
     return request(token, `/drafts${query}`);

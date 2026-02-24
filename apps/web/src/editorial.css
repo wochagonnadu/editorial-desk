@@ -40,6 +40,11 @@
   border-bottom: 1px solid #eaecf0;
 }
 
+.calendar-row {
+  padding: 8px 0;
+  border-bottom: 1px dashed #d0d7de;
+}
+
 .audit-table {
   max-height: 420px;
   overflow: auto;

@@ -9,6 +9,7 @@ export interface TopicItem {
   description?: string;
   source_type: string;
   status: string;
+  created_at?: string;
   expert?: { id: string; name: string } | null;
 }
 

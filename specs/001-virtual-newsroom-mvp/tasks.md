@@ -184,11 +184,11 @@ packages/shared/src/    # Domain types, port interfaces
 
 ### Implementation for User Story 5
 
-- [ ] T050 [US5] Core topic suggestion logic in `services/api/src/core/topics.ts` — `suggestTopics(company, experts)`: LLM call via ContentPort, generate topic cards based on company domain/services, expert profiles, FAQs, myths, seasonal relevance. Return structured Topic proposals
-- [ ] T051 [US5] Topic approve/reject routes in `services/api/src/routes/topics.ts` — `POST /topics/:id/approve` (status → approved, topic enters draft pipeline), `POST /topics/:id/reject` (status → rejected, with reason). Extend existing topics routes
-- [ ] T052 [US5] Weekly proposal email template + logic — `sendWeeklyProposals(company)` in `services/api/src/core/topics.ts`: generate proposals, send email to managers. Called from daily cron dispatcher (T042) on Mondays. Template in `services/api/src/core/email-templates/topics.ts`
-- [ ] T053 [US5] Topic email webhook processing — extend `POST /webhooks/email/click` to handle topic approve/reject clicks from email buttons
-- [ ] T054 [P] [US5] Calendar view in `apps/web/src/pages/CalendarPage.tsx` — editorial calendar showing topics by week/month, assigned experts, status. Simple table/grid view (not full calendar widget)
+- [X] T050 [US5] Core topic suggestion logic in `services/api/src/core/topics.ts` — `suggestTopics(company, experts)`: LLM call via ContentPort, generate topic cards based on company domain/services, expert profiles, FAQs, myths, seasonal relevance. Return structured Topic proposals
+- [X] T051 [US5] Topic approve/reject routes in `services/api/src/routes/topics.ts` — `POST /topics/:id/approve` (status → approved, topic enters draft pipeline), `POST /topics/:id/reject` (status → rejected, with reason). Extend existing topics routes
+- [X] T052 [US5] Weekly proposal email template + logic — `sendWeeklyProposals(company)` in `services/api/src/core/topics.ts`: generate proposals, send email to managers. Called from daily cron dispatcher (T042) on Mondays. Template in `services/api/src/core/email-templates/topics.ts`
+- [X] T053 [US5] Topic email webhook processing — extend `POST /webhooks/email/click` to handle topic approve/reject clicks from email buttons
+- [X] T054 [P] [US5] Calendar view in `apps/web/src/pages/CalendarPage.tsx` — editorial calendar showing topics by week/month, assigned experts, status. Simple table/grid view (not full calendar widget)
 
 **Checkpoint**: Topic suggestions + weekly proposals + approve/reject flow. US5 fully functional.
 

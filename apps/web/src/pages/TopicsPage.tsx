@@ -34,6 +34,18 @@ export const TopicsPage = () => {
     await load();
   };
 
+  const approve = async (topicId: string) => {
+    if (!token) return;
+    await editorialApi.approveTopic(token, topicId);
+    await load();
+  };
+
+  const reject = async (topicId: string) => {
+    if (!token) return;
+    await editorialApi.rejectTopic(token, topicId, 'Rejected by manager');
+    await load();
+  };
+
   return (
     <section>
       <form className="card" onSubmit={create}>
@@ -44,7 +56,7 @@ export const TopicsPage = () => {
       </form>
 
       <label>Filter <select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">all</option><option value="proposed">proposed</option><option value="approved">approved</option></select></label>
-      <div className="list">{topics.map((topic) => <article className="card" key={topic.id}><h3>{topic.title}</h3><p>{topic.description}</p><p>Status: {topic.status}</p></article>)}</div>
+      <div className="list">{topics.map((topic) => <article className="card" key={topic.id}><h3>{topic.title}</h3><p>{topic.description}</p><p>Status: {topic.status}</p>{topic.status === 'proposed' ? <div className="row"><button onClick={() => approve(topic.id)}>Approve</button><button onClick={() => reject(topic.id)}>Reject</button></div> : null}</article>)}</div>
     </section>
   );
 };

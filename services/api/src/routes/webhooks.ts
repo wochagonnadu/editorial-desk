@@ -9,6 +9,7 @@ import { finalizeOnboardingVoiceTest } from '../core/onboarding-finalize';
 import { parseOnboardingReplyAddress, processReply } from '../core/onboarding';
 import type { RouteDeps } from './deps';
 import { processApprovalClick } from './webhooks-click';
+import { processTopicClick } from './webhooks-click-topic';
 import { processDraftInbound } from './webhooks-inbound-draft';
 
 interface InboundPayload {
@@ -26,6 +27,7 @@ const assertSecret = (actual: string | undefined) => {
 export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
   const approvalClick = processApprovalClick(deps);
+  const topicClick = processTopicClick(deps);
 
   router.post('/email/inbound', async (context) => {
     assertSecret(context.req.header('x-webhook-secret'));
@@ -50,10 +52,18 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
 
   router.post('/email/click', async (context) => {
     assertSecret(context.req.header('x-webhook-secret'));
+    const actionFromQuery = context.req.query('action');
+    const rawBody = (await context.req.raw.clone().json().catch(() => ({}))) as Record<string, unknown>;
+    const action = actionFromQuery ?? (typeof rawBody.action === 'string' ? rawBody.action : undefined);
+    if (action === 'topic_approve' || action === 'topic_reject') return topicClick(context);
     return approvalClick(context);
   });
 
-  router.get('/email/click', approvalClick);
+  router.get('/email/click', async (context) => {
+    const action = context.req.query('action');
+    if (action === 'topic_approve' || action === 'topic_reject') return topicClick(context);
+    return approvalClick(context);
+  });
 
   return router;
 };

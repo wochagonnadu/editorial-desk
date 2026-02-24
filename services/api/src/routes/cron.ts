@@ -8,7 +8,8 @@ import { Hono } from 'hono';
 import { checkDeadlines } from '../core/approval';
 import { reminderTemplate } from '../core/email-templates/approval';
 import { AppError } from '../core/errors';
-import { approvalFlowTable, approvalStepTable, draftTable, expertTable, topicTable, userTable } from '../providers/db';
+import { sendWeeklyProposals } from '../core/topics';
+import { approvalFlowTable, approvalStepTable, companyTable, draftTable, expertTable, topicTable, userTable } from '../providers/db';
 import type { RouteDeps } from './deps';
 
 const assertCronSecret = (authorization: string | undefined) => {
@@ -70,8 +71,15 @@ export const buildCronRoutes = (deps: RouteDeps): Hono => {
       }
     }
 
-    const weeklyTopicProposalsTriggered = new Date().getUTCDay() === 1;
-    return context.json({ reminders_sent: remindersSent, escalations_sent: escalationsSent, weekly_topic_proposals_triggered: weeklyTopicProposalsTriggered });
+    let weeklyTopicProposalsSent = 0;
+    if (new Date().getUTCDay() === 1) {
+      const companies = await deps.db.select().from(companyTable);
+      for (const company of companies) {
+        weeklyTopicProposalsSent += await sendWeeklyProposals({ db: deps.db, email: deps.email, content: deps.content }, company.id);
+      }
+    }
+
+    return context.json({ reminders_sent: remindersSent, escalations_sent: escalationsSent, weekly_topic_proposals_sent: weeklyTopicProposalsSent });
   });
 
   return router;
