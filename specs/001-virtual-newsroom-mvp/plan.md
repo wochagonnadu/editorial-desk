@@ -89,26 +89,36 @@ apps/
     ├── src/
     │   ├── components/
     │   ├── pages/
-    │   └── services/
+    │   └── services/    # API client, helpers
     └── tests/
 
 services/
-└── api/                 # REST API (Vercel Serverless via @hono/vercel), domain logic
+└── api/                 # REST API (Vercel Serverless via @hono/vercel)
     ├── src/
-    │   ├── models/
-    │   ├── services/     # LLM calls, email, factcheck — всё inline
-    │   └── routes/
+    │   ├── core/        # Чистая бизнес-логика (зависит только от портов)
+    │   │   ├── voice.ts       # Voice profiling, score calculation
+    │   │   ├── drafts.ts      # Draft lifecycle, versioning rules
+    │   │   ├── factcheck.ts   # Claim extraction, risk scoring
+    │   │   └── approval.ts    # Approval workflow, deadlines
+    │   ├── providers/   # Адаптеры внешних сервисов
+    │   │   ├── email.ts       # EmailPort implementation
+    │   │   ├── llm.ts         # ContentPort implementation (OpenRouter)
+    │   │   └── db/            # DraftStore/ExpertStore impl (Drizzle)
+    │   └── routes/      # HTTP-хэндлеры (тонкие, вызывают core/)
     ├── api/              # Vercel serverless entry point
     └── tests/
 
 packages/
-└── shared/              # Domain types, schemas, shared utilities
+└── shared/              # Domain types, schemas, port interfaces
     └── src/
+        ├── types/       # Domain entities (Draft, Expert, Claim...)
+        └── ports/       # Интерфейсы (EmailPort, ContentPort, DraftStore)
 ```
 
-**Structure Decision**: Monorepo with 2 deployable units (web SPA + API serverless) +
-shared package. Worker убран — pg-boss несовместим с Vercel serverless. Pipeline
-orchestration на фронтенде, scheduled tasks через Vercel Cron Jobs (2 бесплатных).
+**Structure Decision**: Pragmatic Ports — бизнес-логика в `core/` зависит только от
+интерфейсов (портов) в `packages/shared`. Внешние сервисы (DB, email, LLM) — в
+`providers/`. Замена провайдера = новый адаптер, core не трогаем. Не полный hexagonal:
+нет DI-контейнера, зависимости передаются аргументами (poor man's DI).
 
 ## Complexity Tracking
 

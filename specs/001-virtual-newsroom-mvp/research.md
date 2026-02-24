@@ -322,6 +322,38 @@ UI layout и email formatting — ручной QA при 5-10 клиентах.
 
 ---
 
+## 17. Application Architecture
+
+**Decision**: Pragmatic Ports — `core/` (бизнес-логика) + `providers/` (адаптеры) + `ports` (интерфейсы в shared)
+
+**Rationale**: Главная ценность продукта — voice matching, factcheck pipeline, approval
+workflow. Эти вещи стабильны. Внешние зависимости (DB, email, LLM) — нестабильны:
+провайдер поменяется при масштабировании, ORM может замениться, модели будут
+апгрейдиться. Разделение позволяет менять инфраструктуру, не трогая бизнес-правила.
+
+Не полный hexagonal (нет DI-контейнера, нет use-case классов). Простое разделение:
+
+- `packages/shared/src/ports/` — интерфейсы (`EmailPort`, `ContentPort`, `DraftStore`).
+  Определяют контракт, не реализацию.
+- `services/api/src/core/` — чистая бизнес-логика. Зависит только от портов.
+  Функции, не классы. Без side effects, легко тестировать.
+- `services/api/src/providers/` — конкретные реализации портов (Drizzle repo,
+  OpenRouter через AI SDK, email-адаптер).
+- `services/api/src/routes/` — тонкие HTTP-хэндлеры. Собирают providers, вызывают
+  core-функции. Poor man's DI: передают зависимости аргументами.
+
+Стоимость: ~15 дополнительных файлов, ~300-400 LOC boilerplate (порты + repo-обёртки).
+Оправдано конкретным требованием заменяемости, а не абстрактным «на вырост».
+
+**Alternatives considered**:
+- Flat services (всё в `services/`) — быстрее начать, но при замене провайдера
+  придётся разбирать файлы, где DB переплетён с бизнес-правилами. Дисциплина —
+  ненадёжная замена структуре.
+- Full hexagonal (ports & adapters + DI container) — use-case классы, команды/запросы,
+  DI через tsyringe/inversify. Overengineering для MVP с 2 разработчиками.
+
+---
+
 ## Summary
 
 | Категория | Решение | Стоимость/мес |
@@ -339,6 +371,7 @@ UI layout и email formatting — ручной QA при 5-10 клиентах.
 | LLM Gateway | Vercel AI SDK | — (OSS) |
 | Testing | Vitest | — |
 | Deployment | Vercel (free Hobby tier) | $0 |
+| Architecture | Pragmatic Ports (core/providers/ports) | — |
 | **Итого инфраструктура** | | **$0/мес** |
 
 Итоговая архитектура: TypeScript монорепо (2 deployable units: web SPA + API serverless),
