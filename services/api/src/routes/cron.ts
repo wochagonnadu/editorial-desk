@@ -10,9 +10,10 @@ import { reminderTemplate } from '../core/email-templates/approval';
 import { AppError } from '../core/errors';
 import { sendWeeklyProposals } from '../core/topics';
 import { approvalFlowTable, approvalStepTable, companyTable, draftTable, expertTable, topicTable, userTable } from '../providers/db';
+import { buildDigestCronHandler } from './cron-digest';
 import type { RouteDeps } from './deps';
 
-const assertCronSecret = (authorization: string | undefined) => {
+export const assertCronSecret = (authorization: string | undefined) => {
   const expected = process.env.CRON_SECRET;
   if (!expected) throw new AppError(500, 'CONFIG_ERROR', 'CRON_SECRET is not configured');
   if (authorization !== `Bearer ${expected}`) throw new AppError(401, 'UNAUTHORIZED', 'Invalid cron token');
@@ -34,6 +35,7 @@ const findUserEmail = async (deps: RouteDeps, userId: string) => {
 
 export const buildCronRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
+  const digestCron = buildDigestCronHandler(deps, assertCronSecret);
 
   router.get('/daily', async (context) => {
     assertCronSecret(context.req.header('authorization'));
@@ -81,6 +83,8 @@ export const buildCronRoutes = (deps: RouteDeps): Hono => {
 
     return context.json({ reminders_sent: remindersSent, escalations_sent: escalationsSent, weekly_topic_proposals_sent: weeklyTopicProposalsSent });
   });
+
+  router.get('/digest', digestCron);
 
   return router;
 };

@@ -87,3 +87,12 @@ export interface AuditEntry {
   metadata?: Record<string, unknown>;
   created_at: string;
 }
+
+export interface MonthlyReport {
+  period: string;
+  drafts_created: number;
+  drafts_approved: number;
+  drafts_pending: number;
+  avg_approval_days: number;
+  delays: Array<{ expert: string; draft_title: string; days_delayed: number }>;
+}

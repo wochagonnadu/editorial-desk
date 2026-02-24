@@ -10,3 +10,4 @@ export * from './TopicsPage';
 export * from './DraftsPage';
 export * from './DraftDetailPage';
 export * from './AuditPage';
+export * from './ReportsPage';

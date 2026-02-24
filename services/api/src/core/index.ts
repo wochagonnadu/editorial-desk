@@ -10,5 +10,6 @@ export * from './drafts';
 export * from './factcheck';
 export * from './onboarding';
 export * from './onboarding-finalize';
+export * from './reports';
 export * from './topics';
 export * from './voice';

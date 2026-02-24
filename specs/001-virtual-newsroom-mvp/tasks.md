@@ -206,11 +206,11 @@ packages/shared/src/    # Domain types, port interfaces
 
 ### Implementation for User Story 6
 
-- [ ] T055 [US6] Core reports logic in `services/api/src/core/reports.ts` — `buildMonthlyReport(company, period)`: aggregate drafts created/approved/pending, avg approval days, delays (who, how long). Query DraftVersion, ApprovalDecision, AuditLog
-- [ ] T056 [US6] Reports route in `services/api/src/routes/reports.ts` — `GET /reports/monthly?month=YYYY-MM`: return monthly stats per api.md contract
-- [ ] T057 [US6] Cron digest endpoint in `services/api/src/routes/cron.ts` — `GET /api/cron/digest`: find all companies, build reports, send digest emails to owners. Protected by CRON_SECRET. Extend existing cron routes
-- [ ] T058 [US6] Digest email template in `services/api/src/core/email-templates/digest.ts` — monthly digest with metrics: drafts created/approved/pending, delays, overall output
-- [ ] T059 [P] [US6] Reports page in `apps/web/src/pages/ReportsPage.tsx` — monthly stats dashboard: summary cards (drafts created, approved, pending), avg approval time, delay list. Simple read-only view
+- [X] T055 [US6] Core reports logic in `services/api/src/core/reports.ts` — `buildMonthlyReport(company, period)`: aggregate drafts created/approved/pending, avg approval days, delays (who, how long). Query DraftVersion, ApprovalDecision, AuditLog
+- [X] T056 [US6] Reports route in `services/api/src/routes/reports.ts` — `GET /reports/monthly?month=YYYY-MM`: return monthly stats per api.md contract
+- [X] T057 [US6] Cron digest endpoint in `services/api/src/routes/cron.ts` — `GET /api/cron/digest`: find all companies, build reports, send digest emails to owners. Protected by CRON_SECRET. Extend existing cron routes
+- [X] T058 [US6] Digest email template in `services/api/src/core/email-templates/digest.ts` — monthly digest with metrics: drafts created/approved/pending, delays, overall output
+- [X] T059 [P] [US6] Reports page in `apps/web/src/pages/ReportsPage.tsx` — monthly stats dashboard: summary cards (drafts created, approved, pending), avg approval time, delay list. Simple read-only view
 
 **Checkpoint**: Monthly digest + reports endpoint + web view. US6 fully functional.
 

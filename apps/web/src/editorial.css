@@ -49,3 +49,9 @@
   max-height: 420px;
   overflow: auto;
 }
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
