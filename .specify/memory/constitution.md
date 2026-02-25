@@ -1,23 +1,20 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 0.0.0 (template) → 1.0.0
-Bump rationale: MAJOR — first concrete constitution from blank template.
+Version change: 1.0.2 → 1.1.0
+Bump rationale: MINOR — new principle added (VIII), two existing
+principles materially expanded (I, V). No removals or redefinitions.
 
 Modified principles:
-  - (none prior) → I. Editorial Framing (NEW)
-  - (none prior) → II. Voice Fidelity (NEW)
-  - (none prior) → III. Factual Accuracy & Compliance (NEW)
-  - (none prior) → IV. Immutable Versioning & Audit Trail (NEW)
-  - (none prior) → V. Email-First Expert Experience (NEW)
-  - (none prior) → VI. Simplicity & 80/20 (NEW)
-  - (none prior) → VII. Observability & Idempotency (NEW)
+  - I. Editorial Framing — expanded with microcopy tone guidelines
+    from Web PRD §10 (calm vocabulary do/don't list).
+  - V. Email-First Expert Experience → V. Dual-Channel Access —
+    renamed and expanded to reflect web app as single source of
+    truth for managers alongside email-first expert interaction
+    (Web PRD §1).
 
 Added sections:
-  - Core Principles (7 principles)
-  - Security & Compliance Constraints
-  - Development Workflow & Quality Gates
-  - Governance
+  - VIII. Calm UX & Minimal Cognitive Load (Web PRD §5)
 
 Removed sections: (none)
 
@@ -31,6 +28,7 @@ Templates requiring updates:
   - .specify/templates/checklist-template.md   ✅ no update needed
   - .specify/templates/commands/               ✅ directory does not exist
   - README.md                                  ✅ does not exist yet
+  - AGENTS.md                                  ✅ no constitution refs
 
 Follow-up TODOs: (none)
 -->
@@ -45,15 +43,21 @@ The product MUST be positioned as a "virtual newsroom" / "editorial
 team." Users MUST perceive an editorial process, not an AI generator.
 
 - UI and marketing MUST NOT use: "generation," "automation,"
-  "AI-powered," "generator" (any language equivalent).
+  "AI-powered," "generator," "error," "failed" (any language
+  equivalent).
 - Permitted vocabulary: "editors," "draft," "proofreading,"
   "approval," "editorial plan," "accountability."
+- UI microcopy MUST use calm, human tone: "needs clarification"
+  (not "error"), "draft ready" (not "generated"), "gentle
+  reminder" (not "overdue alert"), "N facts to confirm" (not
+  "N claims failed").
 - Every user-facing surface MUST reinforce the metaphor of a
   professional editorial office staffed by named roles.
 
 **Rationale**: Research shows SMB experts in high-liability verticals
 (medicine, law) reject "AI content" framing. Trust and adoption depend
-on the editorial-responsibility narrative.
+on the editorial-responsibility narrative. Calm microcopy reinforces
+that the product is a professional team, not a machine.
 
 ### II. Voice Fidelity
 
@@ -108,11 +112,13 @@ maintain a tamper-evident audit trail.
 **Rationale**: Regulated industries (healthcare, law) require provable
 approval chains. Immutability prevents "who approved what?" disputes.
 
-### V. Email-First Expert Experience
+### V. Dual-Channel Access
 
-Experts MUST be able to complete all critical actions via email
-without learning a new interface.
+Experts interact via email; managers operate via the web app.
+The web app is the single source of truth for all content state.
 
+- Experts MUST be able to complete all critical actions via email
+  without learning a new interface.
 - Onboarding (voice profiling) MUST happen entirely through email.
 - Approval actions (Approve / Request Changes) MUST be
   available as one-click buttons in the email body.
@@ -122,10 +128,16 @@ without learning a new interface.
 - The system MUST prevent accidental approval of outdated versions
   via safe-guard logic in magic link tokens.
 - Auto-reminders and escalation MUST be built into the email flow.
+- The web app MUST serve as the authoritative dashboard for
+  content managers: pipeline statuses, calendar, approvals,
+  versions, and audit trail.
+- All data surfaced in emails MUST be consistent with the web
+  app's canonical state.
 
 **Rationale**: Experts (doctors, lawyers, professors) will not adopt
-new software. Email is the lowest-friction channel; the web-doc is
-an optional upgrade, not a requirement.
+new software — email is their channel. Content managers need a richer
+workspace for planning and oversight. The web app holds canonical
+state; email is a synchronized access layer for experts.
 
 ### VI. Simplicity & 80/20
 
@@ -162,6 +174,32 @@ All workflow steps MUST be observable and safely retryable.
 partially. Without idempotency and observability, debugging and
 recovery become impossible at scale.
 
+### VIII. Calm UX & Minimal Cognitive Load
+
+The product MUST feel like a calm, professional editorial office —
+not a complex SaaS tool. Every screen minimizes cognitive load.
+
+- "One primary action per screen" MUST be the default design
+  pattern. Secondary actions are visually subordinate.
+- Progressive disclosure: complexity MUST be hidden until the
+  user explicitly requests it (e.g., fact-check details expand
+  on click, not shown by default).
+- Familiar metaphors MUST be used: cards (Trello/Notion style),
+  document view (Google Docs-like), calendar.
+- Every content card MUST display: status pill, next reviewer,
+  and deadline (if set).
+- Default views MUST prioritize "what needs attention now":
+  Today / This Week / Needs Your Attention.
+- WCAG-compliant spacing, contrast, keyboard navigation, and
+  readable font sizes MUST be maintained.
+- Motion MUST be subtle and purposeful; decorative animations
+  are FORBIDDEN.
+
+**Rationale**: The primary user outcome is "hired a calm editorial
+team." Cluttered or complex UI undermines the editorial metaphor
+and drives churn among non-technical SMBs. Cognitive ease is what
+separates this product from generic SaaS dashboards.
+
 ## Security & Compliance Constraints
 
 - The system MUST NOT collect personal medical data of patients.
@@ -188,6 +226,9 @@ recovery become impossible at scale.
   `draft_version_id`; stale-version approvals MUST be rejected.
 - **Quality scores**: Each draft MUST have a voice score and a
   factual risk score before it reaches an approver.
+- **UX gate**: Every user-facing screen MUST be reviewed against
+  Principle VIII (Calm UX) before implementation. Screens with
+  more than one primary CTA MUST be justified.
 - **File discipline**: Files MUST include the 4-line header comment
   (PATH / WHAT / WHY / RELEVANT). Files exceeding 100 LOC MUST be
   split.
@@ -221,4 +262,6 @@ recovery become impossible at scale.
 
 **PATCH 1.0.2** (2026-02-24): Principle V — removed "Forward" from approval actions list. Forward to reviewer descoped from MVP (FR-012); managers configure reviewers via web UI. Avoids mandating unimplemented feature.
 
-**Version**: 1.0.2 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-24
+**MINOR 1.1.0** (2026-02-25): Per Web PRD (prd_web.md). Added Principle VIII (Calm UX & Minimal Cognitive Load) — UX discipline from PRD §5. Expanded Principle I with microcopy tone guidelines from PRD §10 ("error"→"needs clarification", "generated"→"draft ready"). Renamed Principle V from "Email-First Expert Experience" to "Dual-Channel Access" — reflects web app as single source of truth for managers alongside email-first expert interaction (PRD §1). Added UX gate to Development Workflow.
+
+**Version**: 1.1.0 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-25
