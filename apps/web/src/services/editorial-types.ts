@@ -67,6 +67,7 @@ export interface PipelineEvent {
 
 export interface DraftVersionItem {
   id: string;
+  content?: string;
   versionNumber?: number;
   version_number?: number;
   createdAt?: string;

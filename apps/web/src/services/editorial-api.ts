@@ -102,6 +102,17 @@ export const editorialApi = {
   getDraftVersions(token: string, draftId: string): Promise<{ data: DraftVersionItem[] }> {
     return request(token, `/drafts/${draftId}/versions`);
   },
+  saveDraftVersion(
+    token: string,
+    draftId: string,
+    payload: { content: string; summary?: string; expected_current_version_id?: string },
+  ): Promise<{ id: string; version_number: number; concurrent_edit: boolean }> {
+    return request(token, `/drafts/${draftId}/versions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  },
   createDraft(token: string, topicId: string): Promise<{ id: string }> {
     return request(token, '/drafts', {
       method: 'POST',
@@ -109,11 +120,15 @@ export const editorialApi = {
       body: JSON.stringify({ topic_id: topicId }),
     });
   },
-  addComment(token: string, draftId: string, text: string): Promise<Record<string, unknown>> {
+  addComment(
+    token: string,
+    draftId: string,
+    payload: { text: string; position_start?: number; position_end?: number },
+  ): Promise<Record<string, unknown>> {
     return request(token, `/drafts/${draftId}/comments`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(payload),
     });
   },
   sendForReview(

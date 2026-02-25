@@ -8,8 +8,14 @@ import { authMiddleware } from './auth-middleware';
 import type { RouteDeps } from './deps';
 import { createDraftComment, confirmClaim } from './drafts/actions';
 import { sendForReview } from './drafts/approval';
-import { createDraftFromTopic, factcheckDraft, generateDraft, reviseDraft } from './drafts/pipeline';
+import {
+  createDraftFromTopic,
+  factcheckDraft,
+  generateDraft,
+  reviseDraft,
+} from './drafts/pipeline';
 import { getDraftDetail, getDraftsList, getDraftVersions } from './drafts/query';
+import { saveDraftVersion } from './drafts/versioning';
 import { handleVoiceRating } from './drafts/voice-rating';
 
 export const buildDraftRoutes = (deps: RouteDeps): Hono => {
@@ -23,6 +29,7 @@ export const buildDraftRoutes = (deps: RouteDeps): Hono => {
   router.get('/', getDraftsList(deps));
   router.get('/:id', getDraftDetail(deps));
   router.get('/:id/versions', getDraftVersions(deps));
+  router.post('/:id/versions', saveDraftVersion(deps));
   router.post('/:id/generate', generateDraft(deps));
   router.post('/:id/factcheck', factcheckDraft(deps));
   router.post('/:id/revise', reviseDraft(deps));
