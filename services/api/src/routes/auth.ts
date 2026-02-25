@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import { logAudit } from '../core/audit';
 import { AppError } from '../core/errors';
 import { companyTable, notificationTable, userTable } from '../providers/db';
+import { issueDevMockMagicLink } from './auth-dev-mock';
 import { signSessionToken } from './auth-token';
 import type { RouteDeps } from './deps';
 const parseEmail = (value: unknown): string => {
@@ -35,7 +36,12 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
         .returning();
       [user] = await deps.db
         .insert(userTable)
-        .values({ companyId: company.id, email, name: email.split('@')[0] ?? 'Owner', role: 'owner' })
+        .values({
+          companyId: company.id,
+          email,
+          name: email.split('@')[0] ?? 'Owner',
+          role: 'owner',
+        })
         .returning();
       await logAudit(deps.db, {
         companyId: company.id,
@@ -45,8 +51,17 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
         entityId: user.id,
       });
     }
+
+    const mockToken = await issueDevMockMagicLink(deps, { companyId: user.companyId, email });
+    if (mockToken) {
+      deps.logger.info('auth.login_link_sent_mock', { email, token: mockToken });
+      return context.json({ message: `DEV mock token: ${mockToken}` });
+    }
+
     const token = randomUUID();
-    const expiresAt = new Date(Date.now() + Number(process.env.MAGIC_LINK_TTL_HOURS ?? 72) * 3600_000);
+    const expiresAt = new Date(
+      Date.now() + Number(process.env.MAGIC_LINK_TTL_HOURS ?? 72) * 3600_000,
+    );
     await deps.db.insert(notificationTable).values({
       companyId: user.companyId,
       recipientEmail: email,
@@ -88,8 +103,15 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       .where(eq(userTable.email, notification.recipientEmail))
       .limit(1);
     if (!user) throw new AppError(401, 'INVALID_TOKEN', 'User not found for token');
-    const jwt = await signSessionToken({ userId: user.id, companyId: user.companyId, role: user.role as 'owner' | 'manager' });
-    return context.json({ token: jwt, user: { id: user.id, email: user.email, role: user.role, company_id: user.companyId } });
+    const jwt = await signSessionToken({
+      userId: user.id,
+      companyId: user.companyId,
+      role: user.role as 'owner' | 'manager',
+    });
+    return context.json({
+      token: jwt,
+      user: { id: user.id, email: user.email, role: user.role, company_id: user.companyId },
+    });
   });
   return router;
 };
