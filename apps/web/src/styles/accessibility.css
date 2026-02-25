@@ -1,0 +1,24 @@
+/* PATH: apps/web/src/styles/accessibility.css */
+/* WHAT: Accessibility and focus-visible overrides for keyboard-first usage */
+/* WHY:  T045 — improve WCAG baseline across all screens */
+/* RELEVANT: apps/web/src/styles.css,apps/web/src/main.tsx */
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--line-height);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid #0b6fff;
+  outline-offset: 2px;
+}
+
+.sidebar a.active {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.15);
+}

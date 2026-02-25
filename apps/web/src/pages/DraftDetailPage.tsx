@@ -12,9 +12,10 @@ import { AuditTrailPanel } from '../components/editor/AuditTrailPanel';
 import { FactcheckPanel } from '../components/editor/FactcheckPanel';
 import { InlineComment } from '../components/editor/InlineComment';
 import { RichTextEditor } from '../components/editor/RichTextEditor';
-import { VersionSelector } from '../components/editor/VersionSelector';
-import { StatusPill, type DraftStatus } from '../components/ui/StatusPill';
+import { Skeleton } from '../components/ui/Skeleton';
+import { type DraftStatus } from '../components/ui/StatusPill';
 import { editorialApi } from '../services/editorial-api';
+import { DraftEditorHeader } from './draft-detail/DraftEditorHeader';
 import { useDraftDetailEditor } from './draft-detail/useDraftDetailEditor';
 
 export const DraftDetailPage = () => {
@@ -29,33 +30,22 @@ export const DraftDetailPage = () => {
       ),
     [editor.data.draft],
   );
-  if (!editor.token || !editor.data.draft) return <p>Loading draft...</p>;
+  if (!editor.token || !editor.data.draft) return <Skeleton variant="list" />;
   const token = editor.token;
+  const canSendForApproval = editor.factcheckReady && editor.data.draft.status === 'factcheck';
   return (
     <section style={{ display: 'grid', gap: 'var(--space-4)' }}>
-      <header className="card" style={{ display: 'grid', gap: 'var(--space-2)' }}>
-        <h2>{editor.data.draft.topic?.title ?? 'Draft'}</h2>
-        <div className="row" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
-          <StatusPill status={editor.data.draft.status as DraftStatus} />
-          <VersionSelector
-            versions={editor.data.versions}
-            currentVersionId={editor.selectedVersionId}
-            onSelect={editor.setSelectedVersionId}
-          />
-          <span>Next reviewer: {nextStep?.approver?.name ?? 'Pending'}</span>
-          <button className="btn-secondary" onClick={editor.saveVersion}>
-            Save version
-          </button>
-          <button
-            className="btn-primary"
-            disabled={!editor.factcheckReady}
-            onClick={editor.sendForApproval}
-          >
-            Send for approval
-          </button>
-        </div>
-        {!editor.factcheckReady ? <small>Factcheck needs confirmation before review.</small> : null}
-      </header>
+      <DraftEditorHeader
+        title={editor.data.draft.topic?.title ?? 'Draft'}
+        status={editor.data.draft.status as DraftStatus}
+        versions={editor.data.versions}
+        selectedVersionId={editor.selectedVersionId}
+        onSelectVersion={editor.setSelectedVersionId}
+        nextReviewer={nextStep?.approver?.name ?? 'Pending'}
+        canSendForApproval={canSendForApproval}
+        onSaveVersion={editor.saveVersion}
+        onSendForApproval={editor.sendForApproval}
+      />
       {editor.staleWarning ? (
         <p className="status-warning">You are reviewing an older version.</p>
       ) : null}
@@ -70,7 +60,12 @@ export const DraftDetailPage = () => {
               await editor.load();
             }}
           />
-          <PipelineControls token={token} draftId={id} onDone={editor.load} />
+          <PipelineControls
+            token={token}
+            draftId={id}
+            status={editor.data.draft.status as DraftStatus}
+            onDone={editor.load}
+          />
         </div>
         <aside style={{ display: 'grid', gap: 'var(--space-3)' }}>
           <div className="row">

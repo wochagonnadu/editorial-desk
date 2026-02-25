@@ -43,3 +43,17 @@ export const PERMITTED_TERMS = [
   'gentle reminder',
   'facts to confirm',
 ] as const;
+
+const escaped = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Приводит пользовательские сообщения к editorial tone.
+ * Используем в UI при выводе backend/client ошибок.
+ */
+export const editorizeText = (text: string): string => {
+  let next = text;
+  for (const [from, to] of Object.entries(EDITORIAL_REPLACEMENTS)) {
+    next = next.replace(new RegExp(escaped(from), 'gi'), to);
+  }
+  return next;
+};

@@ -4,6 +4,8 @@
 // RELEVANT: apps/web/src/services/editorial-api.ts,services/api/src/routes/reports.ts
 
 import { FormEvent, useEffect, useState } from 'react';
+import { editorizeText } from '../constants/vocabulary';
+import { Skeleton } from '../components/ui/Skeleton';
 import { useAuth } from '../context/AuthContext';
 import { editorialApi } from '../services/editorial-api';
 import type { MonthlyReport } from '../services/editorial-types';
@@ -17,15 +19,21 @@ export const ReportsPage = () => {
   const { token } = useAuth();
   const [month, setMonth] = useState(currentMonth());
   const [report, setReport] = useState<MonthlyReport | null>(null);
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
     if (!token) return;
-    setError('');
+    setLoading(true);
+    setMessage('');
     try {
       setReport(await editorialApi.getMonthlyReport(token, month));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Failed to load report');
+      setMessage(
+        editorizeText(caught instanceof Error ? caught.message : 'Could not load report yet'),
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,6 +46,8 @@ export const ReportsPage = () => {
     load().catch(() => undefined);
   };
 
+  if (loading) return <Skeleton variant="list" />;
+
   return (
     <section>
       <form className="card" onSubmit={submit}>
@@ -48,10 +58,12 @@ export const ReportsPage = () => {
             onChange={(event) => setMonth(event.target.value)}
             placeholder="YYYY-MM"
           />
-          <button type="submit">Load</button>
+          <button className="btn-secondary" type="submit">
+            Load
+          </button>
         </div>
       </form>
-      {error ? <p className="status-warning">{error}</p> : null}
+      {message ? <p className="status-warning">{message}</p> : null}
       {report ? (
         <article className="card report-grid">
           <p>

@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/DraftDetailPage.tsx,apps/web/src/services/editorial-api.ts
 
 import { FormEvent, useState } from 'react';
+import { editorizeText } from '../constants/vocabulary';
 import { editorialApi } from '../services/editorial-api';
 import type { ApprovalConfigPayload } from '../services/editorial-types';
 
@@ -22,7 +23,7 @@ export const ApprovalConfig = ({ token, draftId, onDone }: ApprovalConfigProps) 
   const [flowType, setFlowType] = useState<'sequential' | 'parallel'>('sequential');
   const [deadlineHours, setDeadlineHours] = useState('48');
   const [steps, setSteps] = useState<ApprovalConfigPayload['steps']>([emptyStep()]);
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const updateStep = (index: number, next: Partial<ApprovalConfigPayload['steps'][number]>) => {
     setSteps((items) => items.map((item, idx) => (idx === index ? { ...item, ...next } : item)));
@@ -30,7 +31,7 @@ export const ApprovalConfig = ({ token, draftId, onDone }: ApprovalConfigProps) 
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    setError('');
+    setMessage('');
     const payload: ApprovalConfigPayload = {
       flow_type: flowType,
       deadline_hours: Number(deadlineHours) > 0 ? Number(deadlineHours) : 48,
@@ -38,7 +39,7 @@ export const ApprovalConfig = ({ token, draftId, onDone }: ApprovalConfigProps) 
         .filter((step) => step.approver_id.trim())
         .map((step) => ({ ...step, approver_id: step.approver_id.trim() })),
     };
-    if (payload.steps.length === 0) return setError('Добавь хотя бы один approver_id');
+    if (payload.steps.length === 0) return setMessage('Add at least one reviewer');
     await editorialApi.sendForReview(token, draftId, payload);
     await onDone();
   };
@@ -78,6 +79,7 @@ export const ApprovalConfig = ({ token, draftId, onDone }: ApprovalConfigProps) 
           />
           <button
             type="button"
+            className="btn-secondary"
             onClick={() => setSteps((items) => items.filter((_, idx) => idx !== index))}
           >
             Remove
@@ -85,12 +87,18 @@ export const ApprovalConfig = ({ token, draftId, onDone }: ApprovalConfigProps) 
         </div>
       ))}
       <div className="row">
-        <button type="button" onClick={() => setSteps((items) => [...items, emptyStep()])}>
+        <button
+          className="btn-secondary"
+          type="button"
+          onClick={() => setSteps((items) => [...items, emptyStep()])}
+        >
           Add step
         </button>
-        <button type="submit">Send for review</button>
+        <button className="btn-primary" type="submit">
+          Send for review
+        </button>
       </div>
-      {error ? <p className="status-warning">{error}</p> : null}
+      {message ? <p className="status-warning">{editorizeText(message)}</p> : null}
     </form>
   );
 };
