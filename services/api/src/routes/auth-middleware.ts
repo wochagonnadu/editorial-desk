@@ -5,6 +5,7 @@
 
 import type { Context, MiddlewareHandler } from 'hono';
 import { AppError } from '../core/errors';
+import { getDevAuthPayload, isDevAuthBypassEnabled } from './auth-dev';
 import { verifySessionToken } from './auth-token';
 
 export interface AuthUser {
@@ -14,6 +15,12 @@ export interface AuthUser {
 }
 
 export const authMiddleware: MiddlewareHandler = async (context, next) => {
+  if (isDevAuthBypassEnabled()) {
+    context.set('authUser', getDevAuthPayload());
+    await next();
+    return;
+  }
+
   const authorization = context.req.header('authorization');
   if (!authorization?.startsWith('Bearer ')) {
     throw new AppError(401, 'UNAUTHORIZED', 'Missing bearer token');

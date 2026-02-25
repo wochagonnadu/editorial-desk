@@ -4,11 +4,17 @@
 // RELEVANT: services/api/src/routes/auth-token.ts,services/api/src/providers/email.ts
 
 import { randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { logAudit } from '../core/audit';
 import { AppError } from '../core/errors';
 import { companyTable, notificationTable, userTable } from '../providers/db';
+import {
+  DEV_BYPASS_TOKEN,
+  getDevAuthEmail,
+  getDevAuthPayload,
+  isDevAuthBypassEnabled,
+} from './auth-dev';
 import { issueDevMockMagicLink } from './auth-dev-mock';
 import { signSessionToken } from './auth-token';
 import type { RouteDeps } from './deps';
@@ -27,6 +33,11 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
   router.post('/login', async (context) => {
     const body = await context.req.json();
     const email = parseEmail((body as { email?: unknown }).email);
+
+    if (isDevAuthBypassEnabled()) {
+      deps.logger.warn('auth.dev_bypass_login', { email });
+      return context.json({ message: `DEV auth bypass enabled. Token: ${DEV_BYPASS_TOKEN}` });
+    }
 
     let [user] = await deps.db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
     if (!user) {
@@ -86,10 +97,26 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     const token = context.req.query('token');
     if (!token) throw new AppError(400, 'VALIDATION_ERROR', 'token is required');
 
+    if (isDevAuthBypassEnabled()) {
+      const payload = getDevAuthPayload();
+      const jwt = await signSessionToken(payload);
+      deps.logger.warn('auth.dev_bypass_verify', { token });
+      return context.json({
+        token: jwt,
+        user: {
+          id: payload.userId,
+          email: getDevAuthEmail(),
+          role: payload.role,
+          company_id: payload.companyId,
+        },
+      });
+    }
+
     const [notification] = await deps.db
       .select()
       .from(notificationTable)
       .where(eq(notificationTable.magicLinkToken, token))
+      .orderBy(desc(notificationTable.createdAt))
       .limit(1);
     if (!notification || notification.magicLinkRevoked || !notification.magicLinkExpiresAt) {
       throw new AppError(401, 'INVALID_TOKEN', 'Magic link is invalid');
