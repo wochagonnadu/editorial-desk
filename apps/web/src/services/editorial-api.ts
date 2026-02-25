@@ -92,9 +92,15 @@ export const editorialApi = {
       body: JSON.stringify({ reason }),
     });
   },
-  getDrafts(token: string, status?: string): Promise<{ data: DraftCard[] }> {
-    const query = status ? `?status=${encodeURIComponent(status)}` : '';
-    return request(token, `/drafts${query}`);
+  getDrafts(
+    token: string,
+    query?: { status?: string; expertId?: string },
+  ): Promise<{ data: DraftCard[] }> {
+    const search = new URLSearchParams();
+    if (query?.status) search.set('status', query.status);
+    if (query?.expertId) search.set('expert_id', query.expertId);
+    const suffix = search.size > 0 ? `?${search.toString()}` : '';
+    return request(token, `/drafts${suffix}`);
   },
   getDraft(token: string, draftId: string): Promise<DraftDetail> {
     return request(token, `/drafts/${draftId}`);

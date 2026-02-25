@@ -11,9 +11,11 @@ import { startOnboarding } from '../core/onboarding';
 import { DrizzleExpertStore, onboardingSequenceTable, voiceProfileTable } from '../providers/db';
 import { getAuthUser } from './auth-middleware';
 import type { RouteDeps } from './deps';
+import { requestTwoMinutes } from './experts-ping';
 
 const parseString = (value: unknown, field: string): string => {
-  if (typeof value !== 'string' || value.trim() === '') throw new AppError(400, 'VALIDATION_ERROR', `${field} is required`);
+  if (typeof value !== 'string' || value.trim() === '')
+    throw new AppError(400, 'VALIDATION_ERROR', `${field} is required`);
   return value.trim();
 };
 
@@ -36,25 +38,47 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
     await startOnboarding({ db: deps.db, email: deps.email }, created.id);
     return context.json({ id: created.id, status: 'onboarding' }, 201);
   });
-
   router.get('/', async (context) => {
     const authUser = getAuthUser(context);
     const status = context.req.query('status');
-    const experts = await expertStore.list({ companyId: authUser.companyId, status: status as ExpertStatus | undefined });
-    const data = await Promise.all(experts.map(async (expert) => {
-      const steps = await deps.db.select().from(onboardingSequenceTable).where(eq(onboardingSequenceTable.expertId, expert.id));
-      const [profile] = await deps.db.select().from(voiceProfileTable).where(eq(voiceProfileTable.expertId, expert.id)).limit(1);
-      return { ...expert, onboarding_progress: steps.filter((step) => step.status === 'replied').length, voice_profile_status: profile?.status ?? 'draft' };
-    }));
+    const experts = await expertStore.list({
+      companyId: authUser.companyId,
+      status: status as ExpertStatus | undefined,
+    });
+    const data = await Promise.all(
+      experts.map(async (expert) => {
+        const steps = await deps.db
+          .select()
+          .from(onboardingSequenceTable)
+          .where(eq(onboardingSequenceTable.expertId, expert.id));
+        const [profile] = await deps.db
+          .select()
+          .from(voiceProfileTable)
+          .where(eq(voiceProfileTable.expertId, expert.id))
+          .limit(1);
+        return {
+          ...expert,
+          onboarding_progress: steps.filter((step) => step.status === 'replied').length,
+          voice_profile_status: profile?.status ?? 'draft',
+        };
+      }),
+    );
     return context.json({ data });
   });
-
   router.get('/:id', async (context) => {
     const authUser = getAuthUser(context);
     const expert = await expertStore.findById(context.req.param('id'), authUser.companyId);
     if (!expert) throw new AppError(404, 'NOT_FOUND', 'Expert not found');
-    const [profile] = await deps.db.select().from(voiceProfileTable).where(eq(voiceProfileTable.expertId, expert.id)).limit(1);
-    return context.json({ ...expert, voice_profile_status: profile?.status ?? 'draft' });
+    const [profile] = await deps.db
+      .select()
+      .from(voiceProfileTable)
+      .where(eq(voiceProfileTable.expertId, expert.id))
+      .limit(1);
+    return context.json({
+      ...expert,
+      voice_profile_status: profile?.status ?? 'draft',
+      voice_profile_data: profile?.profileData ?? {},
+    });
   });
 
   router.get('/:id/onboarding', async (context) => {
@@ -69,6 +93,8 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       .orderBy(onboardingSequenceTable.stepNumber);
     return context.json({ expert_id: expertId, steps });
   });
+
+  router.post('/:id/ping', requestTwoMinutes(deps, expertStore));
 
   return router;
 };
