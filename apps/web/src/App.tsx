@@ -15,15 +15,10 @@ import {
   ExpertDetailPage,
   ExpertsPage,
   HomePage,
+  LandingPage,
+  SettingsPage,
 } from './pages';
 import { apiClient } from './services/api';
-
-/** Временная заглушка для страниц, которые ещё не реализованы */
-const Placeholder = ({ label }: { label: string }) => (
-  <section>
-    <h1>{label}</h1>
-  </section>
-);
 
 const LoginPanel = () => {
   const { requestMagicLink, verifyMagicLink } = useAuth();
@@ -106,6 +101,7 @@ const App = () => {
       </aside>
       <main className="content">
         <Routes>
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/experts" element={<ExpertsPage />} />
           <Route path="/experts/:id" element={<ExpertDetailPage />} />
@@ -117,7 +113,7 @@ const App = () => {
             path="/settings"
             element={
               <RoleGuard allow={['owner']}>
-                <Placeholder label="Settings" />
+                <SettingsPage />
               </RoleGuard>
             }
           />

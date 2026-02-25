@@ -13,3 +13,5 @@ export * from './DraftsPage';
 export * from './DraftDetailPage';
 export * from './AuditPage';
 export * from './ReportsPage';
+export { default as LandingPage } from './LandingPage';
+export { default as SettingsPage } from './SettingsPage';
