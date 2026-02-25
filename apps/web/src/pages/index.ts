@@ -6,6 +6,7 @@
 export * from './ExpertsPage';
 export * from './ExpertDetailPage';
 export * from './CalendarPage';
+export * from './ApprovalsPage';
 export * from './HomePage';
 export * from './TopicsPage';
 export * from './DraftsPage';

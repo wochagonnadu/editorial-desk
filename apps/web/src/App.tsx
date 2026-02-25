@@ -9,6 +9,7 @@ import { useAuth } from './context/AuthContext';
 import { RoleGuard } from './components/RoleGuard';
 import {
   CalendarPage,
+  ApprovalsPage,
   DraftDetailPage,
   DraftsPage,
   ExpertDetailPage,
@@ -111,7 +112,7 @@ const App = () => {
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/drafts" element={<DraftsPage />} />
           <Route path="/drafts/:id" element={<DraftDetailPage />} />
-          <Route path="/approvals" element={<Placeholder label="Approvals" />} />
+          <Route path="/approvals" element={<ApprovalsPage />} />
           <Route
             path="/settings"
             element={

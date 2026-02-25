@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import { authMiddleware } from './auth-middleware';
 import { buildAuthRoutes } from './auth';
 import { buildAuditRoutes } from './audit';
+import { buildApprovalsRoutes } from './approvals';
 import { buildCompanyRoutes } from './companies';
 import { buildDashboardRoutes } from './dashboard';
 import { buildDocsRoutes } from './docs';
@@ -25,6 +26,7 @@ export const buildApiRouter = (deps: RouteDeps): Hono => {
   router.route('/webhooks', buildWebhookRoutes(deps));
   router.route('/drafts', buildDraftRoutes(deps));
   router.route('/audit', buildAuditRoutes(deps));
+  router.route('/approvals', buildApprovalsRoutes(deps));
   router.route('/reports', buildReportsRoutes(deps));
 
   router.use('/companies/*', authMiddleware);
