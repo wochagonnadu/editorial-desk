@@ -13,7 +13,10 @@ interface ApprovalConfigProps {
   onDone(): Promise<void>;
 }
 
-const emptyStep = (): ApprovalConfigPayload['steps'][number] => ({ approver_type: 'user', approver_id: '' });
+const emptyStep = (): ApprovalConfigPayload['steps'][number] => ({
+  approver_type: 'user',
+  approver_id: '',
+});
 
 export const ApprovalConfig = ({ token, draftId, onDone }: ApprovalConfigProps) => {
   const [flowType, setFlowType] = useState<'sequential' | 'parallel'>('sequential');
@@ -31,7 +34,9 @@ export const ApprovalConfig = ({ token, draftId, onDone }: ApprovalConfigProps) 
     const payload: ApprovalConfigPayload = {
       flow_type: flowType,
       deadline_hours: Number(deadlineHours) > 0 ? Number(deadlineHours) : 48,
-      steps: steps.filter((step) => step.approver_id.trim()).map((step) => ({ ...step, approver_id: step.approver_id.trim() })),
+      steps: steps
+        .filter((step) => step.approver_id.trim())
+        .map((step) => ({ ...step, approver_id: step.approver_id.trim() })),
     };
     if (payload.steps.length === 0) return setError('Добавь хотя бы один approver_id');
     await editorialApi.sendForReview(token, draftId, payload);
@@ -41,17 +46,51 @@ export const ApprovalConfig = ({ token, draftId, onDone }: ApprovalConfigProps) 
   return (
     <form className="card" onSubmit={submit}>
       <h3>Approval config</h3>
-      <div className="row"><label>Flow</label><select value={flowType} onChange={(e) => setFlowType(e.target.value as 'sequential' | 'parallel')}><option value="sequential">Sequential</option><option value="parallel">Parallel</option></select></div>
-      <div className="row"><label>Deadline (hours)</label><input value={deadlineHours} onChange={(e) => setDeadlineHours(e.target.value)} /></div>
+      <div className="row">
+        <label>Flow</label>
+        <select
+          value={flowType}
+          onChange={(e) => setFlowType(e.target.value as 'sequential' | 'parallel')}
+        >
+          <option value="sequential">Sequential</option>
+          <option value="parallel">Parallel</option>
+        </select>
+      </div>
+      <div className="row">
+        <label>Deadline (hours)</label>
+        <input value={deadlineHours} onChange={(e) => setDeadlineHours(e.target.value)} />
+      </div>
       {steps.map((step, index) => (
         <div className="row" key={`${index}-${step.approver_id}`}>
-          <select value={step.approver_type} onChange={(e) => updateStep(index, { approver_type: e.target.value as 'user' | 'expert' })}><option value="user">User</option><option value="expert">Expert</option></select>
-          <input value={step.approver_id} placeholder="Approver ID" onChange={(e) => updateStep(index, { approver_id: e.target.value })} />
-          <button type="button" onClick={() => setSteps((items) => items.filter((_, idx) => idx !== index))}>Remove</button>
+          <select
+            value={step.approver_type}
+            onChange={(e) =>
+              updateStep(index, { approver_type: e.target.value as 'user' | 'expert' })
+            }
+          >
+            <option value="user">User</option>
+            <option value="expert">Expert</option>
+          </select>
+          <input
+            value={step.approver_id}
+            placeholder="Approver ID"
+            onChange={(e) => updateStep(index, { approver_id: e.target.value })}
+          />
+          <button
+            type="button"
+            onClick={() => setSteps((items) => items.filter((_, idx) => idx !== index))}
+          >
+            Remove
+          </button>
         </div>
       ))}
-      <div className="row"><button type="button" onClick={() => setSteps((items) => [...items, emptyStep()])}>Add step</button><button type="submit">Send for review</button></div>
-      {error ? <p className="error">{error}</p> : null}
+      <div className="row">
+        <button type="button" onClick={() => setSteps((items) => [...items, emptyStep()])}>
+          Add step
+        </button>
+        <button type="submit">Send for review</button>
+      </div>
+      {error ? <p className="status-warning">{error}</p> : null}
     </form>
   );
 };

@@ -11,3 +11,4 @@ export * from './factcheck';
 export * from './approval';
 export * from './communication';
 export * from './audit';
+export * from './dashboard';

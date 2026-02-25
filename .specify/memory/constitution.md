@@ -1,8 +1,14 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.0.2 → 1.1.0
-Bump rationale: MINOR — new principle added (VIII), two existing
+Version change: 1.1.0 → 1.1.1
+Bump rationale: PATCH — re-scoped "Forward to reviewer" into web MVP.
+PATCH 1.0.2 descoped forward from email-only MVP; web MVP spec (002)
+requires it as a web-only manager action (FR-043). No principle
+changes, only scope clarification in Amendment Log.
+
+Previous report (1.0.2 → 1.1.0):
+MINOR — new principle added (VIII), two existing
 principles materially expanded (I, V). No removals or redefinitions.
 
 Modified principles:
@@ -264,4 +270,6 @@ separates this product from generic SaaS dashboards.
 
 **MINOR 1.1.0** (2026-02-25): Per Web PRD (prd_web.md). Added Principle VIII (Calm UX & Minimal Cognitive Load) — UX discipline from PRD §5. Expanded Principle I with microcopy tone guidelines from PRD §10 ("error"→"needs clarification", "generated"→"draft ready"). Renamed Principle V from "Email-First Expert Experience" to "Dual-Channel Access" — reflects web app as single source of truth for managers alongside email-first expert interaction (PRD §1). Added UX gate to Development Workflow.
 
-**Version**: 1.1.0 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-25
+**PATCH 1.1.1** (2026-02-25): Principle V — re-scoped "Forward to reviewer" into web MVP. PATCH 1.0.2 descoped forward from email-only MVP (FR-012); web MVP spec (002) requires it in the manager's web UI (FR-043). Forward is implemented as a web-only action — managers assign additional reviewers via the Approvals screen. Email-based forward remains descoped.
+
+**Version**: 1.1.1 | **Ratified**: 2026-02-24 | **Last Amended**: 2026-02-25

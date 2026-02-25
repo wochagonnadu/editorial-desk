@@ -39,9 +39,23 @@ export const PipelineControls = ({ token, draftId, onDone }: PipelineControlsPro
   return (
     <section className="card">
       <h3>Pipeline</h3>
-      <div className="row"><button onClick={() => run('generate')}>Generate</button><button onClick={() => run('factcheck')}>Factcheck</button></div>
-      <form onSubmit={submitRevise}><input value={instructions} onChange={(event) => setInstructions(event.target.value)} placeholder="Revision instructions" /><button type="submit">Revise</button></form>
-      {error ? <p className="error">{error} <button onClick={() => run('generate')}>Retry</button></p> : null}
+      <div className="row">
+        <button onClick={() => run('generate')}>Generate</button>
+        <button onClick={() => run('factcheck')}>Factcheck</button>
+      </div>
+      <form onSubmit={submitRevise}>
+        <input
+          value={instructions}
+          onChange={(event) => setInstructions(event.target.value)}
+          placeholder="Revision instructions"
+        />
+        <button type="submit">Revise</button>
+      </form>
+      {error ? (
+        <p className="status-warning">
+          {error} <button onClick={() => run('generate')}>Retry</button>
+        </p>
+      ) : null}
       <pre className="events">{events.map((item) => JSON.stringify(item)).join('\n')}</pre>
     </section>
   );

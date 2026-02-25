@@ -8,6 +8,7 @@ import { authMiddleware } from './auth-middleware';
 import { buildAuthRoutes } from './auth';
 import { buildAuditRoutes } from './audit';
 import { buildCompanyRoutes } from './companies';
+import { buildDashboardRoutes } from './dashboard';
 import { buildDocsRoutes } from './docs';
 import { buildDraftRoutes } from './drafts';
 import { buildExpertRoutes } from './experts';
@@ -27,9 +28,12 @@ export const buildApiRouter = (deps: RouteDeps): Hono => {
   router.route('/reports', buildReportsRoutes(deps));
 
   router.use('/companies/*', authMiddleware);
+  router.use('/dashboard', authMiddleware);
+  router.use('/dashboard/*', authMiddleware);
   router.use('/experts/*', authMiddleware);
   router.use('/topics/*', authMiddleware);
   router.route('/companies', buildCompanyRoutes(deps));
+  router.route('/dashboard', buildDashboardRoutes(deps));
   router.route('/experts', buildExpertRoutes(deps));
   router.route('/topics', buildTopicRoutes(deps));
 

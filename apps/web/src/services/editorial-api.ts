@@ -1,20 +1,43 @@
 // PATH: apps/web/src/services/editorial-api.ts
-// WHAT: API helper for topic and draft lifecycle endpoints
-// WHY:  Isolates US2 network calls from page components
-// RELEVANT: apps/web/src/pages/TopicsPage.tsx,apps/web/src/components/PipelineControls.tsx
+// WHAT: API client for topics, drafts, dashboard, approvals, expert actions
+// WHY:  Centralizes editorial HTTP calls; T009 added dashboard/approval/ping methods
+// RELEVANT: apps/web/src/services/api.ts, packages/shared/src/types/dashboard.ts
 
-import type { ApprovalConfigPayload, AuditEntry, DraftCard, DraftDetail, DraftVersionItem, MonthlyReport, PipelineEvent, TopicItem } from './editorial-types';
+import type {
+  ApprovalConfigPayload,
+  AuditEntry,
+  DraftCard,
+  DraftDetail,
+  DraftVersionItem,
+  MonthlyReport,
+  PipelineEvent,
+  TopicItem,
+} from './editorial-types';
+import type { ApprovalListItem, DashboardData } from '@newsroom/shared';
 
-const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000/api/v1';
-const authHeaders = (token: string): Record<string, string> => ({ authorization: `Bearer ${token}` });
+const API_BASE =
+  (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000/api/v1';
+const authHeaders = (token: string): Record<string, string> => ({
+  authorization: `Bearer ${token}`,
+});
 
 const request = async <T>(token: string, path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(`${API_BASE}${path}`, { ...init, headers: { ...authHeaders(token), ...(init?.headers ?? {}) } });
-  if (!response.ok) throw new Error(((await response.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message ?? 'Request failed');
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: { ...authHeaders(token), ...(init?.headers ?? {}) },
+  });
+  if (!response.ok)
+    throw new Error(
+      ((await response.json().catch(() => null)) as { error?: { message?: string } } | null)?.error
+        ?.message ?? 'Request failed',
+    );
   return (await response.json()) as T;
 };
 
-const readSse = async (response: Response, onEvent?: (event: PipelineEvent) => void): Promise<PipelineEvent[]> => {
+const readSse = async (
+  response: Response,
+  onEvent?: (event: PipelineEvent) => void,
+): Promise<PipelineEvent[]> => {
   const events: PipelineEvent[] = [];
   const reader = response.body?.getReader();
   if (!reader) return events;
@@ -45,14 +68,29 @@ export const editorialApi = {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';
     return request(token, `/topics${query}`);
   },
-  createTopic(token: string, payload: { title: string; description?: string; expert_id?: string }): Promise<{ id: string; status: string }> {
-    return request(token, '/topics', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...payload, source_type: 'manual' }) });
+  createTopic(
+    token: string,
+    payload: { title: string; description?: string; expert_id?: string },
+  ): Promise<{ id: string; status: string }> {
+    return request(token, '/topics', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...payload, source_type: 'manual' }),
+    });
   },
   approveTopic(token: string, topicId: string): Promise<{ id: string; status: string }> {
     return request(token, `/topics/${topicId}/approve`, { method: 'POST' });
   },
-  rejectTopic(token: string, topicId: string, reason?: string): Promise<{ id: string; status: string }> {
-    return request(token, `/topics/${topicId}/reject`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reason }) });
+  rejectTopic(
+    token: string,
+    topicId: string,
+    reason?: string,
+  ): Promise<{ id: string; status: string }> {
+    return request(token, `/topics/${topicId}/reject`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
   },
   getDrafts(token: string, status?: string): Promise<{ data: DraftCard[] }> {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';
@@ -65,18 +103,39 @@ export const editorialApi = {
     return request(token, `/drafts/${draftId}/versions`);
   },
   createDraft(token: string, topicId: string): Promise<{ id: string }> {
-    return request(token, '/drafts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ topic_id: topicId }) });
+    return request(token, '/drafts', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ topic_id: topicId }),
+    });
   },
   addComment(token: string, draftId: string, text: string): Promise<Record<string, unknown>> {
-    return request(token, `/drafts/${draftId}/comments`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }) });
+    return request(token, `/drafts/${draftId}/comments`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
   },
-  sendForReview(token: string, draftId: string, payload: ApprovalConfigPayload): Promise<{ approval_flow_id: string; status: string; notifications_sent: number }> {
-    return request(token, `/drafts/${draftId}/send-for-review`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+  sendForReview(
+    token: string,
+    draftId: string,
+    payload: ApprovalConfigPayload,
+  ): Promise<{ approval_flow_id: string; status: string; notifications_sent: number }> {
+    return request(token, `/drafts/${draftId}/send-for-review`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
   },
   confirmClaim(token: string, draftId: string, claimId: string): Promise<Record<string, unknown>> {
-    return request(token, `/drafts/${draftId}/claims/${claimId}/expert-confirm`, { method: 'POST' });
+    return request(token, `/drafts/${draftId}/claims/${claimId}/expert-confirm`, {
+      method: 'POST',
+    });
   },
-  getAudit(token: string, query?: { entity_type?: string; entity_id?: string; limit?: number; offset?: number }): Promise<{ data: AuditEntry[]; total: number; limit: number; offset: number }> {
+  getAudit(
+    token: string,
+    query?: { entity_type?: string; entity_id?: string; limit?: number; offset?: number },
+  ): Promise<{ data: AuditEntry[]; total: number; limit: number; offset: number }> {
     const search = new URLSearchParams();
     if (query?.entity_type) search.set('entity_type', query.entity_type);
     if (query?.entity_id) search.set('entity_id', query.entity_id);
@@ -89,9 +148,57 @@ export const editorialApi = {
     const suffix = month ? `?month=${encodeURIComponent(month)}` : '';
     return request(token, `/reports/monthly${suffix}`);
   },
-  async runPipelineStep(token: string, draftId: string, step: 'generate' | 'factcheck' | 'revise', body?: Record<string, unknown>, onEvent?: (event: PipelineEvent) => void): Promise<PipelineEvent[]> {
-    const response = await fetch(`${API_BASE}/drafts/${draftId}/${step}`, { method: 'POST', headers: { ...authHeaders(token), 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) });
-    if (!response.ok) throw new Error(((await response.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message ?? 'Pipeline failed');
+  async runPipelineStep(
+    token: string,
+    draftId: string,
+    step: 'generate' | 'factcheck' | 'revise',
+    body?: Record<string, unknown>,
+    onEvent?: (event: PipelineEvent) => void,
+  ): Promise<PipelineEvent[]> {
+    const response = await fetch(`${API_BASE}/drafts/${draftId}/${step}`, {
+      method: 'POST',
+      headers: { ...authHeaders(token), 'content-type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    });
+    if (!response.ok)
+      throw new Error(
+        ((await response.json().catch(() => null)) as { error?: { message?: string } } | null)
+          ?.error?.message ?? 'Pipeline failed',
+      );
     return readSse(response, onEvent);
+  },
+
+  // --- T009: Dashboard, Approvals, Expert ping ---
+
+  /** Home dashboard — все 5 блоков */
+  getDashboard(token: string): Promise<DashboardData> {
+    return request(token, '/dashboard');
+  },
+
+  /** Approvals list — view=stuck | view=reviewer */
+  getApprovals(
+    token: string,
+    view: 'stuck' | 'reviewer' = 'stuck',
+  ): Promise<{ data: ApprovalListItem[] }> {
+    return request(token, `/approvals?view=${view}`);
+  },
+
+  /** Gentle reminder — отправить напоминание рецензенту */
+  sendReminder(token: string, stepId: string): Promise<{ ok: boolean }> {
+    return request(token, `/approvals/${stepId}/remind`, { method: 'POST' });
+  },
+
+  /** Forward — назначить дополнительного рецензента */
+  forwardApproval(token: string, stepId: string, reviewerId: string): Promise<{ ok: boolean }> {
+    return request(token, `/approvals/${stepId}/forward`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ reviewerId }),
+    });
+  },
+
+  /** Request 2 minutes — пинг эксперту */
+  pingExpert(token: string, expertId: string): Promise<{ ok: boolean }> {
+    return request(token, `/experts/${expertId}/ping`, { method: 'POST' });
   },
 };

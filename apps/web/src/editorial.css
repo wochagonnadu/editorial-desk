@@ -1,8 +1,9 @@
 /* PATH: apps/web/src/editorial.css */
-/* WHAT: Styles for topics and draft lifecycle pages */
+/* WHAT: Styles for draft lifecycle pages, tables, modals */
 /* WHY:  Keeps feature-specific styling outside base shell styles */
-/* RELEVANT: apps/web/src/pages/DraftsPage.tsx,apps/web/src/components/PipelineControls.tsx */
+/* RELEVANT: apps/web/src/pages/DraftsPage.tsx,apps/web/src/components/drafts/DraftTable.tsx */
 
+/* --- Kanban (legacy, может быть удалено позже) --- */
 .kanban {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -23,26 +24,27 @@
   border-radius: 8px;
 }
 
-.error {
-  color: #b42318;
+/* FR-003: renamed from .error to .status-warning (editorial vocabulary) */
+.status-warning {
+  color: var(--color-danger);
 }
 
 .approval-step {
   padding: 8px;
-  border: 1px solid #d0d7de;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   margin-bottom: 8px;
 }
 
 .version-row,
 .audit-row {
   padding: 8px;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .calendar-row {
   padding: 8px 0;
-  border-bottom: 1px dashed #d0d7de;
+  border-bottom: 1px dashed var(--color-border);
 }
 
 .audit-table {
@@ -54,4 +56,46 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
+}
+
+/* --- Draft Table (T013) --- */
+.draft-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.draft-table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 2px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  user-select: none;
+}
+
+.draft-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+}
+
+.draft-table tbody tr:hover {
+  background: var(--color-bg-alt);
+}
+
+.draft-table a {
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.draft-table a:hover {
+  text-decoration: underline;
+}
+
+.home-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }

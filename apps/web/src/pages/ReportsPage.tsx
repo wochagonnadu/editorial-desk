@@ -40,10 +40,46 @@ export const ReportsPage = () => {
 
   return (
     <section>
-      <form className="card" onSubmit={submit}><h2>Monthly report</h2><div className="row"><input value={month} onChange={(event) => setMonth(event.target.value)} placeholder="YYYY-MM" /><button type="submit">Load</button></div></form>
-      {error ? <p className="error">{error}</p> : null}
-      {report ? <article className="card report-grid"><p>Created: <strong>{report.drafts_created}</strong></p><p>Approved: <strong>{report.drafts_approved}</strong></p><p>Pending: <strong>{report.drafts_pending}</strong></p><p>Avg approval days: <strong>{report.avg_approval_days}</strong></p></article> : null}
-      <article className="card"><h3>Delays</h3>{report?.delays.length ? report.delays.map((item, index) => <div className="audit-row" key={`${item.draft_title}-${index}`}>{item.expert} | {item.draft_title} | {item.days_delayed} days</div>) : <p>No delays for selected period.</p>}</article>
+      <form className="card" onSubmit={submit}>
+        <h2>Monthly report</h2>
+        <div className="row">
+          <input
+            value={month}
+            onChange={(event) => setMonth(event.target.value)}
+            placeholder="YYYY-MM"
+          />
+          <button type="submit">Load</button>
+        </div>
+      </form>
+      {error ? <p className="status-warning">{error}</p> : null}
+      {report ? (
+        <article className="card report-grid">
+          <p>
+            Created: <strong>{report.drafts_created}</strong>
+          </p>
+          <p>
+            Approved: <strong>{report.drafts_approved}</strong>
+          </p>
+          <p>
+            Pending: <strong>{report.drafts_pending}</strong>
+          </p>
+          <p>
+            Avg approval days: <strong>{report.avg_approval_days}</strong>
+          </p>
+        </article>
+      ) : null}
+      <article className="card">
+        <h3>Delays</h3>
+        {report?.delays.length ? (
+          report.delays.map((item, index) => (
+            <div className="audit-row" key={`${item.draft_title}-${index}`}>
+              {item.expert} | {item.draft_title} | {item.days_delayed} days
+            </div>
+          ))
+        ) : (
+          <p>No delays for selected period.</p>
+        )}
+      </article>
     </section>
   );
 };
