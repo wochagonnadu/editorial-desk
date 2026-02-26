@@ -57,37 +57,75 @@ export const HomePage = () => {
 
   if (loading) {
     return (
-      <section className="home-grid">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <article className="card" key={index}>
-            <Skeleton variant="list" />
+      <section style={{ display: 'grid', gap: 'var(--space-4)' }}>
+        <header className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1>Home</h1>
+            <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
+              Here is what needs your attention today.
+            </p>
+          </div>
+          <button className="btn-primary" onClick={() => navigate('/drafts')}>
+            Open drafts
+          </button>
+        </header>
+
+        <div className="home-two-col">
+          <article className="card">
+            <Skeleton variant="list" rows={4} />
           </article>
-        ))}
+          <article className="card">
+            <Skeleton variant="list" rows={4} />
+          </article>
+          <article className="card">
+            <Skeleton variant="list" rows={4} />
+          </article>
+          <article className="card">
+            <Skeleton variant="list" rows={4} />
+          </article>
+          <article className="card">
+            <Skeleton variant="list" rows={4} />
+          </article>
+        </div>
       </section>
     );
   }
 
   return (
     <section style={{ display: 'grid', gap: 'var(--space-4)' }}>
-      <h1>Home</h1>
+      <header className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ marginBottom: 'var(--space-1)' }}>Home</h1>
+          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
+            Here is what needs your attention today.
+          </p>
+        </div>
+        <button className="btn-primary" onClick={() => navigate('/drafts')}>
+          Open drafts
+        </button>
+      </header>
+
       {isFreshAccount ? (
-        <div className="home-grid">
+        <section className="card">
           <EmptyState
-            message="Add your first expert"
+            message="Your newsroom is ready. Start with your first expert."
+            description="After you add an expert, dashboard widgets fill automatically from live data."
             action={{ label: 'Open Experts', onClick: () => navigate('/experts') }}
           />
-          <EmptyState
-            message="Create your first weekly plan"
-            action={{ label: 'Open Calendar', onClick: () => navigate('/calendar') }}
-          />
-        </div>
+        </section>
       ) : null}
-      <div className="home-grid">
-        <TodayActions actions={data.todayActions} onOpen={onOpenAction} />
-        <InReviewList items={data.inReview} onOpenDraft={(id) => navigate(`/drafts/${id}`)} />
-        <MiniCalendar items={data.weekSchedule} />
-        <TeamPulse items={data.teamPulse} />
-        <ActivityFeed items={data.activityFeed} />
+
+      <div className="home-two-col">
+        <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+          <TodayActions actions={data.todayActions} onOpen={onOpenAction} />
+          <InReviewList items={data.inReview} onOpenDraft={(id) => navigate(`/drafts/${id}`)} />
+        </div>
+
+        <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+          <TeamPulse items={data.teamPulse} />
+          <MiniCalendar items={data.weekSchedule} />
+          <ActivityFeed items={data.activityFeed} />
+        </div>
       </div>
     </section>
   );

@@ -99,3 +99,15 @@
   gap: var(--space-4);
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+
+.home-two-col {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+@media (max-width: 980px) {
+  .home-two-col {
+    grid-template-columns: 1fr;
+  }
+}
