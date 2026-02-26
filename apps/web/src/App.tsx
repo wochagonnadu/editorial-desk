@@ -3,7 +3,7 @@
 // WHY:  FR-001 — persistent sidebar с Home, Experts, Calendar, Drafts, Approvals, Settings
 // RELEVANT: apps/web/src/main.tsx, apps/web/src/context/AuthContext.tsx, apps/web/src/pages/index.ts
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Suspense, lazy, useEffect, useState } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { RoleGuard } from './components/RoleGuard';
@@ -17,10 +17,11 @@ import {
   ExpertSetupPage,
   ExpertsPage,
   HomePage,
-  LandingPage,
   SettingsPage,
 } from './pages';
 import { apiClient } from './services/api';
+
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 const LoginPanel = () => {
   const { requestMagicLink, verifyMagicLink } = useAuth();
@@ -72,6 +73,7 @@ const App = () => {
   const { token, user, logout } = useAuth();
   const [companyName, setCompanyName] = useState('');
   const location = useLocation();
+  const isLandingRoute = location.pathname === '/landing';
 
   // Settings доступен только owners (FR-002)
   const visibleNav =
@@ -84,6 +86,13 @@ const App = () => {
       .then((c) => setCompanyName(c.name))
       .catch(() => setCompanyName(''));
   }, [token]);
+
+  if (isLandingRoute)
+    return (
+      <Suspense fallback={<main className="login-panel">Loading landing...</main>}>
+        <LandingPage />
+      </Suspense>
+    );
 
   if (!token) return <LoginPanel />;
 
@@ -103,7 +112,6 @@ const App = () => {
       </aside>
       <main className="content">
         <Routes>
-          <Route path="/landing" element={<LandingPage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/experts" element={<ExpertsPage />} />
           <Route path="/experts/setup" element={<ExpertSetupPage />} />
