@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/ApprovalsPage.tsx,apps/web/src/components/approvals/StuckItemsList.tsx
 
 import type { ApprovalListItem } from '@newsroom/shared';
+import { Link } from 'react-router-dom';
 
 interface ReviewerGroupListProps {
   items: ApprovalListItem[];
@@ -21,19 +22,20 @@ export function ReviewerGroupList({ items, onRemind }: ReviewerGroupListProps) {
   const groups = grouped(items);
 
   return (
-    <section className="card">
-      <h3>By reviewer</h3>
+    <section className="approvals-list">
+      <h3 style={{ margin: 0 }}>By reviewer</h3>
       <div className="list">
         {Object.entries(groups).map(([reviewer, group]) => (
-          <article key={reviewer} className="approval-step">
+          <article key={reviewer} className="approval-group card">
             <strong>{reviewer}</strong>
             <div>
               <small>{group.length} pending items</small>
             </div>
             <div className="list" style={{ marginTop: 'var(--space-2)' }}>
               {group.map((item) => (
-                <div key={item.stepId} className="version-row">
-                  {item.draftTitle} · {item.status} · {Math.floor(item.timeWaitingSec / 3600)}h
+                <div key={item.stepId} className="version-row approval-reviewer-row">
+                  <Link to={`/drafts/${item.draftId}`}>{item.draftTitle}</Link> · {item.status} ·{' '}
+                  {Math.floor(item.timeWaitingSec / 3600)}h
                   <div>
                     <button className="btn-secondary" onClick={() => onRemind(item.stepId)}>
                       Gentle reminder

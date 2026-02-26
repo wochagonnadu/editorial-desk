@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/ApprovalsPage.tsx,apps/web/src/services/editorial-api.ts
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { ApprovalListItem } from '@newsroom/shared';
 
 interface ReviewerOption {
@@ -26,25 +27,47 @@ const waitingLabel = (seconds: number) => {
 
 export function StuckItemsList({ items, reviewers, onRemind, onForward }: StuckItemsListProps) {
   const [selected, setSelected] = useState<Record<string, string>>({});
+  const [busyStepId, setBusyStepId] = useState<string>('');
+
   if (!items.length) return <p>No stuck approvals right now.</p>;
 
   return (
-    <section className="card">
-      <h3>Stuck items</h3>
-      <div className="list">
+    <section className="approvals-list">
+      <h3 style={{ margin: 0 }}>Stuck items</h3>
+      <div className="list" style={{ marginTop: 'var(--space-2)' }}>
         {items.map((item) => (
-          <article key={item.stepId} className="approval-step">
-            <strong>{item.draftTitle}</strong>
-            <div>
-              <small>
-                {item.reviewer} · {item.status} · {waitingLabel(item.timeWaitingSec)}
-              </small>
+          <article key={item.stepId} className="approval-item card">
+            <div className="approval-item-top">
+              <div style={{ display: 'grid', gap: 'var(--space-1)' }}>
+                <strong>
+                  <Link to={`/drafts/${item.draftId}`}>{item.draftTitle}</Link>
+                </strong>
+                <small>
+                  Waiting on {item.reviewer} · {item.status} · {waitingLabel(item.timeWaitingSec)}
+                </small>
+              </div>
+              <span className={item.timeWaitingSec > 48 * 3600 ? 'status-warning' : ''}>
+                {item.timeWaitingSec > 48 * 3600 ? 'Urgent' : 'In progress'}
+              </span>
             </div>
-            <div className="row" style={{ flexWrap: 'wrap' }}>
-              <button className="btn-secondary" onClick={() => onRemind(item.stepId)}>
+
+            <div className="approval-item-actions">
+              <button
+                className="btn-secondary"
+                disabled={busyStepId === item.stepId}
+                onClick={async () => {
+                  setBusyStepId(item.stepId);
+                  try {
+                    await onRemind(item.stepId);
+                  } finally {
+                    setBusyStepId('');
+                  }
+                }}
+              >
                 Gentle reminder
               </button>
               <select
+                className="approval-forward-select"
                 value={selected[item.stepId] ?? ''}
                 onChange={(e) => setSelected((s) => ({ ...s, [item.stepId]: e.target.value }))}
               >
@@ -57,8 +80,16 @@ export function StuckItemsList({ items, reviewers, onRemind, onForward }: StuckI
               </select>
               <button
                 className="btn-secondary"
-                disabled={!selected[item.stepId]}
-                onClick={() => onForward(item.stepId, selected[item.stepId])}
+                disabled={!selected[item.stepId] || busyStepId === item.stepId}
+                onClick={async () => {
+                  setBusyStepId(item.stepId);
+                  try {
+                    await onForward(item.stepId, selected[item.stepId]);
+                    setSelected((current) => ({ ...current, [item.stepId]: '' }));
+                  } finally {
+                    setBusyStepId('');
+                  }
+                }}
               >
                 Forward to reviewer
               </button>

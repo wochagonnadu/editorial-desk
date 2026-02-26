@@ -51,10 +51,14 @@ export const ApprovalsPage = () => {
   if (loading) return <Skeleton variant="list" />;
 
   return (
-    <section style={{ display: 'grid', gap: 'var(--space-4)' }}>
-      <header className="card">
-        <h2>Approvals</h2>
-        <div className="row">
+    <section className="approvals-page">
+      <header className="approvals-header card">
+        <div>
+          <h2 style={{ marginBottom: 'var(--space-1)' }}>Approvals</h2>
+          <p className="experts-subtitle">Resolve bottlenecks and keep content moving.</p>
+        </div>
+
+        <div className="row" style={{ flexWrap: 'wrap' }}>
           <button
             className={view === 'stuck' ? 'btn-primary' : 'btn-secondary'}
             onClick={() => setView('stuck')}
@@ -69,8 +73,10 @@ export const ApprovalsPage = () => {
           </button>
         </div>
       </header>
-      {note ? <p>{note}</p> : null}
+
+      {note ? <p className="draft-editor-note">{note}</p> : null}
       {!sorted.length ? <EmptyState message="No approvals pending" /> : null}
+
       {view === 'stuck' ? (
         <StuckItemsList
           items={sorted}
@@ -78,6 +84,7 @@ export const ApprovalsPage = () => {
           onRemind={async (stepId) => {
             await editorialApi.sendReminder(token, stepId);
             setNote('Gentle reminder sent.');
+            await load();
           }}
           onForward={async (stepId, reviewerId) => {
             await editorialApi.forwardApproval(token, stepId, reviewerId);
@@ -92,6 +99,7 @@ export const ApprovalsPage = () => {
           onRemind={async (stepId) => {
             await editorialApi.sendReminder(token, stepId);
             setNote('Gentle reminder sent.');
+            await load();
           }}
         />
       ) : null}
