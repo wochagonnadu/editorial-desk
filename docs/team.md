@@ -24,7 +24,7 @@ WHY: Create a cohesive “Virtual Newsroom” crew with clear role readability a
 **Typical lines:** “One step at a time.” “Safety first, polish second.”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **confident editor-in-chief woman (early 40s)**, **distinct angular face shape**, **short blonde bob**, light skin with natural texture. Outfit: **soft charcoal blazer** over warm off-white top, **terracotta pocket square**. Prop: **clipboard with checkmarks and lines only (no text)** held close to chest. Background: warm beige with faint bulletin-board shapes. Expression: composed, leader-like. Semi-realistic illustration, soft studio light, subtle paper grain, consistent newsroom style.
+Head-and-shoulders portrait of a confident editor-in-chief woman (early 40s), angular face, short blonde bob. Outfit: soft charcoal blazer, off-white top, terracotta pocket square. Hands & props (logical): Morgan holds a thin tablet in left hand, screen facing toward her body (visible edge only) close to chest. Background: warm beige with faint bulletin-board shapes. Expression: calm authority. Semi-realistic illustration, soft studio light, subtle paper grain.
 
 ---
 
@@ -35,7 +35,9 @@ Head-and-shoulders portrait of a **confident editor-in-chief woman (early 40s)**
 **Typical lines:** “Two minutes, then you’re free.” “How would you say this to a client?”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **friendly interviewer woman (late 20s)**, **East Asian**, **rounder face**, **dark shoulder-length hair with side part**. Outfit: **oatmeal cardigan** over light top, **muted terracotta scarf**. Prop: **small voice recorder** and a tiny notepad with **blank lines only**. Background: light beige with faint speech-bubble icon watermark. Expression: warm smile, curious eyes. Semi-realistic illustration, soft studio light, paper grain texture.
+Head-and-shoulders portrait of a friendly interviewer woman (late 20s), East Asian, rounder face, dark shoulder-length hair with side part. Outfit: oatmeal cardigan over light top, muted terracotta scarf.
+Hands & props (logical): Casey holds a small handheld voice recorder in right hand near chest, thumb naturally over button. In left hand she holds a slim smartphone, screen facing toward her body, angled slightly inward.
+Background: light beige with faint speech-bubble shapes. Expression: warm, attentive. Semi-realistic illustration, soft studio light, subtle paper grain.
 
 ---
 
@@ -46,7 +48,10 @@ Head-and-shoulders portrait of a **friendly interviewer woman (late 20s)**, **Ea
 **Typical lines:** “That’s you. This is the line.” “Let’s remove чужие обороты.”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **voice stylist woman (mid 30s)**, **Black**, **heart-shaped face**, **natural textured hair in a neat short curly style**, optional **thin round glasses**. Outfit: warm gray turtleneck, minimalist. Accent: **terracotta quotation-mark pin** on the chest. Prop: pencil tucked behind ear + small stack of sticky notes **without text**. Background: soft gray-beige with faint quotation marks. Expression: focused, slightly playful. Semi-realistic illustration, soft studio light, subtle paper grain.
+Head-and-shoulders portrait of a voice stylist woman (mid 30s), Black, heart-shaped face, short natural textured curls, optional thin round glasses. Outfit: warm gray turtleneck with small terracotta quotation-mark pin.
+Hands & props (logical): Rowan holds a small tablet in left hand, supported from below, screen facing toward her body. Right hand holds a stylus lightly between fingers near tablet edge as if editing.
+Background: soft gray-beige with faint quotation-mark shapes. Expression: focused, slightly playful. Semi-realistic illustration, soft studio light, subtle paper grain.
+
 
 ---
 
@@ -57,7 +62,9 @@ Head-and-shoulders portrait of a **voice stylist woman (mid 30s)**, **Black**, *
 **Typical lines:** “Short first. Details second.” “Make it clear on the first screen.”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **structure editor woman (late 30s)**, **Latina**, **oval face**, **hair in a tidy low bun**, calm expression. Outfit: soft slate button-up shirt. Accent: **terracotta highlighter clipped** to pocket. Prop: **layout sheet** showing **blocks and lines only** (no readable words). Background: warm beige with faint grid/layout lines. Semi-realistic illustration, soft studio light, paper grain texture.
+Head-and-shoulders portrait of a structure editor woman (late 30s), Latina, oval face, hair in tidy low bun. Outfit: soft slate button-up shirt.
+Hands & props (logical): Blair holds a thin tablet in left hand close to chest, screen facing toward her body. In right hand she holds a highlighter in a relaxed natural grip near the tablet, as if reviewing structure.
+Background: warm beige with faint grid/layout shapes. Expression: calm, organized. Semi-realistic illustration, soft studio light, subtle paper grain.
 
 ---
 
@@ -68,7 +75,9 @@ Head-and-shoulders portrait of a **structure editor woman (late 30s)**, **Latina
 **Typical lines:** “We need to back this up.” “If we can’t confirm it, we soften it.”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **fact checker woman (early 30s)**, **Middle Eastern**, **slightly square face**, **dark wavy hair**, subtle freckles optional. Outfit: **sage sweater** with soft gray jacket. Accent: terracotta bookmark tab in pocket. Prop: **magnifying glass** + **clipboard with checkboxes and lines only (no text)**. Background: light gray-beige with faint magnifying-glass and citation-bracket icons. Expression: sharp, kind, focused. Semi-realistic illustration, soft studio light, subtle paper grain.
+Head-and-shoulders portrait of a fact checker woman (early 30s), Middle Eastern, slightly square face, dark wavy hair. Outfit: sage sweater with soft gray jacket.
+Hands & props (logical): Avery holds a magnifying glass in right hand near chest level. In left hand she holds a slim smartphone close to body, screen facing toward her. Hands positioned naturally as if comparing details.
+Background: light gray-beige with faint research-style shapes. Expression: sharp, kind, focused. Semi-realistic illustration, soft studio light, subtle paper grain.
 
 ---
 
@@ -79,7 +88,10 @@ Head-and-shoulders portrait of a **fact checker woman (early 30s)**, **Middle Ea
 **Typical lines:** “We can’t say it that way.” “Let’s make it safe and honest.”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **compliance officer woman (mid 40s)**, **South Asian**, **strong cheekbones**, **straight dark hair in a sleek bob**. Outfit: charcoal blazer, crisp off-white shirt. Accent: **small terracotta shield lapel pin**. Prop: small checklist card with **ticks and lines only**, no words. Background: warm gray with faint shield watermark. Expression: serious, trustworthy. Semi-realistic illustration, soft studio light, paper grain texture.
+Avatar direction (image prompt):
+Head-and-shoulders portrait of a compliance officer woman (mid 40s), South Asian, strong cheekbones, sleek straight dark bob. Outfit: charcoal blazer, crisp off-white shirt, small terracotta shield lapel pin.
+Hands & props (logical): Jordan holds a thin tablet in left hand near chest, screen facing toward her body. Right hand rests lightly against tablet edge as if reviewing carefully.
+Background: warm gray with faint shield-like shapes. Expression: serious, trustworthy. Semi-realistic illustration, soft studio light, subtle paper grain.
 
 ---
 
@@ -90,7 +102,9 @@ Head-and-shoulders portrait of a **compliance officer woman (mid 40s)**, **South
 **Typical lines:** “This sounds like a brochure. Let’s make it real.” “Less formal, more human.”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **polisher woman (late 20s)**, **White**, **soft round face**, **warm auburn hair in a slightly messy bob**. Outfit: cream hoodie layered with light gray shirt. Accent: terracotta bracelet or pen cap. Prop: **smooth pebble** resting in open palm (calm vibe). Background: light beige with faint flowing swirl lines. Expression: empathetic, relaxed. Semi-realistic illustration, soft studio light, subtle paper grain.
+Head-and-shoulders portrait of a polisher woman (late 20s), White, soft round face, warm auburn slightly messy bob. Outfit: cream hoodie layered with light gray shirt.
+Hands & props (logical): Sam holds a slim smartphone in left hand at lower chest level, screen facing toward her body. Right hand relaxed and open near phone, natural comfortable posture.
+Background: light beige with faint flowing soft shapes. Expression: empathetic, relaxed. Semi-realistic illustration, soft studio light, subtle paper grain.
 
 ---
 
@@ -101,7 +115,10 @@ Head-and-shoulders portrait of a **polisher woman (late 20s)**, **White**, **sof
 **Typical lines:** “We’ll merge this into one list.” “No change left behind.”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **revision coordinator woman (mid 30s)**, **White**, **longer face**, **dark brown hair shoulder-length**, neat and practical. Outfit: soft gray blazer over sand-colored top. Accent: terracotta sticky notes peeking from pocket. Props: **a small stack of index cards with blank checkboxes and lines only** + a binder clip. Background: beige with faint card silhouettes (Trello/Notion vibe). Expression: focused, satisfied. Semi-realistic illustration, soft studio light, paper grain texture.
+Avatar direction (image prompt):
+Head-and-shoulders portrait of a revision coordinator woman (mid 30s), White, longer face, dark brown shoulder-length hair, neat and practical. Outfit: soft gray blazer over sand-colored top.
+Hands & props (logical): Quinn holds a small stack of index cards in left hand close to chest, supported from below. In right hand she holds a binder clip naturally between fingers near the cards.
+Background: beige with faint card-like shapes. Expression: focused, satisfied. Semi-realistic illustration, soft studio light, subtle paper grain.
 
 ---
 
@@ -112,7 +129,9 @@ Head-and-shoulders portrait of a **revision coordinator woman (mid 30s)**, **Whi
 **Typical lines:** “Ready.” “Two blockers. Here’s why.”
 
 **Avatar direction (image prompt):**
-Head-and-shoulders portrait of a **quality gatekeeper woman (early 40s)**, **light skin**, **distinct sharp jawline**, **short platinum-blonde pixie cut** (clearly different from Morgan). Outfit: dark gray minimalist sweater. Accent: terracotta circular badge. Prop: **rubber stamp** (no text) or stamp icon card with a simple checkmark. Background: soft gray-beige with faint stamp/checkmark watermark. Expression: neutral, reliable. Semi-realistic illustration, soft studio light, subtle paper grain.
+Head-and-shoulders portrait of a quality gatekeeper woman (early 40s), light skin, sharp jawline, short platinum-blonde pixie cut. Outfit: dark gray minimalist sweater with small terracotta badge.
+Hands & props (logical): Taylor holds a small rubber stamp in right hand at chest level. Left hand holds a simple card close to body as if ready for approval. Hands positioned naturally and close together.
+Background: soft gray-beige with faint checkmark/stamp shapes. Expression: neutral, reliable. Semi-realistic illustration, soft studio light, subtle paper grain.
 
 ---
 
