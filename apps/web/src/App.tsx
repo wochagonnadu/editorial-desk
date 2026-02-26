@@ -1,138 +1,45 @@
-// PATH: apps/web/src/App.tsx
-// WHAT: Dashboard shell — sidebar navigation + routing
-// WHY:  FR-001 — persistent sidebar с Home, Experts, Calendar, Drafts, Approvals, Settings
-// RELEVANT: apps/web/src/main.tsx, apps/web/src/context/AuthContext.tsx, apps/web/src/pages/index.ts
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AppShell } from './components/AppShell';
+import { Landing } from './pages/Landing';
+import { Login } from './pages/Login';
+import { Home } from './pages/Home';
+import { Experts } from './pages/Experts';
+import { ExpertProfile } from './pages/ExpertProfile';
+import { ExpertSetup } from './pages/ExpertSetup';
+import { Calendar } from './pages/Calendar';
+import { Drafts } from './pages/Drafts';
+import { DraftEditor } from './pages/DraftEditor';
+import { CreateDraft } from './pages/CreateDraft';
+import { Approvals } from './pages/Approvals';
+import { Settings } from './pages/Settings';
 
-import { FormEvent, Suspense, lazy, useEffect, useState } from 'react';
-import { Link, Route, Routes, useLocation } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
-import { RoleGuard } from './components/RoleGuard';
-import {
-  CalendarPage,
-  ApprovalsPage,
-  DraftDetailPage,
-  CreateDraftPage,
-  DraftsPage,
-  ExpertDetailPage,
-  ExpertSetupPage,
-  ExpertsPage,
-  HomePage,
-  SettingsPage,
-} from './pages';
-import { apiClient } from './services/api';
-
-const LandingPage = lazy(() => import('./pages/LandingPage'));
-
-const LoginPanel = () => {
-  const { requestMagicLink, verifyMagicLink } = useAuth();
-  const [email, setEmail] = useState('');
-  const [magicToken, setMagicToken] = useState('');
-  const [message, setMessage] = useState('');
-
-  const submitEmail = async (event: FormEvent) => {
-    event.preventDefault();
-    setMessage(await requestMagicLink(email));
-  };
-
-  const submitToken = async (event: FormEvent) => {
-    event.preventDefault();
-    await verifyMagicLink(magicToken);
-  };
-
+export default function App() {
   return (
-    <main className="login-panel">
-      <h1>Virtual Newsroom</h1>
-      <form onSubmit={submitEmail}>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email" />
-        <button>Send link</button>
-      </form>
-      <form onSubmit={submitToken}>
-        <input
-          value={magicToken}
-          onChange={(e) => setMagicToken(e.target.value)}
-          placeholder="token"
-        />
-        <button>Verify</button>
-      </form>
-      <p>{message}</p>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* Authenticated App Routes */}
+        <Route path="/app" element={<AppShell />}>
+          <Route index element={<Home />} />
+          <Route path="experts" element={<Experts />} />
+          <Route path="experts/setup" element={<ExpertSetup />} />
+          <Route path="experts/:id" element={<ExpertProfile />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="drafts" element={<Drafts />} />
+          <Route path="drafts/new" element={<CreateDraft />} />
+          <Route path="drafts/:id" element={<DraftEditor />} />
+          <Route path="approvals" element={<Approvals />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
-};
+}
 
-/** FR-001: sidebar items — Home, Experts, Calendar, Drafts, Approvals, Settings */
-const NAV_ITEMS = [
-  { to: '/', label: 'Home' },
-  { to: '/experts', label: 'Experts' },
-  { to: '/calendar', label: 'Calendar' },
-  { to: '/drafts', label: 'Drafts' },
-  { to: '/approvals', label: 'Approvals' },
-  { to: '/settings', label: 'Settings' },
-] as const;
-
-const App = () => {
-  const { token, user, logout } = useAuth();
-  const [companyName, setCompanyName] = useState('');
-  const location = useLocation();
-  const isLandingRoute = location.pathname === '/landing';
-
-  // Settings доступен только owners (FR-002)
-  const visibleNav =
-    user?.role === 'owner' ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.to !== '/settings');
-
-  useEffect(() => {
-    if (!token) return;
-    apiClient
-      .getCompanyMe(token)
-      .then((c) => setCompanyName(c.name))
-      .catch(() => setCompanyName(''));
-  }, [token]);
-
-  if (isLandingRoute)
-    return (
-      <Suspense fallback={<main className="login-panel">Loading landing...</main>}>
-        <LandingPage />
-      </Suspense>
-    );
-
-  if (!token) return <LoginPanel />;
-
-  return (
-    <div className="layout">
-      <aside className="sidebar">
-        <h2>Virtual Newsroom</h2>
-        <p>{companyName || 'Company'}</p>
-        <nav>
-          {visibleNav.map(({ to, label }) => (
-            <Link key={to} to={to} className={location.pathname === to ? 'active' : ''}>
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <button onClick={logout}>Logout</button>
-      </aside>
-      <main className="content">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/experts" element={<ExpertsPage />} />
-          <Route path="/experts/setup" element={<ExpertSetupPage />} />
-          <Route path="/experts/:id" element={<ExpertDetailPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/drafts" element={<DraftsPage />} />
-          <Route path="/drafts/new" element={<CreateDraftPage />} />
-          <Route path="/drafts/:id" element={<DraftDetailPage />} />
-          <Route path="/approvals" element={<ApprovalsPage />} />
-          <Route
-            path="/settings"
-            element={
-              <RoleGuard allow={['owner']}>
-                <SettingsPage />
-              </RoleGuard>
-            }
-          />
-        </Routes>
-      </main>
-    </div>
-  );
-};
-
-export default App;

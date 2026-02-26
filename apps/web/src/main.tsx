@@ -1,26 +1,10 @@
-// PATH: apps/web/src/main.tsx
-// WHAT: React app bootstrap file
-// WHY:  Mounts router-enabled app into DOM root
-// RELEVANT: apps/web/src/App.tsx,apps/web/index.html,apps/web/src/context/AuthContext.tsx
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
 
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import { AuthProvider } from './context/AuthContext';
-import './styles/tokens.css';
-import './styles/accessibility.css';
-import './styles/draft-editor.css';
-import './styles/landing.css';
-import './editorial.css';
-import './styles.css';
-
-createRoot(document.getElementById('root') as HTMLElement).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
+    <App />
   </StrictMode>,
 );
