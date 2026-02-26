@@ -5,17 +5,14 @@
 
 import { useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { ApprovalStatus } from '../components/ApprovalStatus';
 import { PipelineControls } from '../components/PipelineControls';
-import { VersionDiff } from '../components/VersionDiff';
-import { AuditTrailPanel } from '../components/editor/AuditTrailPanel';
-import { FactcheckPanel } from '../components/editor/FactcheckPanel';
 import { InlineComment } from '../components/editor/InlineComment';
 import { RichTextEditor } from '../components/editor/RichTextEditor';
 import { Skeleton } from '../components/ui/Skeleton';
 import { type DraftStatus } from '../components/ui/StatusPill';
 import { editorialApi } from '../services/editorial-api';
 import { DraftEditorHeader } from './draft-detail/DraftEditorHeader';
+import { DraftEditorSidebar } from './draft-detail/DraftEditorSidebar';
 import { useDraftDetailEditor } from './draft-detail/useDraftDetailEditor';
 
 export const DraftDetailPage = () => {
@@ -33,11 +30,13 @@ export const DraftDetailPage = () => {
   if (!editor.token || !editor.data.draft) return <Skeleton variant="list" />;
   const token = editor.token;
   const canSendForApproval = editor.factcheckReady && editor.data.draft.status === 'factcheck';
+
   return (
-    <section style={{ display: 'grid', gap: 'var(--space-4)' }}>
+    <section className="draft-editor-page">
       <DraftEditorHeader
         title={editor.data.draft.topic?.title ?? 'Draft'}
         status={editor.data.draft.status as DraftStatus}
+        expertName={editor.data.draft.expert?.name}
         versions={editor.data.versions}
         selectedVersionId={editor.selectedVersionId}
         onSelectVersion={editor.setSelectedVersionId}
@@ -46,12 +45,17 @@ export const DraftDetailPage = () => {
         onSaveVersion={editor.saveVersion}
         onSendForApproval={editor.sendForApproval}
       />
+
       {editor.staleWarning ? (
-        <p className="status-warning">You are reviewing an older version.</p>
+        <p className="draft-editor-note draft-editor-note--warning">
+          You are reviewing an older version. Switch to the latest version before publishing.
+        </p>
       ) : null}
-      {editor.note ? <p>{editor.note}</p> : null}
-      <div style={{ display: 'grid', gap: 'var(--space-4)', gridTemplateColumns: '2fr 1fr' }}>
-        <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+
+      {editor.note ? <p className="draft-editor-note">{editor.note}</p> : null}
+
+      <div className="draft-editor-layout">
+        <div className="draft-editor-main">
           <RichTextEditor content={editor.editorContent} onChange={editor.setEditorContent} />
           <InlineComment
             content={editor.editorContent}
@@ -67,25 +71,15 @@ export const DraftDetailPage = () => {
             onDone={editor.load}
           />
         </div>
-        <aside style={{ display: 'grid', gap: 'var(--space-3)' }}>
-          <div className="row">
-            <button className="btn-secondary" onClick={() => editor.setTab('factcheck')}>
-              Factcheck
-            </button>
-            <button className="btn-secondary" onClick={() => editor.setTab('changes')}>
-              Changes
-            </button>
-            <button className="btn-secondary" onClick={() => editor.setTab('audit')}>
-              Audit
-            </button>
-          </div>
-          {editor.tab === 'factcheck' ? (
-            <FactcheckPanel report={editor.data.draft.factcheck_report ?? undefined} />
-          ) : null}
-          {editor.tab === 'changes' ? <VersionDiff versions={editor.data.versions} /> : null}
-          {editor.tab === 'audit' ? <AuditTrailPanel entries={editor.data.audit} /> : null}
-          <ApprovalStatus approval={editor.data.draft.approval} />
-        </aside>
+
+        <DraftEditorSidebar
+          tab={editor.tab}
+          setTab={editor.setTab}
+          factcheckReport={editor.data.draft.factcheck_report}
+          versions={editor.data.versions}
+          auditEntries={editor.data.audit}
+          approval={editor.data.draft.approval}
+        />
       </div>
     </section>
   );

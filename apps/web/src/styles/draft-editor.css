@@ -1,0 +1,80 @@
+/* PATH: apps/web/src/styles/draft-editor.css */
+/* WHAT: Layout and visual styles for DraftDetailPage editor workspace */
+/* WHY:  Keeps Draft Editor look cohesive without polluting global/base styles */
+/* RELEVANT: apps/web/src/pages/DraftDetailPage.tsx,apps/web/src/pages/draft-detail/DraftEditorHeader.tsx */
+
+.draft-editor-page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.draft-editor-header {
+  gap: var(--space-3);
+}
+
+.draft-editor-header-top {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.draft-editor-meta {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.draft-editor-header-controls {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.draft-editor-hint {
+  color: var(--color-text-muted);
+}
+
+.draft-editor-note {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-alt);
+}
+
+.draft-editor-note--warning {
+  border-color: var(--color-warning);
+  background: var(--color-warning-light);
+}
+
+.draft-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: var(--space-4);
+}
+
+.draft-editor-main {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.draft-editor-sidebar {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.draft-editor-tabs {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 980px) {
+  .draft-editor-layout {
+    grid-template-columns: 1fr;
+  }
+}

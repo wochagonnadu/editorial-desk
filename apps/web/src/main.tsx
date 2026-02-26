@@ -10,6 +10,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import './styles/tokens.css';
 import './styles/accessibility.css';
+import './styles/draft-editor.css';
 import './editorial.css';
 import './styles.css';
 
