@@ -13,6 +13,7 @@ import { buildDashboardRoutes } from './dashboard';
 import { buildDocsRoutes } from './docs';
 import { buildDraftRoutes } from './drafts';
 import { buildExpertRoutes } from './experts';
+import { buildLandingRequestRoutes } from './landing-requests';
 import { buildReportsRoutes } from './reports';
 import { buildTopicRoutes } from './topics';
 import { buildWebhookRoutes } from './webhooks';
@@ -24,6 +25,7 @@ export const buildApiRouter = (deps: RouteDeps): Hono => {
   router.route('/auth', buildAuthRoutes(deps));
   router.route('/docs', buildDocsRoutes(deps));
   router.route('/webhooks', buildWebhookRoutes(deps));
+  router.route('/landing', buildLandingRequestRoutes(deps));
   router.route('/drafts', buildDraftRoutes(deps));
   router.route('/audit', buildAuditRoutes(deps));
   router.route('/approvals', buildApprovalsRoutes(deps));
