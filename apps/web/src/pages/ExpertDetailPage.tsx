@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/services/api.ts,apps/web/src/services/editorial-api.ts
 
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { ExpertProfileSections } from '../components/experts/ExpertProfileSections';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -23,6 +24,7 @@ export const ExpertDetailPage = () => {
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [drafts, setDrafts] = useState<DraftCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [note, setNote] = useState('');
 
   useEffect(() => {
     if (!token || !id) return;
@@ -46,14 +48,41 @@ export const ExpertDetailPage = () => {
 
   if (loading) return <Skeleton variant="list" />;
   if (!expert) return <EmptyState message="Expert profile not found" />;
+
   return (
-    <ExpertProfileSections
-      expert={expert}
-      steps={steps}
-      drafts={drafts}
-      tone={tone}
-      dos={dos}
-      donts={donts}
-    />
+    <section className="experts-page" style={{ gap: 'var(--space-4)' }}>
+      <Link to="/experts" className="btn-secondary" style={{ justifySelf: 'start' }}>
+        Back to experts
+      </Link>
+
+      <header className="experts-header">
+        <div>
+          <h1 style={{ marginBottom: 'var(--space-1)' }}>{expert.name}</h1>
+          <p className="experts-subtitle">{expert.roleTitle}</p>
+        </div>
+
+        <button
+          className="btn-secondary"
+          onClick={async () => {
+            if (!token) return;
+            await editorialApi.pingExpert(token, expert.id);
+            setNote('Request 2 minutes sent.');
+          }}
+        >
+          Request 2 minutes
+        </button>
+      </header>
+
+      {note ? <p className="draft-editor-note">{note}</p> : null}
+
+      <ExpertProfileSections
+        expert={expert}
+        steps={steps}
+        drafts={drafts}
+        tone={tone}
+        dos={dos}
+        donts={donts}
+      />
+    </section>
   );
 };

@@ -20,6 +20,7 @@ export const ExpertsPage = () => {
   const [pulseMap, setPulseMap] = useState<Record<string, Pulse>>({});
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState('');
+  const [query, setQuery] = useState('');
 
   const load = async () => {
     if (!token) return;
@@ -66,20 +67,51 @@ export const ExpertsPage = () => {
     [experts, pulseMap],
   );
 
+  const visibleCards = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return cards;
+    return cards.filter(
+      (expert) =>
+        expert.name.toLowerCase().includes(term) || expert.roleTitle.toLowerCase().includes(term),
+    );
+  }, [cards, query]);
+
   if (!token) return null;
+
   return (
-    <section style={{ display: 'grid', gap: 'var(--space-4)' }}>
+    <section className="experts-page">
+      <header className="experts-header">
+        <div>
+          <h1 style={{ marginBottom: 'var(--space-1)' }}>Experts</h1>
+          <p className="experts-subtitle">Manage your subject matter experts and workload.</p>
+        </div>
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search experts by name or role"
+          className="experts-search"
+        />
+      </header>
+
       <AddExpertForm
         onSubmit={async (payload) => {
           await apiClient.createExpert(token, payload);
           await load();
         }}
       />
-      {note ? <p>{note}</p> : null}
+
+      {note ? <p className="draft-editor-note">{note}</p> : null}
       {loading ? <Skeleton variant="list" /> : null}
-      {!loading && cards.length === 0 ? <EmptyState message="Add your first expert" /> : null}
-      <div className="home-grid">
-        {cards.map((expert) => (
+
+      {!loading && visibleCards.length === 0 ? (
+        <EmptyState
+          message={query ? 'No experts match your search' : 'Add your first expert'}
+          description={query ? 'Try another name or role.' : undefined}
+        />
+      ) : null}
+
+      <div className="experts-grid">
+        {visibleCards.map((expert) => (
           <ExpertCard
             key={expert.id}
             id={expert.id}
@@ -89,7 +121,7 @@ export const ExpertsPage = () => {
             lastResponseAt={expert.lastResponseAt}
             draftsInProgress={expert.draftsInProgress}
             onPing={async (expertId) => {
-              await apiClient.pingExpert(token, expertId);
+              await editorialApi.pingExpert(token, expertId);
               setNote('Request 2 minutes sent.');
             }}
           />
