@@ -11,6 +11,7 @@ export * from './ApprovalsPage';
 export * from './HomePage';
 export * from './TopicsPage';
 export * from './DraftsPage';
+export * from './CreateDraftPage';
 export * from './DraftDetailPage';
 export * from './AuditPage';
 export * from './ReportsPage';

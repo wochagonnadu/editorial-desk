@@ -11,6 +11,7 @@ import {
   CalendarPage,
   ApprovalsPage,
   DraftDetailPage,
+  CreateDraftPage,
   DraftsPage,
   ExpertDetailPage,
   ExpertSetupPage,
@@ -109,6 +110,7 @@ const App = () => {
           <Route path="/experts/:id" element={<ExpertDetailPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/drafts" element={<DraftsPage />} />
+          <Route path="/drafts/new" element={<CreateDraftPage />} />
           <Route path="/drafts/:id" element={<DraftDetailPage />} />
           <Route path="/approvals" element={<ApprovalsPage />} />
           <Route

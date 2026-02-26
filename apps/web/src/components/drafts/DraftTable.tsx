@@ -8,18 +8,24 @@ import { Link } from 'react-router-dom';
 import type { DraftCard } from '../../services/editorial-types';
 import { StatusPill, type DraftStatus } from '../ui/StatusPill';
 
-type SortKey = 'title' | 'expert' | 'status' | 'factcheck' | 'updated';
+type SortKey = 'title' | 'expert' | 'status' | 'risk' | 'factcheck' | 'reviewer' | 'updated';
 type SortDir = 'asc' | 'desc';
-
-interface Props {
-  drafts: DraftCard[];
+export interface DraftTableItem extends DraftCard {
+  risk: 'low' | 'medium' | 'high';
+  reviewer: string;
 }
 
-const sortFns: Record<SortKey, (a: DraftCard, b: DraftCard) => number> = {
+interface Props {
+  drafts: DraftTableItem[];
+}
+
+const sortFns: Record<SortKey, (a: DraftTableItem, b: DraftTableItem) => number> = {
   title: (a, b) => (a.topic?.title ?? '').localeCompare(b.topic?.title ?? ''),
   expert: (a, b) => (a.expert?.name ?? '').localeCompare(b.expert?.name ?? ''),
   status: (a, b) => a.status.localeCompare(b.status),
+  risk: (a, b) => a.risk.localeCompare(b.risk),
   factcheck: (a, b) => a.factcheck_status.localeCompare(b.factcheck_status),
+  reviewer: (a, b) => a.reviewer.localeCompare(b.reviewer),
   updated: (a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime(),
 };
 
@@ -27,7 +33,9 @@ const headers: { key: SortKey; label: string }[] = [
   { key: 'title', label: 'Title' },
   { key: 'expert', label: 'Expert' },
   { key: 'status', label: 'Status' },
+  { key: 'risk', label: 'Risk' },
   { key: 'factcheck', label: 'Factcheck' },
+  { key: 'reviewer', label: 'Next Reviewer' },
   { key: 'updated', label: 'Last Updated' },
 ];
 
@@ -49,7 +57,6 @@ export function DraftTable({ drafts }: Props) {
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
-  // Относительное время для updated_at
   const relTime = (iso: string) => {
     const diff = Date.now() - new Date(iso).getTime();
     const hours = Math.floor(diff / 3_600_000);
@@ -57,6 +64,8 @@ export function DraftTable({ drafts }: Props) {
     if (hours < 24) return `${hours}h ago`;
     return `${Math.floor(hours / 24)}d ago`;
   };
+  const riskLabel = (risk: DraftTableItem['risk']) =>
+    risk === 'high' ? 'High' : risk === 'medium' ? 'Medium' : 'Low';
 
   return (
     <table className="draft-table">
@@ -79,7 +88,9 @@ export function DraftTable({ drafts }: Props) {
             <td>
               <StatusPill status={d.status as DraftStatus} />
             </td>
+            <td>{riskLabel(d.risk)}</td>
             <td>{d.factcheck_status}</td>
+            <td>{d.reviewer}</td>
             <td>{relTime(d.updated_at)}</td>
           </tr>
         ))}

@@ -64,8 +64,11 @@ const readSse = async (
 };
 
 export const editorialApi = {
-  getTopics(token: string, status?: string): Promise<{ data: TopicItem[] }> {
-    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  getTopics(token: string, status?: string, expertId?: string): Promise<{ data: TopicItem[] }> {
+    const search = new URLSearchParams();
+    if (status) search.set('status', status);
+    if (expertId) search.set('expert_id', expertId);
+    const query = search.size ? `?${search.toString()}` : '';
     return request(token, `/topics${query}`);
   },
   createTopic(

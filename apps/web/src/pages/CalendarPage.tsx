@@ -29,7 +29,7 @@ export const CalendarPage = () => {
         onChangeView={calendar.setView}
         onPrevious={calendar.goPrevious}
         onNext={calendar.goNext}
-        onCreateDraft={() => navigate('/drafts')}
+        onCreateDraft={() => navigate('/drafts/new')}
       />
       <CalendarFilters
         expertId={calendar.filters.expertId}
