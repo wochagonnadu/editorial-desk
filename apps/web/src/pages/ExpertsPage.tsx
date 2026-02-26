@@ -4,7 +4,7 @@
 // RELEVANT: apps/web/src/components/experts/ExpertCard.tsx,apps/web/src/services/api.ts
 
 import { useEffect, useMemo, useState } from 'react';
-import { AddExpertForm } from '../components/AddExpertForm';
+import { Link } from 'react-router-dom';
 import { ExpertCard } from '../components/experts/ExpertCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -85,20 +85,18 @@ export const ExpertsPage = () => {
           <h1 style={{ marginBottom: 'var(--space-1)' }}>Experts</h1>
           <p className="experts-subtitle">Manage your subject matter experts and workload.</p>
         </div>
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search experts by name or role"
-          className="experts-search"
-        />
+        <div className="experts-header-actions">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search experts by name or role"
+            className="experts-search"
+          />
+          <Link to="/experts/setup" className="btn-primary">
+            Setup new expert
+          </Link>
+        </div>
       </header>
-
-      <AddExpertForm
-        onSubmit={async (payload) => {
-          await apiClient.createExpert(token, payload);
-          await load();
-        }}
-      />
 
       {note ? <p className="draft-editor-note">{note}</p> : null}
       {loading ? <Skeleton variant="list" /> : null}

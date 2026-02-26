@@ -116,7 +116,13 @@ export const apiClient = {
   },
   createExpert(
     token: string,
-    payload: { name: string; role_title: string; email: string; domain: string },
+    payload: {
+      name: string;
+      role_title: string;
+      email: string;
+      domain: string;
+      public_text_urls?: string[];
+    },
   ): Promise<{ id: string; status: string }> {
     return request('/experts', {
       method: 'POST',

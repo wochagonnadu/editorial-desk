@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/App.tsx,apps/web/src/pages/ExpertsPage.tsx,apps/web/src/pages/DraftsPage.tsx
 
 export * from './ExpertsPage';
+export * from './ExpertSetupPage';
 export * from './ExpertDetailPage';
 export * from './CalendarPage';
 export * from './ApprovalsPage';

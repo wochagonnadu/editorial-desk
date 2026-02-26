@@ -13,6 +13,7 @@ import {
   DraftDetailPage,
   DraftsPage,
   ExpertDetailPage,
+  ExpertSetupPage,
   ExpertsPage,
   HomePage,
   LandingPage,
@@ -104,6 +105,7 @@ const App = () => {
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/experts" element={<ExpertsPage />} />
+          <Route path="/experts/setup" element={<ExpertSetupPage />} />
           <Route path="/experts/:id" element={<ExpertDetailPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/drafts" element={<DraftsPage />} />
