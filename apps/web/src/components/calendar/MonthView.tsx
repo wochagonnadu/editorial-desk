@@ -29,51 +29,22 @@ export function MonthView({ monthKey, items, onOpenDraft }: MonthViewProps) {
   ];
 
   return (
-    <section className="card">
-      <h3>Month view</h3>
-      <div
-        className="calendar-month-grid"
-        style={{
-          display: 'grid',
-          gap: 'var(--space-2)',
-          gridTemplateColumns: 'repeat(7, minmax(110px, 1fr))',
-        }}
-      >
+    <section className="approvals-list">
+      <h3 style={{ margin: 0 }}>Month view</h3>
+      <div className="calendar-month-grid">
         {cells.map((cell) => {
           if (!cell.date)
-            return (
-              <div
-                key={cell.key}
-                className="calendar-day calendar-day--blank"
-                style={{ minHeight: 90 }}
-              />
-            );
+            return <div key={cell.key} className="calendar-day calendar-day--blank" />;
+
           const dayItems = items.filter((item) => item.scheduledDate === cell.date);
+
           return (
-            <article
-              key={cell.key}
-              className="calendar-day"
-              style={{
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
-                padding: 'var(--space-2)',
-                minHeight: 90,
-              }}
-            >
+            <article key={cell.key} className="calendar-day">
               <strong>{cell.date.slice(8)}</strong>
               {dayItems.map((item) => (
                 <button
                   key={item.draftId}
                   className="calendar-chip"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'left',
-                    marginTop: 'var(--space-1)',
-                    border: '1px solid var(--color-border-light)',
-                    borderRadius: 'var(--radius-sm)',
-                    background: 'var(--color-bg-alt)',
-                  }}
                   onClick={() => onOpenDraft(item.draftId)}
                 >
                   {item.title.slice(0, 20)}

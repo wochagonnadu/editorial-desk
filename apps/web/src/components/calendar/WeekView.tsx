@@ -20,47 +20,24 @@ const addDays = (date: string, offset: number): string => {
 
 export function WeekView({ weekStart, items, onOpenDraft }: WeekViewProps) {
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  const dayLabel = (value: string) =>
+    new Date(`${value}T00:00:00Z`).toLocaleDateString(undefined, { weekday: 'short' });
 
   return (
-    <section className="card">
-      <h3>Week view</h3>
-      <div
-        className="calendar-week-grid"
-        style={{
-          display: 'grid',
-          gap: 'var(--space-3)',
-          gridTemplateColumns: 'repeat(7, minmax(120px, 1fr))',
-        }}
-      >
+    <section className="approvals-list">
+      <h3 style={{ margin: 0 }}>Week view</h3>
+      <div className="calendar-week-grid">
         {days.map((day) => {
           const dayItems = items.filter((item) => item.scheduledDate === day);
           return (
-            <article
-              className="calendar-day"
-              key={day}
-              style={{
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
-                padding: 'var(--space-2)',
-                minHeight: 130,
-              }}
-            >
+            <article className="calendar-day" key={day}>
+              <small>{dayLabel(day)}</small>
               <strong>{day.slice(5)}</strong>
               <div className="list">
                 {dayItems.map((item) => (
                   <button
                     key={item.draftId}
                     className="calendar-entry"
-                    style={{
-                      display: 'grid',
-                      gap: 'var(--space-1)',
-                      width: '100%',
-                      textAlign: 'left',
-                      border: '1px solid var(--color-border-light)',
-                      background: 'var(--color-surface)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: 'var(--space-2)',
-                    }}
                     onClick={() => onOpenDraft(item.draftId)}
                   >
                     <span>{item.title}</span>

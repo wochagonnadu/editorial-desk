@@ -21,9 +21,9 @@ interface CalendarFiltersProps {
 
 export function CalendarFilters(props: CalendarFiltersProps) {
   return (
-    <section className="card">
-      <h3>Filters</h3>
-      <div className="row" style={{ flexWrap: 'wrap' }}>
+    <section className="card approvals-list">
+      <h3 style={{ margin: 0 }}>Filters</h3>
+      <div className="calendar-filter-row">
         <select
           value={props.expertId}
           onChange={(e) =>

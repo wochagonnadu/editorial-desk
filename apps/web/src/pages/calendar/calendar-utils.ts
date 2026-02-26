@@ -32,6 +32,37 @@ export const startOfWeek = (date: Date): string => {
 
 export const monthKey = (date: Date): string => date.toISOString().slice(0, 7);
 
+const addDays = (date: Date, offset: number): Date => {
+  const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  next.setUTCDate(next.getUTCDate() + offset);
+  return next;
+};
+
+export const shiftAnchor = (view: 'week' | 'month', anchor: Date, direction: -1 | 1): Date => {
+  if (view === 'week') return addDays(anchor, 7 * direction);
+  return new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + direction, 1));
+};
+
+export const weekRangeLabel = (weekStart: string): string => {
+  const start = new Date(`${weekStart}T00:00:00Z`);
+  const end = addDays(start, 6);
+  return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+};
+
+export const monthLabel = (month: string): string => {
+  const date = new Date(`${month}-01T00:00:00Z`);
+  return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+};
+
+export const inWeek = (date: string, weekStart: string): boolean => {
+  const value = new Date(`${date}T00:00:00Z`).getTime();
+  const start = new Date(`${weekStart}T00:00:00Z`).getTime();
+  const end = addDays(new Date(`${weekStart}T00:00:00Z`), 7).getTime();
+  return value >= start && value < end;
+};
+
+export const inMonth = (date: string, month: string): boolean => date.startsWith(month);
+
 export const filterEntries = (
   entries: CalendarEntry[],
   filters: { expertId: string; status: string; risk: '' | CalendarRisk },
