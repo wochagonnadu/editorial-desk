@@ -1,3 +1,8 @@
+// PATH: apps/web/src/pages/Landing.tsx
+// WHAT: Marketing landing page with beta access form submission flow
+// WHY:  Connects public CTA to backend so requests are not lost
+// RELEVANT: apps/web/src/services/landing.ts,services/api/src/routes/landing-requests.ts
+
 import React from 'react';
 import { Shield, Clock, FileText, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -5,6 +10,8 @@ import { motion } from 'motion/react';
 import { HeroInteractive } from '../components/HeroInteractive';
 import { TeamCarousel } from '../components/TeamCarousel';
 import { WorkflowInteractive } from '../components/WorkflowInteractive';
+import { submitLandingRequest } from '../services/landing';
+import { ApiError } from '../services/api/client';
 
 // Premium easing curve (Apple-like)
 const customEase = [0.16, 1, 0.3, 1] as const;
@@ -82,6 +89,33 @@ const FadeUp = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 
 export function Landing() {
   const [activeSection, setActiveSection] = React.useState(0);
+  const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
+  const [isSent, setIsSent] = React.useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!name.trim() || !email.trim()) return;
+    try {
+      setFormError(null);
+      setIsSent(false);
+      setIsSubmitting(true);
+      await submitLandingRequest({ name: name.trim(), email: email.trim() });
+      setIsSent(true);
+      setName('');
+      setEmail('');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setFormError(error.message);
+      } else {
+        setFormError('Could not submit request right now');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -299,7 +333,7 @@ export function Landing() {
                   <h3 className="text-3xl md:text-4xl font-serif font-medium mb-6">
                     Start your newsroom
                   </h3>
-                  <form className="space-y-4 md:space-y-6" onSubmit={(e) => e.preventDefault()}>
+                  <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-4 md:space-y-6">
                       <div>
                         <label className="block text-xs md:text-sm font-medium text-ink-500 mb-1 md:mb-2 uppercase tracking-wider">
@@ -307,6 +341,9 @@ export function Landing() {
                         </label>
                         <input
                           type="text"
+                          value={name}
+                          onChange={(event) => setName(event.target.value)}
+                          required
                           className="w-full px-4 py-3 md:px-5 md:py-4 rounded-xl md:rounded-2xl border-2 border-ink-100 bg-beige-50 focus:outline-none focus:border-ink-900 transition-colors text-base md:text-lg"
                           placeholder="Jane Doe"
                         />
@@ -317,14 +354,26 @@ export function Landing() {
                         </label>
                         <input
                           type="email"
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          required
                           className="w-full px-4 py-3 md:px-5 md:py-4 rounded-xl md:rounded-2xl border-2 border-ink-100 bg-beige-50 focus:outline-none focus:border-ink-900 transition-colors text-base md:text-lg"
                           placeholder="jane@company.com"
                         />
                       </div>
                     </div>
-                    <button className="w-full py-4 md:py-5 bg-ink-900 text-white rounded-xl md:rounded-2xl font-medium text-base md:text-lg hover:bg-ink-800 transition-all active:scale-[0.98] mt-2 md:mt-4 shadow-xl shadow-ink-900/20">
-                      Request Beta Access
+                    <button
+                      disabled={isSubmitting}
+                      className="w-full py-4 md:py-5 bg-ink-900 text-white rounded-xl md:rounded-2xl font-medium text-base md:text-lg hover:bg-ink-800 transition-all active:scale-[0.98] mt-2 md:mt-4 shadow-xl shadow-ink-900/20 disabled:opacity-60"
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Request Beta Access'}
                     </button>
+                    {isSent ? (
+                      <p className="text-sm text-green-700">
+                        Thanks! We got your request and will email you.
+                      </p>
+                    ) : null}
+                    {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
                   </form>
                 </div>
               </FadeUp>
