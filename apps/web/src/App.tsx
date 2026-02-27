@@ -20,6 +20,7 @@ import { DraftEditor } from './pages/DraftEditor';
 import { CreateDraft } from './pages/CreateDraft';
 import { Approvals } from './pages/Approvals';
 import { Settings } from './pages/Settings';
+import { Audit } from './pages/Audit';
 import { SessionProvider } from './services/session';
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="drafts/new" element={<CreateDraft />} />
             <Route path="drafts/:id" element={<DraftEditor />} />
             <Route path="approvals" element={<Approvals />} />
+            <Route path="audit" element={<Audit />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

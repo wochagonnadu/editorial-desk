@@ -12,6 +12,7 @@ import {
   CalendarDays,
   FileText,
   CheckSquare,
+  History,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -23,6 +24,7 @@ const navItems = [
   { name: 'Calendar', path: '/app/calendar', icon: CalendarDays },
   { name: 'Drafts', path: '/app/drafts', icon: FileText },
   { name: 'Approvals', path: '/app/approvals', icon: CheckSquare },
+  { name: 'Audit', path: '/app/audit', icon: History },
   { name: 'Settings', path: '/app/settings', icon: Settings },
 ];
 
