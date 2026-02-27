@@ -28,11 +28,17 @@ type VerifyResponse = {
   };
 };
 
-export const loginWithMagicLink = async (email: string): Promise<{ message: string }> => {
-  return apiRequest('/api/v1/auth/login', {
+type LoginResponse = {
+  message: string;
+  devMagicToken?: string;
+};
+
+export const loginWithMagicLink = async (email: string): Promise<LoginResponse> => {
+  const raw = await apiRequest<unknown>('/api/v1/auth/login', {
     method: 'POST',
     body: { email },
   });
+  return mapDto<LoginResponse>(raw);
 };
 
 export const verifyMagicLink = async (token: string): Promise<SessionData> => {

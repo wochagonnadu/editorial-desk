@@ -59,9 +59,17 @@ export function Login() {
     try {
       setError(null);
       setIsSubmitting(true);
-      await loginWithMagicLink(email);
+      const result = await loginWithMagicLink(email);
+      if (result.devMagicToken) {
+        setIsVerifying(true);
+        const nextSession = await verifyMagicLink(result.devMagicToken);
+        setSession(nextSession);
+        navigate(redirectPath, { replace: true });
+        return;
+      }
       setSent(true);
     } catch (submitError) {
+      setIsVerifying(false);
       if (submitError instanceof ApiError) {
         setError(submitError.message);
       } else {

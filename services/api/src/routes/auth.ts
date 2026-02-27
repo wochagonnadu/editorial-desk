@@ -66,7 +66,7 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     const mockToken = await issueDevMockMagicLink(deps, { companyId: user.companyId, email });
     if (mockToken) {
       deps.logger.info('auth.login_link_sent_mock', { email, token: mockToken });
-      return context.json({ message: `DEV mock token: ${mockToken}` });
+      return context.json({ message: `DEV mock token: ${mockToken}`, dev_magic_token: mockToken });
     }
 
     const token = randomUUID();
