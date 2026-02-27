@@ -80,11 +80,12 @@ type DraftVersionsResponse = {
 
 export const fetchDrafts = async (
   token: string,
-  filters?: { expertId?: string },
+  filters?: { expertId?: string; status?: string },
 ): Promise<DraftListItem[]> => {
-  const query = filters?.expertId
-    ? `/api/v1/drafts?expert_id=${encodeURIComponent(filters.expertId)}`
-    : '/api/v1/drafts';
+  const params = new URLSearchParams();
+  if (filters?.expertId) params.set('expert_id', filters.expertId);
+  if (filters?.status) params.set('status', filters.status);
+  const query = params.size > 0 ? `/api/v1/drafts?${params.toString()}` : '/api/v1/drafts';
   const response = await apiRequest<DraftListResponse>(query, { token });
   return response.data.map((item) => ({
     id: item.id,
@@ -193,4 +194,13 @@ export const confirmDraftClaim = async (
     method: 'POST',
     token,
   });
+};
+
+export const createDraftFromTopic = async (token: string, topicId: string): Promise<string> => {
+  const response = await apiRequest<{ id: string }>('/api/v1/drafts', {
+    method: 'POST',
+    token,
+    body: { topic_id: topicId },
+  });
+  return response.id;
 };

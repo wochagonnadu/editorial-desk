@@ -1,134 +1,194 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import { motion } from 'motion/react';
+// PATH: apps/web/src/pages/Calendar.tsx
+// WHAT: Editorial calendar page powered by filtered drafts API data
+// WHY:  Replaces mock week/month events with live drafts schedule surface
+// RELEVANT: apps/web/src/services/drafts.ts,apps/web/src/services/experts.ts
+
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { fetchDrafts, type DraftListItem } from '../services/drafts';
+import { fetchExperts } from '../services/experts';
+import { useSession } from '../services/session';
+
+const startOfWeek = (date: Date): Date => {
+  const next = new Date(date);
+  const day = next.getDay();
+  const shift = day === 0 ? -6 : 1 - day;
+  next.setDate(next.getDate() + shift);
+  next.setHours(0, 0, 0, 0);
+  return next;
+};
+
+const dayKey = (date: Date): string => date.toISOString().slice(0, 10);
+
+const statusClass = (status: string): string => {
+  if (status === 'needs_review') return 'status-review';
+  if (status === 'drafting') return 'status-drafting';
+  if (status === 'approved') return 'status-approved';
+  if (status === 'revisions') return 'status-revisions';
+  return 'status-factcheck';
+};
 
 export function Calendar() {
-  const [view, setView] = useState<'week' | 'month'>('week');
+  const { session } = useSession();
+  const [anchorDate, setAnchorDate] = useState<Date>(() => startOfWeek(new Date()));
+  const [statusFilter, setStatusFilter] = useState('');
+  const [expertFilter, setExpertFilter] = useState('');
+  const [items, setItems] = useState<DraftListItem[]>([]);
+  const [experts, setExperts] = useState<Array<{ id: string; name: string }>>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  
-  // Mock data for week view
-  const weekData = [
-    { day: 'Mon', date: '23', items: [] },
-    { day: 'Tue', date: '24', items: [
-      { title: 'Future of Remote Work', expert: 'Dr. Emily Chen', status: 'Needs Review' }
-    ]},
-    { day: 'Wed', date: '25', items: [
-      { title: 'Q3 Market Analysis', expert: 'Marcus Johnson', status: 'Factcheck' },
-      { title: 'Weekly Topics', expert: 'Editorial Team', status: 'Drafting' }
-    ]},
-    { day: 'Thu', date: '26', items: [] },
-    { day: 'Fri', date: '27', items: [
-      { title: 'AI in Healthcare', expert: 'Dr. Robert Smith', status: 'Approved' }
-    ]},
-    { day: 'Sat', date: '28', items: [] },
-    { day: 'Sun', date: '29', items: [] },
-  ];
+  useEffect(() => {
+    if (!session) return;
+    const load = async () => {
+      try {
+        setError(null);
+        const [drafts, expertList] = await Promise.all([
+          fetchDrafts(session.token, {
+            status: statusFilter || undefined,
+            expertId: expertFilter || undefined,
+          }),
+          fetchExperts(session.token),
+        ]);
+        setItems(drafts);
+        setExperts(expertList.map((item) => ({ id: item.id, name: item.name })));
+      } catch {
+        setError('Could not load calendar data');
+      }
+    };
+    void load();
+  }, [expertFilter, session, statusFilter]);
+
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }).map((_, index) => {
+      const date = new Date(anchorDate);
+      date.setDate(anchorDate.getDate() + index);
+      return date;
+    });
+  }, [anchorDate]);
+
+  const byDay = useMemo(() => {
+    const map = new Map<string, DraftListItem[]>();
+    for (const day of weekDays) map.set(dayKey(day), []);
+    for (const item of items) {
+      const key = dayKey(new Date(item.updatedAt));
+      if (!map.has(key)) continue;
+      map.get(key)?.push(item);
+    }
+    return map;
+  }, [items, weekDays]);
 
   return (
     <div className="space-y-8 h-full flex flex-col">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-serif">Editorial Calendar</h1>
-          <p className="text-ink-500 mt-1">October 2023</p>
+          <p className="text-ink-500 mt-1">Live view from drafts API</p>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="bg-beige-50 border border-ink-100 rounded-xl p-1 flex relative">
-            {(['week', 'month'] as const).map((v) => (
-              <button 
-                key={v}
-                onClick={() => setView(v)}
-                className={`relative px-4 py-1.5 rounded-lg text-sm font-medium transition-colors z-10 ${view === v ? 'text-white' : 'text-ink-500 hover:text-ink-900'}`}
-              >
-                {view === v && (
-                  <motion.div
-                    layoutId="calendarToggle"
-                    className="absolute inset-0 bg-ink-900 rounded-lg -z-10"
-                    transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
-                  />
-                )}
-                {v.charAt(0).toUpperCase() + v.slice(1)}
-              </button>
-            ))}
-          </div>
-          <button className="btn-primary">
-            Create draft
-          </button>
-        </div>
+        <Link to="/app/drafts/new" className="btn-primary">
+          Create draft
+        </Link>
       </header>
 
-      <div className="flex items-center justify-between bg-white border border-ink-100 rounded-xl p-2 px-4">
-        <div className="flex items-center space-x-4">
-          <button className="p-1 hover:bg-beige-50 rounded-lg transition-colors"><ChevronLeft className="w-5 h-5 text-ink-500" /></button>
-          <span className="font-medium text-ink-900">Oct 23 - Oct 29</span>
-          <button className="p-1 hover:bg-beige-50 rounded-lg transition-colors"><ChevronRight className="w-5 h-5 text-ink-500" /></button>
+      {error ? <div className="card text-red-600">{error}</div> : null}
+
+      <div className="bg-white border border-ink-100 rounded-xl p-3 flex flex-wrap gap-3 items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            className="p-2 hover:bg-beige-50 rounded-lg"
+            onClick={() =>
+              setAnchorDate((prev) => {
+                const next = new Date(prev);
+                next.setDate(prev.getDate() - 7);
+                return next;
+              })
+            }
+          >
+            <ChevronLeft className="w-5 h-5 text-ink-500" />
+          </button>
+          <span className="font-medium text-ink-900">
+            {weekDays[0]?.toLocaleDateString()} - {weekDays[6]?.toLocaleDateString()}
+          </span>
+          <button
+            className="p-2 hover:bg-beige-50 rounded-lg"
+            onClick={() =>
+              setAnchorDate((prev) => {
+                const next = new Date(prev);
+                next.setDate(prev.getDate() + 7);
+                return next;
+              })
+            }
+          >
+            <ChevronRight className="w-5 h-5 text-ink-500" />
+          </button>
         </div>
-        <button className="btn-secondary py-1.5 px-3 text-sm">
-          <Filter className="w-4 h-4 mr-2" />
-          Filter
-        </button>
+
+        <div className="flex items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="px-3 py-2 rounded-xl border border-ink-200 bg-white text-sm"
+          >
+            <option value="">All statuses</option>
+            <option value="drafting">drafting</option>
+            <option value="factcheck">factcheck</option>
+            <option value="needs_review">needs_review</option>
+            <option value="revisions">revisions</option>
+            <option value="approved">approved</option>
+          </select>
+
+          <select
+            value={expertFilter}
+            onChange={(event) => setExpertFilter(event.target.value)}
+            className="px-3 py-2 rounded-xl border border-ink-200 bg-white text-sm"
+          >
+            <option value="">All experts</option>
+            {experts.map((expert) => (
+              <option key={expert.id} value={expert.id}>
+                {expert.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {view === 'week' ? (
-        <div className="flex-1 grid grid-cols-7 gap-4 min-h-[500px]">
-          {weekData.map((col, i) => (
-            <div key={i} className="flex flex-col">
-              <div className="text-center mb-4">
-                <div className="text-sm font-medium text-ink-500 uppercase tracking-wider">{col.day}</div>
-                <div className={`text-2xl font-serif mt-1 ${col.date === '25' ? 'text-terracotta-600' : 'text-ink-900'}`}>{col.date}</div>
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-7 gap-4 min-h-[500px]">
+        {weekDays.map((day) => {
+          const key = dayKey(day);
+          const dayItems = byDay.get(key) ?? [];
+          return (
+            <div key={key} className="flex flex-col">
+              <div className="text-center mb-3">
+                <div className="text-xs font-medium text-ink-500 uppercase">
+                  {day.toLocaleDateString(undefined, { weekday: 'short' })}
+                </div>
+                <div className="text-2xl font-serif mt-1 text-ink-900">{day.getDate()}</div>
               </div>
               <div className="flex-1 bg-white border border-ink-100 rounded-2xl p-2 space-y-2">
-                {col.items.map((item, j) => (
-                  <div key={j} className="p-3 bg-beige-50 rounded-xl border border-ink-100 hover:border-ink-300 cursor-pointer transition-colors group">
-                    <span className={`status-pill mb-2 ${
-                      item.status === 'Needs Review' ? 'status-review' :
-                      item.status === 'Drafting' ? 'status-drafting' :
-                      item.status === 'Approved' ? 'status-approved' :
-                      'status-factcheck'
-                    }`}>
-                      {item.status}
-                    </span>
-                    <h3 className="font-medium text-sm text-ink-900 group-hover:text-terracotta-600 transition-colors leading-tight">{item.title}</h3>
-                    <p className="text-xs text-ink-500 mt-2">{item.expert}</p>
-                  </div>
-                ))}
+                {dayItems.length === 0 ? (
+                  <p className="text-xs text-ink-400 p-2">No items</p>
+                ) : (
+                  dayItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/app/drafts/${item.id}`}
+                      className="block p-3 bg-beige-50 rounded-xl border border-ink-100 hover:border-ink-300"
+                    >
+                      <span className={`status-pill mb-2 ${statusClass(item.status)}`}>
+                        {item.status}
+                      </span>
+                      <h3 className="font-medium text-sm text-ink-900 leading-tight">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-ink-500 mt-2">{item.expertName}</p>
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex-1 bg-white border border-ink-100 rounded-2xl overflow-hidden flex flex-col min-h-[600px]">
-          <div className="grid grid-cols-7 border-b border-ink-100 bg-beige-50">
-            {days.map(day => (
-              <div key={day} className="py-3 text-center text-sm font-medium text-ink-500 uppercase tracking-wider border-r border-ink-100 last:border-r-0">
-                {day}
-              </div>
-            ))}
-          </div>
-          <div className="flex-1 grid grid-cols-7 grid-rows-5">
-            {Array.from({ length: 35 }).map((_, i) => {
-              const date = i - 1; // offset for month start
-              const isCurrentMonth = date > 0 && date <= 31;
-              const hasItem = date === 15 || date === 24 || date === 25;
-              
-              return (
-                <div key={i} className={`border-r border-b border-ink-100 last:border-r-0 p-2 min-h-[100px] ${!isCurrentMonth ? 'bg-beige-50/50' : ''}`}>
-                  {isCurrentMonth && (
-                    <>
-                      <div className={`text-sm font-medium mb-1 ${date === 25 ? 'text-terracotta-600' : 'text-ink-500'}`}>{date}</div>
-                      {hasItem && (
-                        <div className="text-xs p-1.5 bg-warning-100 text-warning-700 rounded-md truncate cursor-pointer hover:bg-warning-200">
-                          Review: Q3 Analysis
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 }
