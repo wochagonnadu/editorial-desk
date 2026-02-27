@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/Experts.tsx,apps/web/src/pages/ExpertProfile.tsx
 
 import { apiRequest } from './api/client';
+import { mapDto } from './api/mapper';
 
 export type ExpertItem = {
   id: string;
@@ -28,8 +29,8 @@ type ExpertListResponse = {
     roleTitle: string;
     email: string;
     status: string;
-    onboarding_progress: number;
-    voice_profile_status: string;
+    onboardingProgress: number;
+    voiceProfileStatus: string;
   }>;
 };
 
@@ -41,8 +42,8 @@ type ExpertDetailResponse = {
   domain: string;
   status: string;
   publicTextUrls: string[];
-  voice_profile_status: string;
-  voice_profile_data: Record<string, unknown>;
+  voiceProfileStatus: string;
+  voiceProfileData: Record<string, unknown>;
 };
 
 export type CreateExpertInput = {
@@ -54,20 +55,22 @@ export type CreateExpertInput = {
 };
 
 export const fetchExperts = async (token: string): Promise<ExpertItem[]> => {
-  const response = await apiRequest<ExpertListResponse>('/api/v1/experts', { token });
+  const raw = await apiRequest<unknown>('/api/v1/experts', { token });
+  const response = mapDto<ExpertListResponse>(raw);
   return response.data.map((item) => ({
     id: item.id,
     name: item.name,
     roleTitle: item.roleTitle,
     email: item.email,
     status: item.status,
-    onboardingProgress: item.onboarding_progress,
-    voiceProfileStatus: item.voice_profile_status,
+    onboardingProgress: item.onboardingProgress,
+    voiceProfileStatus: item.voiceProfileStatus,
   }));
 };
 
 export const fetchExpertDetail = async (token: string, id: string): Promise<ExpertDetail> => {
-  const data = await apiRequest<ExpertDetailResponse>(`/api/v1/experts/${id}`, { token });
+  const raw = await apiRequest<unknown>(`/api/v1/experts/${id}`, { token });
+  const data = mapDto<ExpertDetailResponse>(raw);
   return {
     id: data.id,
     name: data.name,
@@ -77,8 +80,8 @@ export const fetchExpertDetail = async (token: string, id: string): Promise<Expe
     status: data.status,
     publicTextUrls: data.publicTextUrls,
     onboardingProgress: 0,
-    voiceProfileStatus: data.voice_profile_status,
-    profileData: data.voice_profile_data,
+    voiceProfileStatus: data.voiceProfileStatus,
+    profileData: data.voiceProfileData,
   };
 };
 

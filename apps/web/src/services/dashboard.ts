@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/Home.tsx,apps/web/src/services/api/client.ts
 
 import { apiRequest } from './api/client';
+import { mapDto } from './api/mapper';
 
 export type DashboardAction = {
   id: string;
@@ -68,7 +69,8 @@ export type DashboardData = {
 };
 
 export const fetchDashboard = async (token: string): Promise<DashboardData> => {
-  const data = await apiRequest<DashboardResponse>('/api/v1/dashboard', { token });
+  const raw = await apiRequest<unknown>('/api/v1/dashboard', { token });
+  const data = mapDto<DashboardResponse>(raw);
   return {
     todayActions: data.todayActions.map((item) => ({
       id: item.id,

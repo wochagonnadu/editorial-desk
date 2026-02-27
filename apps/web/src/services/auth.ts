@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/services/api/client.ts,apps/web/src/services/session.tsx
 
 import { apiRequest } from './api/client';
+import { mapDto } from './api/mapper';
 
 export type SessionUser = {
   id: string;
@@ -23,7 +24,7 @@ type VerifyResponse = {
     id: string;
     email: string;
     role: 'owner' | 'manager';
-    company_id: string;
+    companyId: string;
   };
 };
 
@@ -35,16 +36,15 @@ export const loginWithMagicLink = async (email: string): Promise<{ message: stri
 };
 
 export const verifyMagicLink = async (token: string): Promise<SessionData> => {
-  const response = await apiRequest<VerifyResponse>(
-    `/api/v1/auth/verify?token=${encodeURIComponent(token)}`,
-  );
+  const raw = await apiRequest<unknown>(`/api/v1/auth/verify?token=${encodeURIComponent(token)}`);
+  const response = mapDto<VerifyResponse>(raw);
   return {
     token: response.token,
     user: {
       id: response.user.id,
       email: response.user.email,
       role: response.user.role,
-      companyId: response.user.company_id,
+      companyId: response.user.companyId,
     },
   };
 };

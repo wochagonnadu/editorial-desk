@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/DraftEditor.tsx,apps/web/src/pages/Audit.tsx
 
 import { apiRequest } from './api/client';
+import { mapDto } from './api/mapper';
 
 export type AuditEvent = {
   id: string;
@@ -20,36 +21,38 @@ type AuditResponse = {
     id: string;
     action: string;
     actor: { name: string; type?: string };
-    entity_type?: string;
-    entity_id?: string;
-    created_at: string;
+    entityType?: string;
+    entityId?: string;
+    createdAt: string;
   }>;
 };
 
 export const fetchDraftAudit = async (token: string, draftId: string): Promise<AuditEvent[]> => {
   const query = `/api/v1/audit?entity_type=draft&entity_id=${encodeURIComponent(draftId)}&limit=20`;
-  const response = await apiRequest<AuditResponse>(query, { token });
+  const raw = await apiRequest<unknown>(query, { token });
+  const response = mapDto<AuditResponse>(raw);
   return response.data.map((item) => ({
     id: item.id,
     action: item.action,
     actorName: item.actor.name,
     actorType: item.actor.type,
-    entityType: item.entity_type,
-    entityId: item.entity_id,
-    createdAt: item.created_at,
+    entityType: item.entityType,
+    entityId: item.entityId,
+    createdAt: item.createdAt,
   }));
 };
 
 export const fetchAuditFeed = async (token: string, limit = 50): Promise<AuditEvent[]> => {
   const query = `/api/v1/audit?limit=${Math.max(1, Math.min(limit, 200))}`;
-  const response = await apiRequest<AuditResponse>(query, { token });
+  const raw = await apiRequest<unknown>(query, { token });
+  const response = mapDto<AuditResponse>(raw);
   return response.data.map((item) => ({
     id: item.id,
     action: item.action,
     actorName: item.actor.name,
     actorType: item.actor.type,
-    entityType: item.entity_type,
-    entityId: item.entity_id,
-    createdAt: item.created_at,
+    entityType: item.entityType,
+    entityId: item.entityId,
+    createdAt: item.createdAt,
   }));
 };

@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/Approvals.tsx,services/api/src/routes/approvals.ts
 
 import { apiRequest } from './api/client';
+import { mapDto } from './api/mapper';
 
 export type ApprovalItem = {
   stepId: string;
@@ -29,7 +30,8 @@ export const fetchApprovals = async (
   token: string,
   view: 'stuck' | 'reviewer',
 ): Promise<ApprovalItem[]> => {
-  const response = await apiRequest<ApprovalsResponse>(`/api/v1/approvals?view=${view}`, { token });
+  const raw = await apiRequest<unknown>(`/api/v1/approvals?view=${view}`, { token });
+  const response = mapDto<ApprovalsResponse>(raw);
   return response.data;
 };
 

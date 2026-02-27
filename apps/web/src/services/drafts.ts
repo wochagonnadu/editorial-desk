@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/Drafts.tsx,apps/web/src/pages/DraftEditor.tsx
 
 import { apiRequest } from './api/client';
+import { mapDto } from './api/mapper';
 
 export type DraftListItem = {
   id: string;
@@ -50,9 +51,9 @@ type DraftListResponse = {
     topic: { id: string; title: string } | null;
     expert: { id: string; name: string } | null;
     status: string;
-    current_version: number | null;
-    factcheck_status: string;
-    updated_at: string;
+    currentVersion: number | null;
+    factcheckStatus: string;
+    updatedAt: string;
   }>;
 };
 
@@ -61,15 +62,15 @@ type DraftDetailResponse = {
   status: string;
   topic: { title: string } | null;
   expert: { id: string; name: string } | null;
-  current_version: {
+  currentVersion: {
     id: string;
     versionNumber: number;
     content: string;
     summary?: string | null;
   } | null;
-  factcheck_report?: {
+  factcheckReport?: {
     status?: string;
-    results?: Array<{ claim_id?: string; claimId?: string; verdict?: string; notes?: string }>;
+    results?: Array<{ claimId?: string; verdict?: string; notes?: string }>;
   } | null;
   comments: Array<{ id: string; text: string; createdAt: string; authorType: string }>;
 };
@@ -86,21 +87,23 @@ export const fetchDrafts = async (
   if (filters?.expertId) params.set('expert_id', filters.expertId);
   if (filters?.status) params.set('status', filters.status);
   const query = params.size > 0 ? `/api/v1/drafts?${params.toString()}` : '/api/v1/drafts';
-  const response = await apiRequest<DraftListResponse>(query, { token });
+  const raw = await apiRequest<unknown>(query, { token });
+  const response = mapDto<DraftListResponse>(raw);
   return response.data.map((item) => ({
     id: item.id,
     title: item.topic?.title ?? 'Untitled',
     expertName: item.expert?.name ?? 'Unknown expert',
     status: item.status,
-    factcheckStatus: item.factcheck_status,
-    currentVersion: item.current_version,
-    updatedAt: item.updated_at,
+    factcheckStatus: item.factcheckStatus,
+    currentVersion: item.currentVersion,
+    updatedAt: item.updatedAt,
   }));
 };
 
 export const fetchDraftDetail = async (token: string, id: string): Promise<DraftDetail> => {
-  const data = await apiRequest<DraftDetailResponse>(`/api/v1/drafts/${id}`, { token });
-  if (!data.current_version) {
+  const raw = await apiRequest<unknown>(`/api/v1/drafts/${id}`, { token });
+  const data = mapDto<DraftDetailResponse>(raw);
+  if (!data.currentVersion) {
     throw new Error('Draft has no active version');
   }
 
@@ -110,19 +113,19 @@ export const fetchDraftDetail = async (token: string, id: string): Promise<Draft
     topicTitle: data.topic?.title ?? 'Untitled',
     expertName: data.expert?.name ?? 'Unknown expert',
     expertId: data.expert?.id ?? '',
-    content: data.current_version.content,
-    summary: data.current_version.summary ?? '',
-    currentVersionId: data.current_version.id,
-    currentVersionNumber: data.current_version.versionNumber,
+    content: data.currentVersion.content,
+    summary: data.currentVersion.summary ?? '',
+    currentVersionId: data.currentVersion.id,
+    currentVersionNumber: data.currentVersion.versionNumber,
     comments: data.comments.map((comment) => ({
       id: comment.id,
       text: comment.text,
       createdAt: comment.createdAt,
       authorType: comment.authorType,
     })),
-    hasCompletedFactcheck: data.factcheck_report?.status === 'completed',
-    factcheckResults: (data.factcheck_report?.results ?? []).map((item) => ({
-      claimId: item.claim_id ?? item.claimId ?? 'unknown',
+    hasCompletedFactcheck: data.factcheckReport?.status === 'completed',
+    factcheckResults: (data.factcheckReport?.results ?? []).map((item) => ({
+      claimId: item.claimId ?? 'unknown',
       verdict: item.verdict ?? 'pending',
       notes: item.notes,
     })),
@@ -130,9 +133,10 @@ export const fetchDraftDetail = async (token: string, id: string): Promise<Draft
 };
 
 export const fetchDraftVersions = async (token: string, id: string): Promise<DraftVersion[]> => {
-  const response = await apiRequest<DraftVersionsResponse>(`/api/v1/drafts/${id}/versions`, {
+  const raw = await apiRequest<unknown>(`/api/v1/drafts/${id}/versions`, {
     token,
   });
+  const response = mapDto<DraftVersionsResponse>(raw);
   return response.data.map((version) => ({
     id: version.id,
     versionNumber: version.versionNumber,

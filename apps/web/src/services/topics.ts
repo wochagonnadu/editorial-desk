@@ -4,6 +4,7 @@
 // RELEVANT: apps/web/src/pages/CreateDraft.tsx,apps/web/src/services/drafts.ts
 
 import { apiRequest } from './api/client';
+import { mapDto } from './api/mapper';
 
 export type TopicItem = {
   id: string;
@@ -23,7 +24,8 @@ type TopicsResponse = {
 };
 
 export const fetchTopics = async (token: string): Promise<TopicItem[]> => {
-  const response = await apiRequest<TopicsResponse>('/api/v1/topics', { token });
+  const raw = await apiRequest<unknown>('/api/v1/topics', { token });
+  const response = mapDto<TopicsResponse>(raw);
   return response.data.map((item) => ({
     id: item.id,
     title: item.title,
