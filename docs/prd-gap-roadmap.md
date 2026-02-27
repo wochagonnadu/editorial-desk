@@ -74,28 +74,28 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 Рекомендуемый набор:
 
-### Spec 005: Web API Adapters Core
+### Spec 004: API Adapter Integration (Core + Auth + Audit)
 
-- Scope: auth session, Home, Experts, Drafts, DraftEditor, Approvals, Calendar, CreateDraft.
+- Scope: auth session, Home, Experts, Drafts, DraftEditor, Approvals, Calendar, CreateDraft, Audit.
 - Без миграций БД.
-- Выход: UI перестает быть demo-state.
+- Выход: UI перестает быть demo-state и private web начинает жить на реальном API.
 
-### Spec 006: Editorial Doc Surface + Audit UI
+### Spec 005: Editorial Doc Surface + Diff UX
 
-- Scope: Audit page, magic-link web-doc UX, diff summary/diff view в интерфейсе.
+- Scope: magic-link web-doc UX, diff summary/diff view в интерфейсе и письмах.
 - Минимальные backend правки по необходимости.
 
-### Spec 007: Settings + Team Management
+### Spec 006: Settings + Team Management
 
 - Scope: update company/defaults, team users/roles/invite.
 - Почти наверняка потребуются новые backend endpoints.
 
-### Spec 008: Workflow Runtime Hardening
+### Spec 007: Workflow Runtime Hardening
 
 - Scope: выделение `services/worker`, queue-driven orchestration, retries/idempotency visibility.
 - Можно делать после стабилизации product flows, чтобы не усложнять ранний этап.
 
-### Spec 009: Data Model Enhancements (optional)
+### Spec 008: Data Model Enhancements (optional)
 
 - Scope: `landing_request` table, optional `evidence` table, нужные индексы/репорты.
 - Запускать только после подтверждения реальной бизнес-нужды (не заранее).
@@ -105,10 +105,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 Если хочется меньше административного overhead, можно вести как 4 крупных фазы:
 
 1. **Этап A: Core adapters (P0)**
-   - Закрывает реальную работу UI с backend.
+   - Закрывает реальную работу UI с backend, включая auth и Audit screen.
 
 2. **Этап B: PRD parity in UI (P1 часть)**
-   - Audit screen + doc/diff UX.
+   - Doc/magic-link UX + diff summary/diff view.
 
 3. **Этап C: Org/Settings contracts (P1 часть)**
    - Company update + team management APIs.
@@ -118,10 +118,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 ## 5) Рекомендуемый порядок (практичный)
 
-1. Сначала **Spec 005** (или Этап A) — это максимальный value и проверка реального продукта.
-2. Затем **Spec 006** — добиваем ключевую UX-обещанку PRD (audit + diff/doc).
-3. Потом **Spec 007** — закрываем управленческие функции для команды.
-4. В конце **Spec 008/009** — выносим runtime и data-усиления без риска затормозить core delivery.
+1. Сначала **Spec 004** (или Этап A) — это максимальный value и проверка реального продукта.
+2. Затем **Spec 005** — добиваем ключевую UX-обещанку PRD (doc + diff).
+3. Потом **Spec 006** — закрываем управленческие функции для команды.
+4. В конце **Spec 007/008** — выносим runtime и data-усиления без риска затормозить core delivery.
 
 ## 6) Мини-вывод
 
