@@ -36,7 +36,10 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
 
     if (isDevAuthBypassEnabled()) {
       deps.logger.warn('auth.dev_bypass_login', { email });
-      return context.json({ message: `DEV auth bypass enabled. Token: ${DEV_BYPASS_TOKEN}` });
+      return context.json({
+        message: `DEV auth bypass enabled. Token: ${DEV_BYPASS_TOKEN}`,
+        dev_magic_token: DEV_BYPASS_TOKEN,
+      });
     }
 
     let [user] = await deps.db.select().from(userTable).where(eq(userTable.email, email)).limit(1);

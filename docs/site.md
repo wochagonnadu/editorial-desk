@@ -1,17 +1,17 @@
 <!--
 PATH: /Users/VC/dev/editorial_ai/docs/site.md
-WHAT: Prompt-pack для Stitch: дизайн страниц Virtual Newsroom + storyscrolling
+WHAT: Prompt-pack для Stitch: дизайн страниц Editorial Desk + storyscrolling
 WHY: Зафиксировать единый визуальный и UX-направление перед генерацией экранов
 RELEVANT: .PRDS/prd_web.md,specs/002-web-mvp-app/spec.md,apps/web/src/App.tsx
 -->
 
-# Virtual Newsroom — Stitch Prompt Pack
+# Editorial Desk — Stitch Prompt Pack
 
 ## Контекст проекта
 
-Этот набор промптов собран под текущий Web MVP Virtual Newsroom.
+Этот набор промптов собран под текущий Web MVP Editorial Desk.
 
-Цель: сделать интерфейс в стиле **Editorial Minimalism + Virtual Newsroom** с акцентом на команду экспертов, контент-календарь и спокойную, человечную атмосферу.
+Цель: сделать интерфейс в стиле **Editorial Minimalism + Editorial Desk** с акцентом на команду экспертов, контент-календарь и спокойную, человечную атмосферу.
 
 ## Какие страницы нужны
 
@@ -42,8 +42,8 @@ RELEVANT: .PRDS/prd_web.md,specs/002-web-mvp-app/spec.md,apps/web/src/App.tsx
 ## MASTER PROMPT (для всех экранов)
 
 ```text
-Design a modern web product UI for "Virtual Newsroom".
-Style direction: Editorial Minimalism + Virtual Newsroom.
+Design a modern web product UI for "Editorial Desk".
+Style direction: Editorial Minimalism + Editorial Desk.
 Mood: warm, friendly, human teamwork, calm organization.
 Visual language: Trello/Notion-like card system, large readable typography, generous whitespace, prominent team avatars.
 Color palette: warm beige, terracotta accents, soft gray neutrals, muted green for approved state, muted amber for warnings.
@@ -66,7 +66,7 @@ Keep components reusable across screens.
 ## PROMPT 1 — Storyscrolling Landing (скользящие слайды)
 
 ```text
-Create a long-form storyscrolling landing page for Virtual Newsroom.
+Create a long-form storyscrolling landing page for Editorial Desk.
 Use 8 full-screen sections with smooth slide-like transitions and scroll snap.
 Add a sticky vertical progress rail showing section progress.
 Sections:
@@ -184,7 +184,7 @@ Use same visual system and friendly editorial microcopy.
 ## PROMPT 10 — Login / Magic Link
 
 ```text
-Design a simple login page for Virtual Newsroom.
+Design a simple login page for Editorial Desk.
 Fields: email request and magic token verify.
 Tone: welcoming editorial workspace, minimal friction.
 Include subtle team-themed illustration or avatar cluster.

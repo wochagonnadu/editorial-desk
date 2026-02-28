@@ -39,13 +39,13 @@ Templates requiring updates:
 Follow-up TODOs: (none)
 -->
 
-# Virtual Newsroom Constitution
+# Editorial Desk Constitution
 
 ## Core Principles
 
 ### I. Editorial Framing (NON-NEGOTIABLE)
 
-The product MUST be positioned as a "virtual newsroom" / "editorial
+The product MUST be positioned as a "Editorial Desk" / "editorial
 team." Users MUST perceive an editorial process, not an AI generator.
 
 - UI and marketing MUST NOT use: "generation," "automation,"
@@ -244,7 +244,7 @@ separates this product from generic SaaS dashboards.
 ## Governance
 
 - This constitution supersedes all other development practices and
-  guidelines for the Virtual Newsroom project.
+  guidelines for the Editorial Desk project.
 - **Amendment procedure**: Any change to this constitution MUST be
   documented with a Sync Impact Report, reviewed by the project
   owner, and versioned according to semver rules:

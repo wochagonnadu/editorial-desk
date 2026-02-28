@@ -1,7 +1,7 @@
 <!--
 PATH: team.md
 WHAT: EditorialDesk Team personas + avatar generation directions (consistent style, diverse faces, no readable text)
-WHY: Create a cohesive “Virtual Newsroom” crew with clear role readability and strong visual differentiation
+WHY: Create a cohesive “Editorial Desk” crew with clear role readability and strong visual differentiation
 -->
 
 # EditorialDesk Team (Personas + Avatar Directions)

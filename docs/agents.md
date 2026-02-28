@@ -7,7 +7,7 @@ RELEVANT: services/api/src/core/onboarding.ts, services/api/src/core/drafts.ts, 
 
 # Agentic Editorial Loop + Voice Acquisition Layer (Implementable Spec)
 
-Метафора: **Virtual Newsroom** (редакция, а не “AI writer”).
+Метафора: **Editorial Desk** (редакция, а не “AI writer”).
 Ключевой принцип: **каждая новая версия текста** проходит один и тот же контур качества до `REVIEW_READY` или `BLOCKED`.
 
 ---

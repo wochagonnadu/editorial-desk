@@ -1,4 +1,4 @@
-# PRD: Virtual Newsroom (Ghostwriter AI)
+# PRD: Editorial Desk (Ghostwriter AI)
 
 Версия: 0.1
 Статус: Draft for Spec Kit
@@ -6,7 +6,7 @@
 
 ## 1) Короткое описание
 
-Virtual Newsroom - это виртуальная редакция, которая:
+Editorial Desk - это виртуальная редакция, которая:
 
 * собирает “голос” эксперта через email-онбординг,
 * предлагает темы как редактор,
@@ -79,7 +79,7 @@ SMB нужен контент, но:
 Запрещенные слова в UI/маркетинге: “генерация”, “автоматизация”, “AI-powered”, “генератор”.
 Разрешенные: “редакторы”, “черновик”, “вычитка”, “согласование”, “редакционный план”, “ответственность”.
 
-## 7) UX-концепция (Virtual Newsroom)
+## 7) UX-концепция (Editorial Desk)
 
 Стиль:
 
@@ -345,7 +345,7 @@ US-R2: Хочу видеть, что изменилось с прошлой ве
 
 * /apps/web
 
-  * UI Virtual Newsroom (Experts, Calendar, Drafts, Approvals, Audit)
+  * UI Editorial Desk (Experts, Calendar, Drafts, Approvals, Audit)
 * /services/api
 
   * REST/GraphQL API, auth, доменная логика
@@ -500,7 +500,7 @@ R4: Неправильный pricing anchor (сравнят с $50 AI tools).
 * мера: сравнение только с агентствами и ретейнерами. ) Приложение: короткие seed-промпты для Spec Kit
   (Ты дашь агенту PRD, а дальше запускаешь короткими командами.)
 
-Pкацию MVP Virtual Newsroom на основе PRD. Приоритет только Tier 1.”
+Pкацию MVP Editorial Desk на основе PRD. Приоритет только Tier 1.”
 P2: “Сделай техплан монорепо: web, api, worker, email inbound, workflow engine, сущности данных.”
 P3: “Сгенерируй задачи (tasks) по фичам: Voice Onboarding, Draft Lifecycle, Factcheck, Approvals, Audit.”
 P4: “Опиши edge cases: ответ на старый email thread, конфликт правок, параллельные аппрувы, просрочки.”
