@@ -5,11 +5,11 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { activateNextStep, consolidateFeedback, recordDecision } from '../core/approval';
-import { logAudit } from '../core/audit';
-import { buildDiffSummaryBullets } from '../core/diff-summary';
-import { consolidatedFeedbackTemplate } from '../core/email-templates/approval';
-import { AppError } from '../core/errors';
+import { activateNextStep, consolidateFeedback, recordDecision } from '../core/approval.js';
+import { logAudit } from '../core/audit.js';
+import { buildDiffSummaryBullets } from '../core/diff-summary.js';
+import { consolidatedFeedbackTemplate } from '../core/email-templates/approval.js';
+import { AppError } from '../core/errors.js';
 import {
   approvalFlowTable,
   approvalStepTable,
@@ -18,9 +18,9 @@ import {
   notificationTable,
   topicTable,
   userTable,
-} from '../providers/db';
-import { resolveApprover, sendApprovalRequest } from './approval-notify';
-import type { RouteDeps } from './deps';
+} from '../providers/db/index.js';
+import { resolveApprover, sendApprovalRequest } from './approval-notify.js';
+import type { RouteDeps } from './deps.js';
 
 const parseParams = async (context: Context) => {
   const body = (await context.req.json().catch(() => ({}))) as Record<string, unknown>;

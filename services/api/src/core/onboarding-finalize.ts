@@ -6,9 +6,9 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import type { EmailPort } from '@newsroom/shared';
-import { buildRatingTemplate } from './email-templates/rating';
-import { buildVoiceProfile, calculateVoiceScore, generateVoiceTest } from './voice';
-import type { Database } from '../providers/db';
+import { buildRatingTemplate } from './email-templates/rating.js';
+import { buildVoiceProfile, calculateVoiceScore, generateVoiceTest } from './voice.js';
+import type { Database } from '../providers/db/index.js';
 import {
   DrizzleDraftStore,
   expertTable,
@@ -16,7 +16,7 @@ import {
   onboardingSequenceTable,
   topicTable,
   voiceProfileTable,
-} from '../providers/db';
+} from '../providers/db/index.js';
 
 interface FinalizeContext {
   db: Database;

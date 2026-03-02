@@ -4,20 +4,20 @@
 // RELEVANT: services/api/src/routes/auth.ts,services/api/src/routes/companies.ts,services/api/src/routes/topics.ts
 
 import { Hono } from 'hono';
-import { authMiddleware } from './auth-middleware';
-import { buildAuthRoutes } from './auth';
-import { buildAuditRoutes } from './audit';
-import { buildApprovalsRoutes } from './approvals';
-import { buildCompanyRoutes } from './companies';
-import { buildDashboardRoutes } from './dashboard';
-import { buildDocsRoutes } from './docs';
-import { buildDraftRoutes } from './drafts';
-import { buildExpertRoutes } from './experts';
-import { buildLandingRequestRoutes } from './landing-requests';
-import { buildReportsRoutes } from './reports';
-import { buildTopicRoutes } from './topics';
-import { buildWebhookRoutes } from './webhooks';
-import type { RouteDeps } from './deps';
+import { authMiddleware } from './auth-middleware.js';
+import { buildAuthRoutes } from './auth.js';
+import { buildAuditRoutes } from './audit.js';
+import { buildApprovalsRoutes } from './approvals.js';
+import { buildCompanyRoutes } from './companies.js';
+import { buildDashboardRoutes } from './dashboard.js';
+import { buildDocsRoutes } from './docs.js';
+import { buildDraftRoutes } from './drafts.js';
+import { buildExpertRoutes } from './experts.js';
+import { buildLandingRequestRoutes } from './landing-requests.js';
+import { buildReportsRoutes } from './reports.js';
+import { buildTopicRoutes } from './topics.js';
+import { buildWebhookRoutes } from './webhooks.js';
+import type { RouteDeps } from './deps.js';
 
 export const buildApiRouter = (deps: RouteDeps): Hono => {
   const router = new Hono();

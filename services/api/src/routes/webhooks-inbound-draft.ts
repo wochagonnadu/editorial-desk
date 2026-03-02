@@ -5,9 +5,9 @@
 
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { logAudit } from '../core/audit';
-import { draftTable, draftVersionTable, expertTable, notificationTable } from '../providers/db';
-import type { RouteDeps } from './deps';
+import { logAudit } from '../core/audit.js';
+import { draftTable, draftVersionTable, expertTable, notificationTable } from '../providers/db/index.js';
+import type { RouteDeps } from './deps.js';
 
 const parseDraftReplyAddress = (
   to: string,

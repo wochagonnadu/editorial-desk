@@ -5,12 +5,12 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { createDraft, createVersion, transitionDraftStatus } from '../../core/drafts';
-import { AppError } from '../../core/errors';
-import { DrizzleDraftStore, draftTable, draftVersionTable, expertTable, topicTable } from '../../providers/db';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
-import { sseResponse } from './sse';
+import { createDraft, createVersion, transitionDraftStatus } from '../../core/drafts.js';
+import { AppError } from '../../core/errors.js';
+import { DrizzleDraftStore, draftTable, draftVersionTable, expertTable, topicTable } from '../../providers/db/index.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
+import { sseResponse } from './sse.js';
 
 const readBody = async (context: Context) => (await context.req.json().catch(() => ({}))) as Record<string, unknown>;
 

@@ -4,8 +4,8 @@
 // RELEVANT: services/api/src/routes/reports.ts,services/api/src/routes/cron-digest.ts
 
 import { eq, inArray } from 'drizzle-orm';
-import type { Database } from '../providers/db';
-import { approvalDecisionTable, approvalFlowTable, approvalStepTable, auditLogTable, draftTable, draftVersionTable, expertTable, topicTable } from '../providers/db';
+import type { Database } from '../providers/db/index.js';
+import { approvalDecisionTable, approvalFlowTable, approvalStepTable, auditLogTable, draftTable, draftVersionTable, expertTable, topicTable } from '../providers/db/index.js';
 
 interface DelayItem {
   expert: string;

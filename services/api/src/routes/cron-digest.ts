@@ -6,10 +6,10 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { monthlyDigestTemplate } from '../core/email-templates/digest';
-import { buildMonthlyReport, monthRange } from '../core/reports';
-import { companyTable, notificationTable, userTable } from '../providers/db';
-import type { RouteDeps } from './deps';
+import { monthlyDigestTemplate } from '../core/email-templates/digest.js';
+import { buildMonthlyReport, monthRange } from '../core/reports.js';
+import { companyTable, notificationTable, userTable } from '../providers/db/index.js';
+import type { RouteDeps } from './deps.js';
 
 const currentPeriod = () => {
   const now = new Date();

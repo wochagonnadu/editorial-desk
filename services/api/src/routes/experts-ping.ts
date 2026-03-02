@@ -4,11 +4,11 @@
 // RELEVANT: services/api/src/routes/experts.ts,services/api/src/core/audit.ts
 
 import type { Context } from 'hono';
-import { logAudit } from '../core/audit';
-import { AppError } from '../core/errors';
-import type { DrizzleExpertStore } from '../providers/db';
-import { getAuthUser } from './auth-middleware';
-import type { RouteDeps } from './deps';
+import { logAudit } from '../core/audit.js';
+import { AppError } from '../core/errors.js';
+import type { DrizzleExpertStore } from '../providers/db/index.js';
+import { getAuthUser } from './auth-middleware.js';
+import type { RouteDeps } from './deps.js';
 
 const buildPingMessage = (name: string) => {
   const subject = 'Request 2 minutes';

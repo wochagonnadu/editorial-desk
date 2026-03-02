@@ -4,8 +4,8 @@
 // RELEVANT: services/api/src/providers/db/schema/comms-audit.ts,services/api/src/routes/auth.ts
 
 import type { EntityId } from '@newsroom/shared';
-import { auditLogTable } from '../providers/db/schema';
-import type { Database } from '../providers/db/pool';
+import { auditLogTable } from '../providers/db/schema.js';
+import type { Database } from '../providers/db/pool.js';
 
 export interface AuditInput {
   companyId: EntityId;

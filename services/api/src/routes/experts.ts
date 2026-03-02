@@ -6,12 +6,12 @@
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { ExpertStatus } from '@newsroom/shared';
-import { AppError } from '../core/errors';
-import { startOnboarding } from '../core/onboarding';
-import { DrizzleExpertStore, onboardingSequenceTable, voiceProfileTable } from '../providers/db';
-import { getAuthUser } from './auth-middleware';
-import type { RouteDeps } from './deps';
-import { requestTwoMinutes } from './experts-ping';
+import { AppError } from '../core/errors.js';
+import { startOnboarding } from '../core/onboarding.js';
+import { DrizzleExpertStore, onboardingSequenceTable, voiceProfileTable } from '../providers/db/index.js';
+import { getAuthUser } from './auth-middleware.js';
+import type { RouteDeps } from './deps.js';
+import { requestTwoMinutes } from './experts-ping.js';
 
 const parseString = (value: unknown, field: string): string => {
   if (typeof value !== 'string' || value.trim() === '')

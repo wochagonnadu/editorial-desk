@@ -3,7 +3,7 @@
 // WHY:  Lets local development continue when login flow is not needed
 // RELEVANT: services/api/src/routes/auth.ts,services/api/src/routes/auth-middleware.ts
 
-import type { SessionPayload } from './auth-token';
+import type { SessionPayload } from './auth-token.js';
 
 export const DEV_BYPASS_TOKEN = 'dev-bypass-token';
 

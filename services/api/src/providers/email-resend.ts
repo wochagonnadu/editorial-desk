@@ -4,7 +4,7 @@
 // RELEVANT: services/api/src/providers/email.ts,packages/shared/src/ports/email-port.ts
 
 import type { SendEmailInput } from '@newsroom/shared';
-import type { Logger } from './logger';
+import type { Logger } from './logger.js';
 
 const parseResponse = async (response: Response): Promise<{ id?: string; message?: string }> => {
   const text = await response.text();

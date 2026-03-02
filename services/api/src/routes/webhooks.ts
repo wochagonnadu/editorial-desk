@@ -4,18 +4,18 @@
 // RELEVANT: services/api/src/core/onboarding.ts,services/api/src/core/onboarding-finalize.ts
 
 import { Hono } from 'hono';
-import { AppError } from '../core/errors';
-import { finalizeOnboardingVoiceTest } from '../core/onboarding-finalize';
-import { parseOnboardingReplyAddress, processReply } from '../core/onboarding';
-import type { RouteDeps } from './deps';
-import { processApprovalClick } from './webhooks-click';
-import { processTopicClick } from './webhooks-click-topic';
-import { processDraftInbound } from './webhooks-inbound-draft';
+import { AppError } from '../core/errors.js';
+import { finalizeOnboardingVoiceTest } from '../core/onboarding-finalize.js';
+import { parseOnboardingReplyAddress, processReply } from '../core/onboarding.js';
+import type { RouteDeps } from './deps.js';
+import { processApprovalClick } from './webhooks-click.js';
+import { processTopicClick } from './webhooks-click-topic.js';
+import { processDraftInbound } from './webhooks-inbound-draft.js';
 import {
   isSvixSignedRequest,
   resolveInboundPayload,
   verifyResendSignature,
-} from './webhooks-resend';
+} from './webhooks-resend.js';
 
 interface InboundPayload {
   from?: string;

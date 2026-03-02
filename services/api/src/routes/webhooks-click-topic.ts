@@ -5,10 +5,10 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { logAudit } from '../core/audit';
-import { AppError } from '../core/errors';
-import { notificationTable, topicTable, userTable } from '../providers/db';
-import type { RouteDeps } from './deps';
+import { logAudit } from '../core/audit.js';
+import { AppError } from '../core/errors.js';
+import { notificationTable, topicTable, userTable } from '../providers/db/index.js';
+import type { RouteDeps } from './deps.js';
 
 const parseTopicClick = async (context: Context) => {
   const body = (await context.req.json().catch(() => ({}))) as Record<string, unknown>;

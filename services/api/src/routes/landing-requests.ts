@@ -4,8 +4,8 @@
 // RELEVANT: services/api/src/routes/index.ts,specs/003-frontend-snapshot-import/api-compat-matrix.md
 
 import { Hono } from 'hono';
-import { AppError } from '../core/errors';
-import type { RouteDeps } from './deps';
+import { AppError } from '../core/errors.js';
+import type { RouteDeps } from './deps.js';
 
 const parseRequired = (value: unknown, field: string): string => {
   if (typeof value !== 'string' || value.trim().length < 2) {

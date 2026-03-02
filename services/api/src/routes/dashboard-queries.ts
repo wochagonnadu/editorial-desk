@@ -5,8 +5,8 @@
 
 import { and, eq, gte, inArray, sql } from 'drizzle-orm';
 import type { InReviewItem, TodayAction, WeekScheduleItem } from '@newsroom/shared';
-import { draftTable, expertTable, topicTable } from '../providers/db';
-import type { RouteDeps } from './deps';
+import { draftTable, expertTable, topicTable } from '../providers/db/index.js';
+import type { RouteDeps } from './deps.js';
 
 export async function fetchTodayActions(
   deps: RouteDeps,

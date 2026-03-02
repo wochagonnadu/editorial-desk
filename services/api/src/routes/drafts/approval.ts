@@ -5,21 +5,21 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { createFlow } from '../../core/approval';
-import type { ApprovalConfig } from '../../core/approval';
-import { logAudit } from '../../core/audit';
-import { buildDiffSummaryBullets } from '../../core/diff-summary';
-import { AppError } from '../../core/errors';
+import { createFlow } from '../../core/approval.js';
+import type { ApprovalConfig } from '../../core/approval.js';
+import { logAudit } from '../../core/audit.js';
+import { buildDiffSummaryBullets } from '../../core/diff-summary.js';
+import { AppError } from '../../core/errors.js';
 import {
   approvalFlowTable,
   draftTable,
   draftVersionTable,
   factcheckReportTable,
   topicTable,
-} from '../../providers/db';
-import { resolveApprover, sendApprovalRequest } from '../approval-notify';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
+} from '../../providers/db/index.js';
+import { resolveApprover, sendApprovalRequest } from '../approval-notify.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
 
 const parseConfig = (body: Record<string, unknown>): ApprovalConfig => {
   const flow_type = body.flow_type === 'parallel' ? 'parallel' : 'sequential';

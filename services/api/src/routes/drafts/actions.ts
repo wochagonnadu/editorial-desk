@@ -5,11 +5,11 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { AppError } from '../../core/errors';
-import { logAudit } from '../../core/audit';
-import { claimTable, commentTable, draftTable, factcheckReportTable } from '../../providers/db';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
+import { AppError } from '../../core/errors.js';
+import { logAudit } from '../../core/audit.js';
+import { claimTable, commentTable, draftTable, factcheckReportTable } from '../../providers/db/index.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
 
 export const createDraftComment = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);

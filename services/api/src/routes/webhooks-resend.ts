@@ -4,7 +4,7 @@
 // RELEVANT: services/api/src/routes/webhooks.ts,services/api/src/providers/email-resend.ts
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { AppError } from '../core/errors';
+import { AppError } from '../core/errors.js';
 
 type InboundPayload = { from?: string; to?: string; textBody?: string; rawBody?: string };
 

@@ -5,9 +5,9 @@
 
 import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { AppError } from '../core/errors';
-import { draftTable, draftVersionTable, expertTable, notificationTable, topicTable } from '../providers/db';
-import type { RouteDeps } from './deps';
+import { AppError } from '../core/errors.js';
+import { draftTable, draftVersionTable, expertTable, notificationTable, topicTable } from '../providers/db/index.js';
+import type { RouteDeps } from './deps.js';
 
 export const buildDocsRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();

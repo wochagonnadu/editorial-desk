@@ -4,10 +4,10 @@
 // RELEVANT: services/api/src/core/reports.ts,apps/web/src/pages/ReportsPage.tsx
 
 import { Hono } from 'hono';
-import { buildMonthlyReport } from '../core/reports';
-import { AppError } from '../core/errors';
-import { authMiddleware, getAuthUser } from './auth-middleware';
-import type { RouteDeps } from './deps';
+import { buildMonthlyReport } from '../core/reports.js';
+import { AppError } from '../core/errors.js';
+import { authMiddleware, getAuthUser } from './auth-middleware.js';
+import type { RouteDeps } from './deps.js';
 
 const currentPeriod = () => {
   const now = new Date();

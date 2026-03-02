@@ -4,8 +4,8 @@
 // RELEVANT: services/api/src/routes/index.ts,services/api/src/providers/db/pool.ts
 
 import type { ContentPort, EmailPort } from '@newsroom/shared';
-import type { Database } from '../providers/db/pool';
-import type { Logger } from '../providers/logger';
+import type { Database } from '../providers/db/pool.js';
+import type { Logger } from '../providers/logger.js';
 
 export interface RouteDeps {
   db: Database;

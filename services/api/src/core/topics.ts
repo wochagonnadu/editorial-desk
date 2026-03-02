@@ -6,15 +6,15 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import type { ContentPort, EmailPort } from '@newsroom/shared';
-import type { Database } from '../providers/db';
+import type { Database } from '../providers/db/index.js';
 import {
   companyTable,
   expertTable,
   notificationTable,
   topicTable,
   userTable,
-} from '../providers/db';
-import { weeklyTopicProposalsTemplate } from './email-templates/topics';
+} from '../providers/db/index.js';
+import { weeklyTopicProposalsTemplate } from './email-templates/topics.js';
 
 export interface TopicSuggestion {
   title: string;

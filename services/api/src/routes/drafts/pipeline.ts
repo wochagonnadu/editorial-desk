@@ -3,5 +3,5 @@
 // WHY:  Keeps route assembly clean while handlers stay focused
 // RELEVANT: services/api/src/routes/drafts/pipeline-create.ts,services/api/src/routes/drafts/pipeline-review.ts
 
-export * from './pipeline-create';
-export * from './pipeline-review';
+export * from './pipeline-create.js';
+export * from './pipeline-review.js';

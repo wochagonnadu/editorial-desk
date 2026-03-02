@@ -5,9 +5,9 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { DraftStore } from '@newsroom/shared';
-import { AppError } from './errors';
-import type { Database } from '../providers/db';
-import { draftTable, expertTable, topicTable } from '../providers/db';
+import { AppError } from './errors.js';
+import type { Database } from '../providers/db/index.js';
+import { draftTable, expertTable, topicTable } from '../providers/db/index.js';
 
 const allowedTransitions: Record<string, string[]> = {
   drafting: ['factcheck', 'revisions'],

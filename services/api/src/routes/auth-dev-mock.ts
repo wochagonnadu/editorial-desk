@@ -5,8 +5,8 @@
 
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { notificationTable } from '../providers/db';
-import type { RouteDeps } from './deps';
+import { notificationTable } from '../providers/db/index.js';
+import type { RouteDeps } from './deps.js';
 
 const isTrue = (value: string | undefined): boolean => {
   if (!value) return false;

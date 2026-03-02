@@ -5,10 +5,10 @@
 
 import { eq, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { checkDeadlines } from '../core/approval';
-import { reminderTemplate } from '../core/email-templates/approval';
-import { AppError } from '../core/errors';
-import { sendWeeklyProposals } from '../core/topics';
+import { checkDeadlines } from '../core/approval.js';
+import { reminderTemplate } from '../core/email-templates/approval.js';
+import { AppError } from '../core/errors.js';
+import { sendWeeklyProposals } from '../core/topics.js';
 import {
   approvalFlowTable,
   companyTable,
@@ -16,9 +16,9 @@ import {
   expertTable,
   topicTable,
   userTable,
-} from '../providers/db';
-import { buildDigestCronHandler } from './cron-digest';
-import type { RouteDeps } from './deps';
+} from '../providers/db/index.js';
+import { buildDigestCronHandler } from './cron-digest.js';
+import type { RouteDeps } from './deps.js';
 
 export const assertCronSecret = (authorization: string | undefined) => {
   const expected = process.env.CRON_SECRET;

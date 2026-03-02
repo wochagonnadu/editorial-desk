@@ -5,10 +5,10 @@
 
 import { and, asc, desc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { AppError } from '../../core/errors';
-import { approvalFlowTable, approvalStepTable, commentTable, draftTable, draftVersionTable, expertTable, factcheckReportTable, topicTable, userTable } from '../../providers/db';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
+import { AppError } from '../../core/errors.js';
+import { approvalFlowTable, approvalStepTable, commentTable, draftTable, draftVersionTable, expertTable, factcheckReportTable, topicTable, userTable } from '../../providers/db/index.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
 
 export const getDraftsList = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);

@@ -5,8 +5,8 @@
 
 import { and, count, desc, eq, sql } from 'drizzle-orm';
 import type { ActivityEvent, TeamPulseItem } from '@newsroom/shared';
-import { auditLogTable, draftTable, expertTable, voiceProfileTable } from '../providers/db';
-import type { RouteDeps } from './deps';
+import { auditLogTable, draftTable, expertTable, voiceProfileTable } from '../providers/db/index.js';
+import type { RouteDeps } from './deps.js';
 
 export async function fetchTeamPulse(deps: RouteDeps, companyId: string): Promise<TeamPulseItem[]> {
   const experts = await deps.db

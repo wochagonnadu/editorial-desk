@@ -5,9 +5,10 @@
   "packageManager": "pnpm@10.30.3",
   "scripts": {
     "build": "turbo run build",
+    "check:api-esm-imports": "node scripts/check-api-esm-imports.mjs",
     "check": "pnpm typecheck && pnpm lint",
     "check:ci": "pnpm check && pnpm test",
-    "check:push": "pnpm install --frozen-lockfile --force && pnpm turbo run build --force && pnpm --filter @newsroom/api exec tsc -p tsconfig.json --noEmit --pretty false",
+    "check:push": "pnpm install --frozen-lockfile --force && pnpm check:api-esm-imports && pnpm turbo run build --force && pnpm --filter @newsroom/api exec tsc -p tsconfig.json --noEmit --pretty false",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "prepare": "simple-git-hooks",

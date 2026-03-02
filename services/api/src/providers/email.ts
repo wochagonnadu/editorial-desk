@@ -10,8 +10,8 @@ import type {
   SendEmailInput,
   SendMagicLinkInput,
 } from '@newsroom/shared';
-import type { Logger } from './logger';
-import { sendWithResend } from './email-resend';
+import type { Logger } from './logger.js';
+import { sendWithResend } from './email-resend.js';
 
 const createReplyToken = (context: ReplyToContext): string => {
   const payload = `${context.draftId}:${context.version}:${context.expertId}`;

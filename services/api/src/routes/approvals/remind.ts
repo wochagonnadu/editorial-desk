@@ -6,19 +6,19 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { reminderTemplate } from '../../core/email-templates/approval';
-import { logAudit } from '../../core/audit';
-import { AppError } from '../../core/errors';
+import { reminderTemplate } from '../../core/email-templates/approval.js';
+import { logAudit } from '../../core/audit.js';
+import { AppError } from '../../core/errors.js';
 import {
   approvalFlowTable,
   approvalStepTable,
   draftTable,
   notificationTable,
   topicTable,
-} from '../../providers/db';
-import { resolveApprover } from '../approval-notify';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
+} from '../../providers/db/index.js';
+import { resolveApprover } from '../approval-notify.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
 
 export const sendReminder = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);

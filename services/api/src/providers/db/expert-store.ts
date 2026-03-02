@@ -6,8 +6,8 @@
 import { and, eq } from 'drizzle-orm';
 import type { ExpertStore } from '@newsroom/shared';
 import type { Expert } from '@newsroom/shared';
-import type { Database } from './pool';
-import { expertTable } from './schema';
+import type { Database } from './pool.js';
+import { expertTable } from './schema.js';
 
 const toExpert = (row: typeof expertTable.$inferSelect): Expert => ({
   id: row.id,

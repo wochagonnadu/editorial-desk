@@ -5,10 +5,10 @@
 
 import { Hono } from 'hono';
 import type { DashboardData } from '@newsroom/shared';
-import { fetchTodayActions, fetchInReview, fetchWeekSchedule } from './dashboard-queries';
-import { fetchTeamPulse, fetchActivityFeed } from './dashboard-queries-pulse';
-import { getAuthUser } from './auth-middleware';
-import type { RouteDeps } from './deps';
+import { fetchTodayActions, fetchInReview, fetchWeekSchedule } from './dashboard-queries.js';
+import { fetchTeamPulse, fetchActivityFeed } from './dashboard-queries-pulse.js';
+import { getAuthUser } from './auth-middleware.js';
+import type { RouteDeps } from './deps.js';
 
 export const buildDashboardRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();

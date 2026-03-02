@@ -5,15 +5,15 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { createVersion, transitionDraftStatus } from '../../core/drafts';
+import { createVersion, transitionDraftStatus } from '../../core/drafts.js';
 import {
   buildReport,
   extractClaims,
   flagDangerousAdvice,
   rejectUnSourcedStats,
   verifyHighRiskClaims,
-} from '../../core/factcheck';
-import { AppError } from '../../core/errors';
+} from '../../core/factcheck.js';
+import { AppError } from '../../core/errors.js';
 import {
   DrizzleDraftStore,
   claimTable,
@@ -21,10 +21,10 @@ import {
   draftVersionTable,
   expertTable,
   factcheckReportTable,
-} from '../../providers/db';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
-import { sseResponse } from './sse';
+} from '../../providers/db/index.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
+import { sseResponse } from './sse.js';
 
 export const factcheckDraft = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);

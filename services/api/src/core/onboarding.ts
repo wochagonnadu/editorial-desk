@@ -5,9 +5,9 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { EmailPort } from '@newsroom/shared';
-import type { Database } from '../providers/db';
-import { expertTable, onboardingSequenceTable, userTable } from '../providers/db';
-import { getOnboardingTemplate } from './email-templates/onboarding';
+import type { Database } from '../providers/db/index.js';
+import { expertTable, onboardingSequenceTable, userTable } from '../providers/db/index.js';
+import { getOnboardingTemplate } from './email-templates/onboarding.js';
 
 export interface OnboardingContext {
   db: Database;

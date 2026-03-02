@@ -5,8 +5,8 @@
 
 import { and, desc, eq } from 'drizzle-orm';
 import type { Draft, DraftStore, DraftVersion } from '@newsroom/shared';
-import type { Database } from './pool';
-import { draftTable, draftVersionTable } from './schema';
+import type { Database } from './pool.js';
+import { draftTable, draftVersionTable } from './schema.js';
 
 const toDraft = (row: typeof draftTable.$inferSelect): Draft => ({
   id: row.id,

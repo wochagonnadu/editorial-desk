@@ -5,9 +5,9 @@
 
 import { and, desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { authMiddleware, getAuthUser } from './auth-middleware';
-import type { RouteDeps } from './deps';
-import { auditLogTable, expertTable, userTable } from '../providers/db';
+import { authMiddleware, getAuthUser } from './auth-middleware.js';
+import type { RouteDeps } from './deps.js';
+import { auditLogTable, expertTable, userTable } from '../providers/db/index.js';
 
 const toPositiveInt = (value: string | undefined, fallback: number) => {
   const parsed = Number(value);

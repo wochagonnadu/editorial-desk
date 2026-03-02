@@ -4,8 +4,8 @@
 // RELEVANT: services/api/src/core/onboarding-finalize.ts,services/api/src/routes/drafts.ts
 
 import { desc, eq } from 'drizzle-orm';
-import type { Database } from '../providers/db';
-import { draftTable, draftVersionTable, expertTable, voiceProfileTable } from '../providers/db';
+import type { Database } from '../providers/db/index.js';
+import { draftTable, draftVersionTable, expertTable, voiceProfileTable } from '../providers/db/index.js';
 
 export const buildVoiceProfile = (responses: string[]): Record<string, unknown> => {
   const joined = responses.join(' ').trim();

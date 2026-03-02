@@ -5,13 +5,13 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { toErrorResponse } from './core/errors';
-import { createDbClient } from './providers/db';
-import { createEmailPort } from './providers/email';
-import { createContentPort } from './providers/llm';
-import { createLogger } from './providers/logger';
-import { buildCronRoutes } from './routes/cron';
-import { buildApiRouter } from './routes';
+import { toErrorResponse } from './core/errors.js';
+import { createDbClient } from './providers/db/index.js';
+import { createEmailPort } from './providers/email.js';
+import { createContentPort } from './providers/llm.js';
+import { createLogger } from './providers/logger.js';
+import { buildCronRoutes } from './routes/cron.js';
+import { buildApiRouter } from './routes/index.js';
 
 export const createApp = (): Hono => {
   const app = new Hono();

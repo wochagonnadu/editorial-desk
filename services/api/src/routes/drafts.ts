@@ -4,19 +4,19 @@
 // RELEVANT: services/api/src/routes/drafts/pipeline.ts,services/api/src/routes/drafts/query.ts
 
 import { Hono } from 'hono';
-import { authMiddleware } from './auth-middleware';
-import type { RouteDeps } from './deps';
-import { createDraftComment, confirmClaim } from './drafts/actions';
-import { sendForReview } from './drafts/approval';
+import { authMiddleware } from './auth-middleware.js';
+import type { RouteDeps } from './deps.js';
+import { createDraftComment, confirmClaim } from './drafts/actions.js';
+import { sendForReview } from './drafts/approval.js';
 import {
   createDraftFromTopic,
   factcheckDraft,
   generateDraft,
   reviseDraft,
-} from './drafts/pipeline';
-import { getDraftDetail, getDraftsList, getDraftVersions } from './drafts/query';
-import { saveDraftVersion } from './drafts/versioning';
-import { handleVoiceRating } from './drafts/voice-rating';
+} from './drafts/pipeline.js';
+import { getDraftDetail, getDraftsList, getDraftVersions } from './drafts/query.js';
+import { saveDraftVersion } from './drafts/versioning.js';
+import { handleVoiceRating } from './drafts/voice-rating.js';
 
 export const buildDraftRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();

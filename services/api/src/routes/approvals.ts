@@ -4,11 +4,11 @@
 // RELEVANT: services/api/src/routes/approvals/list.ts,services/api/src/routes/approvals/remind.ts
 
 import { Hono } from 'hono';
-import { authMiddleware } from './auth-middleware';
-import { forwardReviewer } from './approvals/forward';
-import { getApprovals } from './approvals/list';
-import { sendReminder } from './approvals/remind';
-import type { RouteDeps } from './deps';
+import { authMiddleware } from './auth-middleware.js';
+import { forwardReviewer } from './approvals/forward.js';
+import { getApprovals } from './approvals/list.js';
+import { sendReminder } from './approvals/remind.js';
+import type { RouteDeps } from './deps.js';
 
 export const buildApprovalsRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();

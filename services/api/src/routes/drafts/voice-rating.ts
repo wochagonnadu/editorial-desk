@@ -5,10 +5,10 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { AppError } from '../../core/errors';
-import { recordSelfRating } from '../../core/voice';
-import { draftTable, expertTable, notificationTable } from '../../providers/db';
-import type { RouteDeps } from '../deps';
+import { AppError } from '../../core/errors.js';
+import { recordSelfRating } from '../../core/voice.js';
+import { draftTable, expertTable, notificationTable } from '../../providers/db/index.js';
+import type { RouteDeps } from '../deps.js';
 
 const parseScore = (queryScore: string | undefined, bodyScore: unknown): number => {
   const raw = queryScore ?? (typeof bodyScore === 'number' ? String(bodyScore) : undefined);

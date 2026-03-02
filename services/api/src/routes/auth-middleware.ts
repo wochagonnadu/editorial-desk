@@ -4,9 +4,9 @@
 // RELEVANT: services/api/src/routes/auth-token.ts,services/api/src/routes/companies.ts
 
 import type { Context, MiddlewareHandler } from 'hono';
-import { AppError } from '../core/errors';
-import { getDevAuthPayload, isDevAuthBypassEnabled } from './auth-dev';
-import { verifySessionToken } from './auth-token';
+import { AppError } from '../core/errors.js';
+import { getDevAuthPayload, isDevAuthBypassEnabled } from './auth-dev.js';
+import { verifySessionToken } from './auth-token.js';
 
 export interface AuthUser {
   userId: string;

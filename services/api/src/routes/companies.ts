@@ -5,10 +5,10 @@
 
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { AppError } from '../core/errors';
-import { companyTable } from '../providers/db';
-import { getAuthUser } from './auth-middleware';
-import type { RouteDeps } from './deps';
+import { AppError } from '../core/errors.js';
+import { companyTable } from '../providers/db/index.js';
+import { getAuthUser } from './auth-middleware.js';
+import type { RouteDeps } from './deps.js';
 
 export const buildCompanyRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();

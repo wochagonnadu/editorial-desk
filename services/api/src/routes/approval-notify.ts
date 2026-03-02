@@ -5,10 +5,10 @@
 
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { approvalRequestTemplate } from '../core/email-templates/approval';
-import { AppError } from '../core/errors';
-import { expertTable, notificationTable, userTable } from '../providers/db';
-import type { RouteDeps } from './deps';
+import { approvalRequestTemplate } from '../core/email-templates/approval.js';
+import { AppError } from '../core/errors.js';
+import { expertTable, notificationTable, userTable } from '../providers/db/index.js';
+import type { RouteDeps } from './deps.js';
 
 export const resolveApprover = async (deps: RouteDeps, type: 'user' | 'expert', id: string) => {
   if (type === 'user') {

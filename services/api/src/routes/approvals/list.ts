@@ -12,9 +12,9 @@ import {
   expertTable,
   topicTable,
   userTable,
-} from '../../providers/db';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
+} from '../../providers/db/index.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
 
 const reviewerName = async (deps: RouteDeps, type: string, id: string) => {
   if (type === 'user') {

@@ -6,18 +6,18 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { logAudit } from '../core/audit';
-import { AppError } from '../core/errors';
-import { companyTable, notificationTable, userTable } from '../providers/db';
+import { logAudit } from '../core/audit.js';
+import { AppError } from '../core/errors.js';
+import { companyTable, notificationTable, userTable } from '../providers/db/index.js';
 import {
   DEV_BYPASS_TOKEN,
   getDevAuthEmail,
   getDevAuthPayload,
   isDevAuthBypassEnabled,
-} from './auth-dev';
-import { issueDevMockMagicLink } from './auth-dev-mock';
-import { signSessionToken } from './auth-token';
-import type { RouteDeps } from './deps';
+} from './auth-dev.js';
+import { issueDevMockMagicLink } from './auth-dev-mock.js';
+import { signSessionToken } from './auth-token.js';
+import type { RouteDeps } from './deps.js';
 const parseEmail = (value: unknown): string => {
   if (typeof value !== 'string' || !value.includes('@')) {
     throw new AppError(400, 'VALIDATION_ERROR', 'email must be valid');

@@ -5,11 +5,11 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { logAudit } from '../../core/audit';
-import { AppError } from '../../core/errors';
-import { DrizzleDraftStore, draftTable } from '../../providers/db';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
+import { logAudit } from '../../core/audit.js';
+import { AppError } from '../../core/errors.js';
+import { DrizzleDraftStore, draftTable } from '../../providers/db/index.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
 
 export const saveDraftVersion = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);

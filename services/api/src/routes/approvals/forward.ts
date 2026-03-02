@@ -5,9 +5,9 @@
 
 import { and, desc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { logAudit } from '../../core/audit';
-import { buildDiffSummaryBullets } from '../../core/diff-summary';
-import { AppError } from '../../core/errors';
+import { logAudit } from '../../core/audit.js';
+import { buildDiffSummaryBullets } from '../../core/diff-summary.js';
+import { AppError } from '../../core/errors.js';
 import {
   approvalFlowTable,
   approvalStepTable,
@@ -16,10 +16,10 @@ import {
   expertTable,
   topicTable,
   userTable,
-} from '../../providers/db';
-import { resolveApprover, sendApprovalRequest } from '../approval-notify';
-import { getAuthUser } from '../auth-middleware';
-import type { RouteDeps } from '../deps';
+} from '../../providers/db/index.js';
+import { resolveApprover, sendApprovalRequest } from '../approval-notify.js';
+import { getAuthUser } from '../auth-middleware.js';
+import type { RouteDeps } from '../deps.js';
 
 const parseBody = async (context: Context) =>
   (await context.req.json().catch(() => ({}))) as Record<string, unknown>;

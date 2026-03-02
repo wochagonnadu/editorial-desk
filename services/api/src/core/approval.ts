@@ -4,14 +4,14 @@
 // RELEVANT: services/api/src/routes/drafts.ts,services/api/src/routes/webhooks.ts
 
 import { and, asc, eq, inArray, lt } from 'drizzle-orm';
-import { AppError } from './errors';
-import type { Database } from '../providers/db';
+import { AppError } from './errors.js';
+import type { Database } from '../providers/db/index.js';
 import {
   approvalDecisionTable,
   approvalFlowTable,
   approvalStepTable,
   draftTable,
-} from '../providers/db';
+} from '../providers/db/index.js';
 
 export interface ApprovalConfigStep {
   approver_type: 'user' | 'expert';
