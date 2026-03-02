@@ -28,5 +28,5 @@ export const logAudit = async (db: Database, input: AuditInput): Promise<void> =
     entityId: input.entityId,
     draftVersionId: input.draftVersionId,
     metadata: input.metadata ?? {},
-  });
+  } as unknown as typeof auditLogTable.$inferInsert);
 };

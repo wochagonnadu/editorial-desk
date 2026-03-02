@@ -7,7 +7,7 @@
     "build": "turbo run build",
     "check": "pnpm typecheck && pnpm lint",
     "check:ci": "pnpm check && pnpm test",
-    "check:push": "pnpm install --frozen-lockfile && pnpm build",
+    "check:push": "pnpm install --frozen-lockfile --force && pnpm turbo run build --force && pnpm --filter @newsroom/api exec tsc -p tsconfig.json --noEmit --pretty false",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "prepare": "simple-git-hooks",
