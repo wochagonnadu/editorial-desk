@@ -16,19 +16,47 @@ interface RequestInput {
   version: number;
   title: string;
   summary: string;
+  changes?: string[];
 }
 
-const buildActionLink = (appUrl: string, draftId: string, token: string, version: number, action: 'approve' | 'request_changes') => {
+const buildActionLink = (
+  appUrl: string,
+  draftId: string,
+  token: string,
+  version: number,
+  action: 'approve' | 'request_changes',
+) => {
   return `${appUrl.replace(/\/$/, '')}/api/v1/webhooks/email/click?action=${action}&draft=${draftId}&token=${token}&version=${version}`;
 };
 
 export const approvalRequestTemplate = (input: RequestInput): ApprovalTemplate => {
-  const approveLink = buildActionLink(input.appUrl, input.draftId, input.token, input.version, 'approve');
-  const changesLink = buildActionLink(input.appUrl, input.draftId, input.token, input.version, 'request_changes');
+  const approveLink = buildActionLink(
+    input.appUrl,
+    input.draftId,
+    input.token,
+    input.version,
+    'approve',
+  );
+  const changesLink = buildActionLink(
+    input.appUrl,
+    input.draftId,
+    input.token,
+    input.version,
+    'request_changes',
+  );
+  const highlights = (input.changes ?? []).filter(Boolean).slice(0, 5);
+  const changesTextBlock =
+    highlights.length > 0
+      ? `\n\nWhat changed:\n${highlights.map((item) => `- ${item}`).join('\n')}`
+      : '';
+  const changesHtmlBlock =
+    highlights.length > 0
+      ? `<p><strong>What changed</strong></p><ul>${highlights.map((item) => `<li>${item}</li>`).join('')}</ul>`
+      : '';
   return {
     subject: `Approval requested: ${input.title}`,
-    textBody: `Draft: ${input.title}\n\n${input.summary}\n\nApprove: ${approveLink}\nRequest changes: ${changesLink}`,
-    html: `<p><strong>${input.title}</strong></p><p>${input.summary}</p><p><a href="${approveLink}">Approve</a> | <a href="${changesLink}">Request changes</a></p>`,
+    textBody: `Draft: ${input.title}\n\n${input.summary}${changesTextBlock}\n\nApprove: ${approveLink}\nRequest changes: ${changesLink}`,
+    html: `<p><strong>${input.title}</strong></p><p>${input.summary}</p>${changesHtmlBlock}<p><a href="${approveLink}">Approve</a> | <a href="${changesLink}">Request changes</a></p>`,
   };
 };
 
@@ -41,8 +69,12 @@ export const reminderTemplate = (title: string, deadlineAt: Date): ApprovalTempl
   };
 };
 
-export const consolidatedFeedbackTemplate = (title: string, feedback: string[]): ApprovalTemplate => {
-  const list = feedback.length > 0 ? feedback.map((item) => `- ${item}`).join('\n') : '- No details provided';
+export const consolidatedFeedbackTemplate = (
+  title: string,
+  feedback: string[],
+): ApprovalTemplate => {
+  const list =
+    feedback.length > 0 ? feedback.map((item) => `- ${item}`).join('\n') : '- No details provided';
   return {
     subject: `Consolidated feedback: ${title}`,
     textBody: `All approvers requested changes for "${title}":\n${list}`,

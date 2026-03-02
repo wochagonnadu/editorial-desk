@@ -23,7 +23,16 @@ export const resolveApprover = async (deps: RouteDeps, type: 'user' | 'expert', 
 
 export const sendApprovalRequest = async (
   deps: RouteDeps,
-  input: { companyId: string; draftId: string; stepId: string; to: string; title: string; summary: string; version: number },
+  input: {
+    companyId: string;
+    draftId: string;
+    stepId: string;
+    to: string;
+    title: string;
+    summary: string;
+    version: number;
+    changes?: string[];
+  },
 ) => {
   const token = randomUUID();
   await deps.db.insert(notificationTable).values({
@@ -44,6 +53,12 @@ export const sendApprovalRequest = async (
     version: input.version,
     title: input.title,
     summary: input.summary,
+    changes: input.changes,
   });
-  await deps.email.sendEmail({ to: input.to, subject: email.subject, html: email.html, textBody: email.textBody });
+  await deps.email.sendEmail({
+    to: input.to,
+    subject: email.subject,
+    html: email.html,
+    textBody: email.textBody,
+  });
 };

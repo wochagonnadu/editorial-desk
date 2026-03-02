@@ -6,6 +6,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { logAudit } from '../../core/audit';
+import { buildDiffSummaryBullets } from '../../core/diff-summary';
 import { AppError } from '../../core/errors';
 import {
   approvalFlowTable,
@@ -103,6 +104,17 @@ export const forwardReviewer = (deps: RouteDeps) => async (context: Context) => 
   if (!version || !topic) throw new AppError(404, 'NOT_FOUND', 'Draft context not found');
 
   const approver = await resolveApprover(deps, type, reviewerId);
+  const [previousVersion] = await deps.db
+    .select()
+    .from(draftVersionTable)
+    .where(
+      and(
+        eq(draftVersionTable.draftId, draft.id),
+        eq(draftVersionTable.versionNumber, version.versionNumber - 1),
+      ),
+    )
+    .limit(1);
+  const changes = buildDiffSummaryBullets(previousVersion?.content ?? null, version.content);
   await sendApprovalRequest(deps, {
     companyId: authUser.companyId,
     draftId: draft.id,
@@ -111,6 +123,7 @@ export const forwardReviewer = (deps: RouteDeps) => async (context: Context) => 
     title: topic.title,
     summary: version.summary ?? version.content.slice(0, 200),
     version: version.versionNumber,
+    changes,
   });
   await logAudit(deps.db, {
     companyId: authUser.companyId,
