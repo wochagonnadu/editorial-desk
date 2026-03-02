@@ -52,7 +52,10 @@ export class DrizzleDraftStore implements DraftStore {
     const predicates = [eq(draftTable.companyId, filter.companyId)];
     if (filter.status) predicates.push(eq(draftTable.status, filter.status));
     if (filter.expertId) predicates.push(eq(draftTable.expertId, filter.expertId));
-    const rows = await this.db.select().from(draftTable).where(and(...predicates));
+    const rows = await this.db
+      .select()
+      .from(draftTable)
+      .where(and(...predicates));
     return rows.map(toDraft);
   }
 
@@ -70,11 +73,13 @@ export class DrizzleDraftStore implements DraftStore {
         ...input,
         versionNumber: nextVersion,
         voiceScore: input.voiceScore === undefined ? undefined : input.voiceScore.toFixed(2),
-      })
+      } as unknown as typeof draftVersionTable.$inferInsert)
       .returning();
     await this.db
       .update(draftTable)
-      .set({ currentVersionId: row.id, updatedAt: new Date() })
+      .set({ currentVersionId: row.id, updatedAt: new Date() } as Partial<
+        typeof draftTable.$inferInsert
+      >)
       .where(eq(draftTable.id, input.draftId));
     return toDraftVersion(row);
   }
