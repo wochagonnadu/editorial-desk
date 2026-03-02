@@ -31,7 +31,7 @@ export const createApp = (): Hono => {
   app.use('*', async (context, next) => {
     const startedAt = Date.now();
     const path = context.req.path || 'unknown';
-    logger.info('request.start', { method: context.req.method, path });
+    logger.info('request.start', { method: context.req.method, path, url: context.req.url });
     try {
       await next();
     } finally {
@@ -58,8 +58,12 @@ export const createApp = (): Hono => {
     }),
   );
 
+  // Vercel can pass either /api/* or stripped /* paths depending on route matching.
+  // Register both prefixes to keep behavior stable across environments.
   app.route('/api/v1', buildApiRouter(deps));
+  app.route('/v1', buildApiRouter(deps));
   app.route('/api/cron', buildCronRoutes(deps));
+  app.route('/cron', buildCronRoutes(deps));
 
   app.onError((error, context) => {
     logger.error('api.unhandled_error', { message: error.message });
