@@ -16,16 +16,29 @@ const SVIX_TOLERANCE_SECONDS = 300;
 const readObject = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 
-const firstEmail = (value: unknown): string | undefined => {
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
-  return undefined;
+const normalizeEmailText = (value: string): string | undefined => {
+  const match = value.match(/<([^>]+)>/);
+  const email = (match?.[1] ?? value).trim().toLowerCase();
+  return email || undefined;
 };
 
-const normalizeFrom = (value: unknown): string | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const match = value.match(/<([^>]+)>/);
-  return (match?.[1] ?? value).trim().toLowerCase();
+const readEmail = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return normalizeEmailText(value);
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const email = readEmail(item);
+      if (email) return email;
+    }
+    return undefined;
+  }
+
+  if (value && typeof value === 'object') {
+    const item = value as { email?: unknown; address?: unknown };
+    return readEmail(item.email ?? item.address);
+  }
+
+  return undefined;
 };
 
 const parseSvixSignatures = (value: string): string[] =>
@@ -86,8 +99,8 @@ export const resolveInboundPayload = async (raw: unknown): Promise<InboundPayloa
   const body = readObject(raw);
   if (body.type !== 'email.received') {
     return {
-      from: normalizeFrom(body.from),
-      to: firstEmail(body.to),
+      from: readEmail(body.from),
+      to: readEmail(body.to),
       textBody: typeof body.textBody === 'string' ? body.textBody : undefined,
       rawBody: typeof body.rawBody === 'string' ? body.rawBody : undefined,
     };
@@ -100,8 +113,8 @@ export const resolveInboundPayload = async (raw: unknown): Promise<InboundPayloa
 
   const received = await getReceivedEmail(emailId);
   return {
-    from: normalizeFrom(received.from ?? data.from),
-    to: firstEmail(received.to ?? data.to),
+    from: readEmail(received.from ?? data.from),
+    to: readEmail(received.to ?? data.to),
     textBody: typeof received.text === 'string' ? received.text : undefined,
     rawBody: typeof received.html === 'string' ? received.html : undefined,
   };

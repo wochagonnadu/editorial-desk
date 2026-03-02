@@ -80,7 +80,7 @@ export const processReply = async (
   step: number,
   responseData: string,
 ) => {
-  await context.db
+  const [updated] = await context.db
     .update(onboardingSequenceTable)
     .set({ status: 'replied', repliedAt: new Date(), responseData: { text: responseData } })
     .where(
@@ -88,7 +88,13 @@ export const processReply = async (
         eq(onboardingSequenceTable.expertId, expertId),
         eq(onboardingSequenceTable.stepNumber, step),
       ),
-    );
+    )
+    .returning({ id: onboardingSequenceTable.id });
+
+  if (!updated) {
+    throw new Error(`onboarding step is missing for expert=${expertId} step=${step}`);
+  }
+
   if (step < 5) {
     await sendStepEmail(context, expertId, step + 1);
     return { completed: false, nextStep: step + 1 };

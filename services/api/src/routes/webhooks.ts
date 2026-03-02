@@ -56,15 +56,40 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
     assertInboundAuth(context.req.raw.headers, rawBody, context.req.header('x-webhook-secret'));
     const parsed = parseBody(rawBody);
     const body = (await resolveInboundPayload(parsed)) as InboundPayload;
+    deps.logger.info('webhook.inbound.resolved', {
+      to: body.to ?? null,
+      from: body.from ?? null,
+      has_text: Boolean((body.textBody ?? body.rawBody ?? '').trim()),
+    });
 
     const draftResult = await processDraftInbound(deps, body);
-    if (draftResult.handled) return context.json({ ok: true, stale: draftResult.stale });
+    if (draftResult.handled) {
+      deps.logger.info('webhook.inbound.draft_handled', { stale: draftResult.stale });
+      return context.json({ ok: true, stale: draftResult.stale });
+    }
 
     const to = body.to ?? '';
+    if (!to) {
+      deps.logger.info('webhook.inbound.ignored', { reason: 'missing_to' });
+      return context.json({ ok: true, ignored: true });
+    }
+
     const token = parseOnboardingReplyAddress(to);
-    if (!token) return context.json({ ok: true, ignored: true });
+    if (!token) {
+      deps.logger.info('webhook.inbound.ignored', { reason: 'onboarding_token_not_found', to });
+      return context.json({ ok: true, ignored: true });
+    }
 
     const text = body.textBody ?? body.rawBody ?? '';
+    if (!text.trim()) {
+      deps.logger.info('webhook.inbound.ignored', {
+        reason: 'empty_payload_text',
+        expert_id: token.expertId,
+        step: token.step,
+      });
+      return context.json({ ok: true, ignored: true });
+    }
+
     const result = await processReply(
       { db: deps.db, email: deps.email },
       token.expertId,
