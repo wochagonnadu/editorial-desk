@@ -10,6 +10,7 @@ import { RequireAuth } from './components/RequireAuth';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Logout } from './pages/Logout';
+import { PublicDoc } from './pages/PublicDoc';
 import { Home } from './pages/Home';
 import { Experts } from './pages/Experts';
 import { ExpertProfile } from './pages/ExpertProfile';
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/auth/verify" element={<Login />} />
           <Route path="/logout" element={<Logout />} />
+          <Route path="/docs/:draftId" element={<PublicDoc />} />
 
           {/* Authenticated App Routes */}
           <Route
