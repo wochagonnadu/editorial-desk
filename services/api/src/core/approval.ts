@@ -99,7 +99,7 @@ export const activateNextStep = async (
     .set({
       status: 'pending',
       deadlineAt: withDeadline(deadlineHours),
-    } as typeof approvalStepTable.$inferInsert)
+    } as Partial<typeof approvalStepTable.$inferInsert>)
     .where(eq(approvalStepTable.id, next.id))
     .returning();
   return updated;
@@ -116,7 +116,7 @@ export const activateAllSteps = async (
     .set({
       status: 'pending',
       deadlineAt,
-    } as typeof approvalStepTable.$inferInsert)
+    } as Partial<typeof approvalStepTable.$inferInsert>)
     .where(
       and(
         eq(approvalStepTable.approvalFlowId, approvalFlowId),
@@ -165,7 +165,7 @@ export const recordDecision = async (
     .returning();
   await db
     .update(approvalStepTable)
-    .set({ status: decision } as typeof approvalStepTable.$inferInsert)
+    .set({ status: decision } as Partial<typeof approvalStepTable.$inferInsert>)
     .where(eq(approvalStepTable.id, step.id));
   return { flow, step, saved };
 };
