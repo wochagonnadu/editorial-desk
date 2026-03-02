@@ -31,6 +31,7 @@ export default function App() {
           {/* Public Routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/auth/verify" element={<Login />} />
           <Route path="/logout" element={<Logout />} />
 
           {/* Authenticated App Routes */}
