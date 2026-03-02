@@ -20,6 +20,7 @@ export type DraftVersion = {
   id: string;
   versionNumber: number;
   summary: string;
+  content: string;
   createdAt: string;
 };
 
@@ -76,7 +77,13 @@ type DraftDetailResponse = {
 };
 
 type DraftVersionsResponse = {
-  data: Array<{ id: string; versionNumber: number; summary?: string | null; createdAt: string }>;
+  data: Array<{
+    id: string;
+    versionNumber: number;
+    summary?: string | null;
+    content?: string | null;
+    createdAt: string;
+  }>;
 };
 
 export const fetchDrafts = async (
@@ -141,6 +148,7 @@ export const fetchDraftVersions = async (token: string, id: string): Promise<Dra
     id: version.id,
     versionNumber: version.versionNumber,
     summary: version.summary ?? 'No summary',
+    content: version.content ?? '',
     createdAt: version.createdAt,
   }));
 };

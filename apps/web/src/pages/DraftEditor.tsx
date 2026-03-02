@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Clock, MessageSquare, ShieldAlert, CheckCircle2, History } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import { buildDraftDiffSummary } from '../lib/draft-diff';
 import {
   confirmDraftClaim,
   createDraftComment,
@@ -36,6 +37,8 @@ export function DraftEditor() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingReview, setIsSendingReview] = useState(false);
+  const [diffSourceVersionId, setDiffSourceVersionId] = useState('');
+  const [diffTargetVersionId, setDiffTargetVersionId] = useState('');
 
   const load = async () => {
     if (!session || !id) return;
@@ -64,6 +67,64 @@ export function DraftEditor() {
   }, [id, session]);
 
   const pendingComments = useMemo(() => detail?.comments ?? [], [detail]);
+
+  useEffect(() => {
+    if (versions.length === 0) {
+      setDiffSourceVersionId('');
+      setDiffTargetVersionId('');
+      return;
+    }
+
+    const versionIds = new Set(versions.map((version) => version.id));
+    const defaultTarget =
+      detail?.currentVersionId && versionIds.has(detail.currentVersionId)
+        ? detail.currentVersionId
+        : versions[0].id;
+    const defaultSource = versions.find((version) => version.id !== defaultTarget)?.id ?? '';
+
+    setDiffTargetVersionId((current) =>
+      current && versionIds.has(current) ? current : defaultTarget,
+    );
+    setDiffSourceVersionId((current) =>
+      current && versionIds.has(current) ? current : defaultSource,
+    );
+  }, [versions, detail?.currentVersionId]);
+
+  const diffSourceVersion = useMemo(
+    () => versions.find((version) => version.id === diffSourceVersionId) ?? null,
+    [versions, diffSourceVersionId],
+  );
+
+  const diffTargetVersion = useMemo(
+    () => versions.find((version) => version.id === diffTargetVersionId) ?? null,
+    [versions, diffTargetVersionId],
+  );
+
+  const diffFallback = useMemo(() => {
+    if (versions.length < 2) return 'Need at least two versions to compare.';
+    if (!diffSourceVersionId || !diffTargetVersionId) {
+      return 'Select source and target versions to compare.';
+    }
+    if (diffSourceVersionId === diffTargetVersionId) return 'Choose two different versions.';
+    if (!diffSourceVersion || !diffTargetVersion) {
+      return 'Selected version data is unavailable. Reload draft and try again.';
+    }
+    if (!diffSourceVersion.content.trim() || !diffTargetVersion.content.trim()) {
+      return 'Diff is unavailable because one selected version has empty content.';
+    }
+    return null;
+  }, [
+    versions.length,
+    diffSourceVersionId,
+    diffTargetVersionId,
+    diffSourceVersion,
+    diffTargetVersion,
+  ]);
+
+  const diffSummary = useMemo(() => {
+    if (diffFallback || !diffSourceVersion || !diffTargetVersion) return null;
+    return buildDraftDiffSummary(diffSourceVersion.content, diffTargetVersion.content);
+  }, [diffFallback, diffSourceVersion, diffTargetVersion]);
 
   const handleSave = async () => {
     if (!session || !detail) return;
@@ -254,6 +315,66 @@ export function DraftEditor() {
 
             {activeTab === 'changes' ? (
               <div className="space-y-3">
+                <div className="border border-ink-100 rounded-xl p-3 space-y-3">
+                  <p className="text-xs uppercase tracking-wide text-ink-500">What changed</p>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs text-ink-500 mb-1">Source version</label>
+                      <select
+                        value={diffSourceVersionId}
+                        onChange={(event) => setDiffSourceVersionId(event.target.value)}
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-ink-200"
+                      >
+                        <option value="">Select source version</option>
+                        {versions.map((version) => (
+                          <option key={`source-${version.id}`} value={version.id}>
+                            v{version.versionNumber} -{' '}
+                            {new Date(version.createdAt).toLocaleDateString()}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-ink-500 mb-1">Target version</label>
+                      <select
+                        value={diffTargetVersionId}
+                        onChange={(event) => setDiffTargetVersionId(event.target.value)}
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-ink-200"
+                      >
+                        <option value="">Select target version</option>
+                        {versions.map((version) => (
+                          <option key={`target-${version.id}`} value={version.id}>
+                            v{version.versionNumber} -{' '}
+                            {new Date(version.createdAt).toLocaleDateString()}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {diffFallback ? (
+                    <p className="text-xs text-ink-600">{diffFallback}</p>
+                  ) : diffSummary && diffSummary.bullets.length > 0 ? (
+                    <>
+                      <p className="text-xs text-ink-500">
+                        Paragraphs +{diffSummary.addedParagraphs} / -{diffSummary.removedParagraphs}
+                        {' | '}Lines +{diffSummary.lineAdds} / -{diffSummary.lineRemoves}
+                      </p>
+                      <ul className="space-y-1">
+                        {diffSummary.bullets.map((item, index) => (
+                          <li key={`${item}-${index}`} className="text-xs text-ink-700">
+                            - {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p className="text-xs text-ink-600">
+                      No meaningful text changes between versions.
+                    </p>
+                  )}
+                </div>
+
                 {pendingComments.length === 0 ? (
                   <div className="text-center py-8 text-ink-500 text-sm">
                     <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
