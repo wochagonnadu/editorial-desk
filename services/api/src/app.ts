@@ -30,15 +30,18 @@ export const createApp = (): Hono => {
 
   app.use('*', async (context, next) => {
     const startedAt = Date.now();
-    const path = new URL(context.req.url).pathname;
+    const path = context.req.path || 'unknown';
     logger.info('request.start', { method: context.req.method, path });
-    await next();
-    logger.info('request.done', {
-      method: context.req.method,
-      path,
-      status: context.res.status,
-      duration_ms: Date.now() - startedAt,
-    });
+    try {
+      await next();
+    } finally {
+      logger.info('request.done', {
+        method: context.req.method,
+        path,
+        status: context.res.status,
+        duration_ms: Date.now() - startedAt,
+      });
+    }
   });
 
   app.get('/health', (c) => {
