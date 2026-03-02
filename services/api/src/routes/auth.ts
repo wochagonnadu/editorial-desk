@@ -46,7 +46,7 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     if (!user) {
       const [company] = await deps.db
         .insert(companyTable)
-        .values({ name: companyNameFromEmail(email), domain: 'business', language: 'ru' })
+        .values({ name: companyNameFromEmail(email), domain: 'business' })
         .returning();
       [user] = await deps.db
         .insert(userTable)
@@ -78,7 +78,7 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     );
     await deps.db
       .update(notificationTable)
-      .set({ magicLinkRevoked: true })
+      .set({ magicLinkRevoked: true } as Partial<typeof notificationTable.$inferInsert>)
       .where(
         and(
           eq(notificationTable.recipientEmail, email),
@@ -146,7 +146,11 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
 
     const [consumed] = await deps.db
       .update(notificationTable)
-      .set({ magicLinkRevoked: true, status: 'replied', repliedAt: new Date() })
+      .set({
+        magicLinkRevoked: true,
+        status: 'replied',
+        repliedAt: new Date(),
+      } as Partial<typeof notificationTable.$inferInsert>)
       .where(
         and(
           eq(notificationTable.id, notification.id),

@@ -36,7 +36,7 @@ export const issueDevMockMagicLink = async (
 
   await deps.db
     .update(notificationTable)
-    .set({ magicLinkRevoked: true })
+    .set({ magicLinkRevoked: true } as Partial<typeof notificationTable.$inferInsert>)
     .where(eq(notificationTable.magicLinkToken, token));
 
   await deps.db.insert(notificationTable).values({
