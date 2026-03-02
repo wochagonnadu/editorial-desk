@@ -22,9 +22,21 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
     if (status) predicates.push(eq(topicTable.status, status));
     if (expertId) predicates.push(eq(topicTable.expertId, expertId));
 
-    const topics = await deps.db.select().from(topicTable).where(and(...predicates)).orderBy(desc(topicTable.createdAt));
-    const expertIds = topics.map((topic) => topic.expertId).filter((id): id is string => Boolean(id));
-    const experts = expertIds.length === 0 ? [] : await deps.db.select().from(expertTable).where(eq(expertTable.companyId, authUser.companyId));
+    const topics = await deps.db
+      .select()
+      .from(topicTable)
+      .where(and(...predicates))
+      .orderBy(desc(topicTable.createdAt));
+    const expertIds = topics
+      .map((topic) => topic.expertId)
+      .filter((id): id is string => Boolean(id));
+    const experts =
+      expertIds.length === 0
+        ? []
+        : await deps.db
+            .select()
+            .from(expertTable)
+            .where(eq(expertTable.companyId, authUser.companyId));
     return context.json({
       data: topics.map((topic) => ({
         id: topic.id,
@@ -33,7 +45,9 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
         source_type: topic.sourceType,
         status: topic.status,
         created_at: topic.createdAt,
-        expert: topic.expertId ? experts.find((expert) => expert.id === topic.expertId) ?? null : null,
+        expert: topic.expertId
+          ? (experts.find((expert) => expert.id === topic.expertId) ?? null)
+          : null,
       })),
     });
   });
@@ -55,7 +69,7 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
         sourceType: typeof body.source_type === 'string' ? body.source_type : 'manual',
         status: 'proposed',
         proposedBy: 'manager',
-      })
+      } as unknown as typeof topicTable.$inferInsert)
       .returning();
 
     return context.json({ id: topic.id, status: topic.status }, 201);
@@ -64,11 +78,26 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
   router.post('/:id/approve', async (context) => {
     const authUser = getAuthUser(context);
     const topicId = context.req.param('id');
-    const [topic] = await deps.db.select().from(topicTable).where(and(eq(topicTable.id, topicId), eq(topicTable.companyId, authUser.companyId))).limit(1);
+    const [topic] = await deps.db
+      .select()
+      .from(topicTable)
+      .where(and(eq(topicTable.id, topicId), eq(topicTable.companyId, authUser.companyId)))
+      .limit(1);
     if (!topic) throw new AppError(404, 'NOT_FOUND', 'Topic not found');
 
-    await deps.db.update(topicTable).set({ status: 'approved' }).where(eq(topicTable.id, topic.id));
-    await logAudit(deps.db, { companyId: authUser.companyId, actorType: 'user', actorId: authUser.userId, action: 'topic.approved', entityType: 'topic', entityId: topic.id, metadata: { source: 'dashboard' } });
+    await deps.db
+      .update(topicTable)
+      .set({ status: 'approved' } as Partial<typeof topicTable.$inferInsert>)
+      .where(eq(topicTable.id, topic.id));
+    await logAudit(deps.db, {
+      companyId: authUser.companyId,
+      actorType: 'user',
+      actorId: authUser.userId,
+      action: 'topic.approved',
+      entityType: 'topic',
+      entityId: topic.id,
+      metadata: { source: 'dashboard' },
+    });
     return context.json({ id: topic.id, status: 'approved' });
   });
 
@@ -77,11 +106,26 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
     const topicId = context.req.param('id');
     const body = (await context.req.json().catch(() => ({}))) as Record<string, unknown>;
     const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
-    const [topic] = await deps.db.select().from(topicTable).where(and(eq(topicTable.id, topicId), eq(topicTable.companyId, authUser.companyId))).limit(1);
+    const [topic] = await deps.db
+      .select()
+      .from(topicTable)
+      .where(and(eq(topicTable.id, topicId), eq(topicTable.companyId, authUser.companyId)))
+      .limit(1);
     if (!topic) throw new AppError(404, 'NOT_FOUND', 'Topic not found');
 
-    await deps.db.update(topicTable).set({ status: 'rejected' }).where(eq(topicTable.id, topic.id));
-    await logAudit(deps.db, { companyId: authUser.companyId, actorType: 'user', actorId: authUser.userId, action: 'topic.rejected', entityType: 'topic', entityId: topic.id, metadata: { source: 'dashboard', reason: reason || null } });
+    await deps.db
+      .update(topicTable)
+      .set({ status: 'rejected' } as Partial<typeof topicTable.$inferInsert>)
+      .where(eq(topicTable.id, topic.id));
+    await logAudit(deps.db, {
+      companyId: authUser.companyId,
+      actorType: 'user',
+      actorId: authUser.userId,
+      action: 'topic.rejected',
+      entityType: 'topic',
+      entityId: topic.id,
+      metadata: { source: 'dashboard', reason: reason || null },
+    });
     return context.json({ id: topic.id, status: 'rejected' });
   });
 
