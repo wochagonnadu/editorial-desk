@@ -3,7 +3,7 @@
 // WHY:  Разгружает dashboard.ts, каждая query — отдельная функция
 // RELEVANT: services/api/src/routes/dashboard.ts, services/api/src/providers/db/schema.ts
 
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, gte, inArray, sql } from 'drizzle-orm';
 import type { InReviewItem, TodayAction, WeekScheduleItem } from '@newsroom/shared';
 import { draftTable, expertTable, topicTable } from '../providers/db';
 import type { RouteDeps } from './deps';
@@ -45,21 +45,24 @@ export async function fetchInReview(deps: RouteDeps, companyId: string): Promise
     .from(draftTable)
     .where(and(eq(draftTable.companyId, companyId), eq(draftTable.status, 'needs_review')));
 
-  const topicIds = rows.map((r) => r.topicId);
+  const topicIds = [
+    ...new Set(rows.map((r) => r.topicId).filter((id): id is string => Boolean(id))),
+  ];
   const topics = topicIds.length
     ? await deps.db
         .select({ id: topicTable.id, title: topicTable.title })
         .from(topicTable)
-        .where(sql`${topicTable.id} IN ${topicIds}`)
+        .where(inArray(topicTable.id, topicIds))
     : [];
-  const titleMap = new Map(topics.map((t) => [t.id, t.title]));
+  const titleMap = new Map<string, string>();
+  for (const topic of topics) titleMap.set(String(topic.id), String(topic.title));
 
   const now = Date.now();
   return rows
     .map(
       (r): InReviewItem => ({
         draftId: r.draftId,
-        title: titleMap.get(r.topicId) ?? 'Untitled',
+        title: titleMap.get(String(r.topicId)) ?? 'Untitled',
         status: 'needs_review',
         reviewer: '', // TODO: заполнить из approval_step
         timeInStatusSec: Math.floor((now - r.updatedAt.getTime()) / 1000),
@@ -87,31 +90,37 @@ export async function fetchWeekSchedule(
     .from(draftTable)
     .where(and(eq(draftTable.companyId, companyId), gte(draftTable.updatedAt, weekAgo)));
 
-  const topicIds = rows.map((r) => r.topicId);
-  const expertIds = [...new Set(rows.map((r) => r.expertId))];
+  const topicIds = [
+    ...new Set(rows.map((r) => r.topicId).filter((id): id is string => Boolean(id))),
+  ];
+  const expertIds = [
+    ...new Set(rows.map((r) => r.expertId).filter((id): id is string => Boolean(id))),
+  ];
 
   const [topics, experts] = await Promise.all([
     topicIds.length
       ? deps.db
           .select({ id: topicTable.id, title: topicTable.title })
           .from(topicTable)
-          .where(sql`${topicTable.id} IN ${topicIds}`)
+          .where(inArray(topicTable.id, topicIds))
       : [],
     expertIds.length
       ? deps.db
           .select({ id: expertTable.id, name: expertTable.name })
           .from(expertTable)
-          .where(sql`${expertTable.id} IN ${expertIds}`)
+          .where(inArray(expertTable.id, expertIds))
       : [],
   ]);
-  const titleMap = new Map(topics.map((t) => [t.id, t.title]));
-  const nameMap = new Map(experts.map((e) => [e.id, e.name]));
+  const titleMap = new Map<string, string>();
+  for (const topic of topics) titleMap.set(String(topic.id), String(topic.title));
+  const nameMap = new Map<string, string>();
+  for (const expert of experts) nameMap.set(String(expert.id), String(expert.name));
 
   return rows.map(
     (r): WeekScheduleItem => ({
       draftId: r.draftId,
-      title: titleMap.get(r.topicId) ?? 'Untitled',
-      expertName: nameMap.get(r.expertId) ?? 'Unknown',
+      title: titleMap.get(String(r.topicId)) ?? 'Untitled',
+      expertName: nameMap.get(String(r.expertId)) ?? 'Unknown',
       status: r.status as WeekScheduleItem['status'],
       scheduledDate: r.updatedAt.toISOString().slice(0, 10),
     }),
