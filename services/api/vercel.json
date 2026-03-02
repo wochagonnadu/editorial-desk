@@ -5,6 +5,7 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "functions": {
     "api/index.ts": {
+      "runtime": "nodejs20.x",
       "maxDuration": 25
     }
   },
@@ -20,8 +21,24 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/api/index.ts"
+      "source": "/health",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/api/v1/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/api/cron/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/api/webhooks/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/",
+      "destination": "/api/index"
     }
   ]
 }
