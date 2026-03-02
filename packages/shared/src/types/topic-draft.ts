@@ -3,7 +3,7 @@
 // WHY:  Models editorial pipeline state before approval
 // RELEVANT: packages/shared/src/types/expert.ts,packages/shared/src/types/factcheck.ts
 
-import type { EntityId, ISODateTime } from './common';
+import type { EntityId, ISODateTime } from './common.js';
 
 export type TopicStatus = 'proposed' | 'approved' | 'in_progress' | 'completed' | 'rejected';
 export type TopicSourceType = 'faq' | 'myth' | 'seasonal' | 'service' | 'manual';

@@ -3,7 +3,7 @@
 // WHY:  Defines risk tracking structures for compliance workflows
 // RELEVANT: packages/shared/src/types/topic-draft.ts,packages/shared/src/types/approval.ts
 
-import type { EntityId, ISODateTime } from './common';
+import type { EntityId, ISODateTime } from './common.js';
 
 export type ClaimRiskLevel = 'low' | 'medium' | 'high';
 export type ClaimType = 'statistic' | 'medical' | 'legal' | 'factual' | 'opinion';

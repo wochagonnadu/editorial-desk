@@ -3,7 +3,7 @@
 // WHY:  Preserves traceability for compliance and debugging
 // RELEVANT: packages/shared/src/types/common.ts,services/api/src/core/audit.ts
 
-import type { EntityId, ISODateTime } from './common';
+import type { EntityId, ISODateTime } from './common.js';
 
 export interface AuditLog {
   id: EntityId;

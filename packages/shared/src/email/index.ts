@@ -3,5 +3,5 @@
 // WHY:  Keeps all email types accessible through shared package API
 // RELEVANT: packages/shared/src/index.ts,packages/shared/src/email/provider.ts
 
-export * from './types';
-export * from './provider';
+export * from './types.js';
+export * from './provider.js';

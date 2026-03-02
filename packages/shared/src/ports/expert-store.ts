@@ -3,7 +3,7 @@
 // WHY:  Allows core logic to stay independent from Drizzle specifics
 // RELEVANT: services/api/src/providers/db/expert-store.ts,packages/shared/src/types/expert.ts
 
-import type { CompanyDomain, EntityId, Expert, ExpertStatus } from '../types';
+import type { CompanyDomain, EntityId, Expert, ExpertStatus } from '../types/index.js';
 
 export interface CreateExpertInput {
   companyId: EntityId;

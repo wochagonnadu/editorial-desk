@@ -3,7 +3,7 @@
 // WHY:  Enables provider swap without touching business logic
 // RELEVANT: packages/shared/src/email/types.ts,services/api/src/providers/email.ts
 
-import type { ClickEvent, DeliveryEvent, InboundEmail, OpenEvent } from './types';
+import type { ClickEvent, DeliveryEvent, InboundEmail, OpenEvent } from './types.js';
 
 export interface EmailProvider {
   sendEmail(params: {

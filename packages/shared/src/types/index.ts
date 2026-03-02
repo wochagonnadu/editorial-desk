@@ -3,12 +3,12 @@
 // WHY:  Keeps type imports centralized and predictable
 // RELEVANT: packages/shared/src/index.ts,specs/001-virtual-newsroom-mvp/data-model.md,packages/shared/src/types/common.ts
 
-export * from './common';
-export * from './company-user';
-export * from './expert';
-export * from './topic-draft';
-export * from './factcheck';
-export * from './approval';
-export * from './communication';
-export * from './audit';
-export * from './dashboard';
+export * from './common.js';
+export * from './company-user.js';
+export * from './expert.js';
+export * from './topic-draft.js';
+export * from './factcheck.js';
+export * from './approval.js';
+export * from './communication.js';
+export * from './audit.js';
+export * from './dashboard.js';

@@ -3,8 +3,8 @@
 // WHY:  Captures expert lifecycle and voice calibration entities
 // RELEVANT: packages/shared/src/types/company-user.ts,packages/shared/src/types/topic-draft.ts
 
-import type { CompanyDomain } from './company-user';
-import type { EntityId, ISODateTime } from './common';
+import type { CompanyDomain } from './company-user.js';
+import type { EntityId, ISODateTime } from './common.js';
 
 export type ExpertStatus = 'pending' | 'onboarding' | 'voice_testing' | 'active' | 'inactive';
 export type VoiceProfileStatus = 'draft' | 'confirmed';

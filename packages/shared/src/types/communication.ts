@@ -3,7 +3,7 @@
 // WHY:  Supports collaboration and email tracking in workflows
 // RELEVANT: packages/shared/src/types/topic-draft.ts,packages/shared/src/email/types.ts
 
-import type { EntityId, ISODateTime } from './common';
+import type { EntityId, ISODateTime } from './common.js';
 
 export type NotificationStatus =
   | 'queued'

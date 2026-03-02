@@ -3,7 +3,7 @@
 // WHY:  Defines tenant and operator structures for the platform
 // RELEVANT: packages/shared/src/types/common.ts,packages/shared/src/ports/expert-store.ts
 
-import type { EntityId, ISODateTime } from './common';
+import type { EntityId, ISODateTime } from './common.js';
 
 export type CompanyDomain = 'medical' | 'legal' | 'education' | 'business';
 export type UserRole = 'owner' | 'manager';

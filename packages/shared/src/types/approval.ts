@@ -3,7 +3,7 @@
 // WHY:  Represents sequential and parallel review workflows
 // RELEVANT: packages/shared/src/types/topic-draft.ts,packages/shared/src/types/communication.ts
 
-import type { EntityId, ISODateTime } from './common';
+import type { EntityId, ISODateTime } from './common.js';
 
 export type ApprovalFlowType = 'sequential' | 'parallel';
 export type ApprovalFlowStatus = 'pending' | 'active' | 'completed' | 'cancelled';

@@ -3,8 +3,8 @@
 // WHY:  FR-010–014, FR-040–041 — типизация данных Home и Approvals
 // RELEVANT: packages/shared/src/types/topic-draft.ts, services/api/src/routes/dashboard.ts
 
-import type { EntityId, ISODateTime } from './common';
-import type { DraftStatus } from './topic-draft';
+import type { EntityId, ISODateTime } from './common.js';
+import type { DraftStatus } from './topic-draft.js';
 
 /** Одно приоритетное действие на Today's Actions */
 export interface TodayAction {

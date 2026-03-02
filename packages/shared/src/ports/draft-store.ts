@@ -3,7 +3,7 @@
 // WHY:  Keeps draft lifecycle logic detached from database details
 // RELEVANT: services/api/src/providers/db/draft-store.ts,packages/shared/src/types/topic-draft.ts
 
-import type { Draft, DraftStatus, DraftVersion, EntityId } from '../types';
+import type { Draft, DraftStatus, DraftVersion, EntityId } from '../types/index.js';
 
 export interface CreateDraftInput {
   topicId: EntityId;
