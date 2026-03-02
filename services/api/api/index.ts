@@ -5,7 +5,7 @@
 
 import { serve } from '@hono/node-server';
 import { handle } from 'hono/vercel';
-import { createApp } from '../src/app';
+import { createApp } from '../src/app.js';
 
 const app = createApp();
 
