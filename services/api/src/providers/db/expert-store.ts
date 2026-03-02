@@ -35,7 +35,7 @@ export class DrizzleExpertStore implements ExpertStore {
         domain: input.domain,
         publicTextUrls: input.publicTextUrls ?? [],
         status: input.status ?? 'pending',
-      })
+      } as unknown as typeof expertTable.$inferInsert)
       .returning();
 
     return toExpert(row);
@@ -57,7 +57,10 @@ export class DrizzleExpertStore implements ExpertStore {
       predicates.push(eq(expertTable.status, filter.status));
     }
 
-    const rows = await this.db.select().from(expertTable).where(and(...predicates));
+    const rows = await this.db
+      .select()
+      .from(expertTable)
+      .where(and(...predicates));
     return rows.map(toExpert);
   }
 }
