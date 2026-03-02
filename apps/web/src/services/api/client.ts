@@ -27,8 +27,12 @@ const defaultBaseUrl =
     ? 'http://localhost:3000'
     : window.location.origin;
 
+const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
 const API_BASE_URL =
-  (window as Window & { __API_BASE_URL__?: string }).__API_BASE_URL__ ?? defaultBaseUrl;
+  configuredBaseUrl ||
+  (window as Window & { __API_BASE_URL__?: string }).__API_BASE_URL__ ||
+  defaultBaseUrl;
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
