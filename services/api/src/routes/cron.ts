@@ -3,28 +3,44 @@
 // WHY:  Runs scheduled editorial maintenance within Vercel cron limits
 // RELEVANT: services/api/src/core/approval.ts,services/api/src/core/email-templates/approval.ts
 
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { checkDeadlines } from '../core/approval';
 import { reminderTemplate } from '../core/email-templates/approval';
 import { AppError } from '../core/errors';
 import { sendWeeklyProposals } from '../core/topics';
-import { approvalFlowTable, approvalStepTable, companyTable, draftTable, expertTable, topicTable, userTable } from '../providers/db';
+import {
+  approvalFlowTable,
+  companyTable,
+  draftTable,
+  expertTable,
+  topicTable,
+  userTable,
+} from '../providers/db';
 import { buildDigestCronHandler } from './cron-digest';
 import type { RouteDeps } from './deps';
 
 export const assertCronSecret = (authorization: string | undefined) => {
   const expected = process.env.CRON_SECRET;
   if (!expected) throw new AppError(500, 'CONFIG_ERROR', 'CRON_SECRET is not configured');
-  if (authorization !== `Bearer ${expected}`) throw new AppError(401, 'UNAUTHORIZED', 'Invalid cron token');
+  if (authorization !== `Bearer ${expected}`)
+    throw new AppError(401, 'UNAUTHORIZED', 'Invalid cron token');
 };
 
 const approverEmail = async (deps: RouteDeps, approverType: string, approverId: string) => {
   if (approverType === 'user') {
-    const [user] = await deps.db.select().from(userTable).where(eq(userTable.id, approverId)).limit(1);
+    const [user] = await deps.db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, approverId))
+      .limit(1);
     return user?.email ?? null;
   }
-  const [expert] = await deps.db.select().from(expertTable).where(eq(expertTable.id, approverId)).limit(1);
+  const [expert] = await deps.db
+    .select()
+    .from(expertTable)
+    .where(eq(expertTable.id, approverId))
+    .limit(1);
   return expert?.email ?? null;
 };
 
@@ -45,19 +61,38 @@ export const buildCronRoutes = (deps: RouteDeps): Hono => {
     let escalationsSent = 0;
 
     for (const step of overdue) {
-      const [flow] = await deps.db.select().from(approvalFlowTable).where(eq(approvalFlowTable.id, step.approvalFlowId)).limit(1);
+      const [flow] = await deps.db
+        .select()
+        .from(approvalFlowTable)
+        .where(eq(approvalFlowTable.id, step.approvalFlowId))
+        .limit(1);
       if (!flow) continue;
-      const [draft] = await deps.db.select().from(draftTable).where(eq(draftTable.id, flow.draftId)).limit(1);
+      const [draft] = await deps.db
+        .select()
+        .from(draftTable)
+        .where(eq(draftTable.id, flow.draftId))
+        .limit(1);
       if (!draft) continue;
-      const [topic] = await deps.db.select().from(topicTable).where(eq(topicTable.id, draft.topicId)).limit(1);
+      const [topic] = await deps.db
+        .select()
+        .from(topicTable)
+        .where(eq(topicTable.id, draft.topicId))
+        .limit(1);
       const email = await approverEmail(deps, step.approverType, step.approverId);
       if (!email || !step.deadlineAt) continue;
 
       const template = reminderTemplate(topic?.title ?? 'Draft', step.deadlineAt);
-      await deps.email.sendEmail({ to: email, subject: template.subject, html: template.html, textBody: template.textBody });
+      await deps.email.sendEmail({
+        to: email,
+        subject: template.subject,
+        html: template.html,
+        textBody: template.textBody,
+      });
       remindersSent += 1;
 
-      await deps.db.update(approvalStepTable).set({ reminderCount: step.reminderCount + 1 }).where(eq(approvalStepTable.id, step.id));
+      await deps.db.execute(
+        sql`update approval_step set reminder_count = reminder_count + 1 where id = ${step.id}`,
+      );
 
       if (step.reminderCount >= 2) {
         const ownerEmail = await findUserEmail(deps, flow.createdBy);
@@ -77,11 +112,18 @@ export const buildCronRoutes = (deps: RouteDeps): Hono => {
     if (new Date().getUTCDay() === 1) {
       const companies = await deps.db.select().from(companyTable);
       for (const company of companies) {
-        weeklyTopicProposalsSent += await sendWeeklyProposals({ db: deps.db, email: deps.email, content: deps.content }, company.id);
+        weeklyTopicProposalsSent += await sendWeeklyProposals(
+          { db: deps.db, email: deps.email, content: deps.content },
+          company.id,
+        );
       }
     }
 
-    return context.json({ reminders_sent: remindersSent, escalations_sent: escalationsSent, weekly_topic_proposals_sent: weeklyTopicProposalsSent });
+    return context.json({
+      reminders_sent: remindersSent,
+      escalations_sent: escalationsSent,
+      weekly_topic_proposals_sent: weeklyTopicProposalsSent,
+    });
   });
 
   router.get('/digest', digestCron);
