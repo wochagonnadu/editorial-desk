@@ -65,18 +65,16 @@ export const sendReminder = (deps: RouteDeps) => async (context: Context) => {
   );
 
   log.info('approvals.remind.sending', { recipient: approver.email });
-  await deps.db
-    .insert(notificationTable)
-    .values({
-      companyId: authUser.companyId,
-      recipientEmail: approver.email,
-      notificationType: 'approval_reminder',
-      referenceType: 'approval_step',
-      referenceId: step.id,
-      emailToken: randomUUID(),
-      status: 'sent',
-      sentAt: new Date(),
-    });
+  await deps.db.insert(notificationTable).values({
+    companyId: authUser.companyId,
+    recipientEmail: approver.email,
+    notificationType: 'approval_reminder',
+    referenceType: 'approval_step',
+    referenceId: step.id,
+    emailToken: randomUUID(),
+    status: 'sent',
+    sentAt: new Date(),
+  } as unknown as typeof notificationTable.$inferInsert);
   await deps.email.sendEmail({
     to: approver.email,
     subject: message.subject,

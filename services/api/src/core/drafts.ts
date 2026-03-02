@@ -17,24 +17,43 @@ const allowedTransitions: Record<string, string[]> = {
   approved: [],
 };
 
-export const createDraft = async (db: Database, draftStore: DraftStore, companyId: string, topicId: string) => {
+export const createDraft = async (
+  db: Database,
+  draftStore: DraftStore,
+  companyId: string,
+  topicId: string,
+) => {
   const [topic] = await db
     .select()
     .from(topicTable)
     .where(and(eq(topicTable.id, topicId), eq(topicTable.companyId, companyId)))
     .limit(1);
   if (!topic) throw new AppError(404, 'NOT_FOUND', 'Topic not found');
-  if (topic.status !== 'approved') throw new AppError(400, 'INVALID_STATE', 'Topic must be approved');
+  if (topic.status !== 'approved')
+    throw new AppError(400, 'INVALID_STATE', 'Topic must be approved');
   if (!topic.expertId) throw new AppError(400, 'INVALID_STATE', 'Topic must have assigned expert');
 
-  const [expert] = await db.select().from(expertTable).where(eq(expertTable.id, topic.expertId)).limit(1);
+  const [expert] = await db
+    .select()
+    .from(expertTable)
+    .where(eq(expertTable.id, topic.expertId))
+    .limit(1);
   if (!expert || expert.status !== 'active') {
     throw new AppError(400, 'INVALID_STATE', 'Expert must be active');
   }
 
-  const [existing] = await db.select().from(draftTable).where(eq(draftTable.topicId, topicId)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(draftTable)
+    .where(eq(draftTable.topicId, topicId))
+    .limit(1);
   if (existing) {
-    return { id: existing.id, topicId: existing.topicId, expertId: existing.expertId, status: existing.status };
+    return {
+      id: existing.id,
+      topicId: existing.topicId,
+      expertId: existing.expertId,
+      status: existing.status,
+    };
   }
 
   return draftStore.create({ topicId, expertId: topic.expertId, companyId, status: 'drafting' });
@@ -48,7 +67,14 @@ export const createVersion = async (
   voiceScore: number,
   createdBy: 'system' | 'revision',
 ) => {
-  return draftStore.createVersion({ draftId, content, summary, voiceScore, createdBy, diffFromPrevious: { summary } });
+  return draftStore.createVersion({
+    draftId,
+    content,
+    summary,
+    voiceScore,
+    createdBy,
+    diffFromPrevious: { summary },
+  });
 };
 
 export const transitionDraftStatus = async (db: Database, draftId: string, nextStatus: string) => {
@@ -63,7 +89,7 @@ export const transitionDraftStatus = async (db: Database, draftId: string, nextS
 
   const [updated] = await db
     .update(draftTable)
-    .set({ status: nextStatus, updatedAt: new Date() })
+    .set({ status: nextStatus, updatedAt: new Date() } as Partial<typeof draftTable.$inferInsert>)
     .where(eq(draftTable.id, draftId))
     .returning();
   return updated;

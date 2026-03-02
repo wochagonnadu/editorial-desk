@@ -145,7 +145,9 @@ export const processApprovalClick = (deps: RouteDeps) => async (context: Context
       });
       await deps.db
         .update(notificationTable)
-        .set({ status: 'replied', repliedAt: new Date() })
+        .set({ status: 'replied', repliedAt: new Date() } as Partial<
+          typeof notificationTable.$inferInsert
+        >)
         .where(eq(notificationTable.id, notification.id));
       return context.json({ ok: true, next_step_id: nextStep.id });
     }
@@ -154,11 +156,14 @@ export const processApprovalClick = (deps: RouteDeps) => async (context: Context
   if (allDone) {
     await deps.db
       .update(approvalFlowTable)
-      .set({ status: 'completed' })
+      .set({ status: 'completed' } as Partial<typeof approvalFlowTable.$inferInsert>)
       .where(eq(approvalFlowTable.id, flow.id));
     await deps.db
       .update(draftTable)
-      .set({ status: hasChanges ? 'revisions' : 'approved', updatedAt: new Date() })
+      .set({
+        status: hasChanges ? 'revisions' : 'approved',
+        updatedAt: new Date(),
+      } as Partial<typeof draftTable.$inferInsert>)
       .where(eq(draftTable.id, draftId));
 
     if (hasChanges) {
@@ -198,7 +203,9 @@ export const processApprovalClick = (deps: RouteDeps) => async (context: Context
 
   await deps.db
     .update(notificationTable)
-    .set({ status: 'replied', repliedAt: new Date() })
+    .set({ status: 'replied', repliedAt: new Date() } as Partial<
+      typeof notificationTable.$inferInsert
+    >)
     .where(eq(notificationTable.id, notification.id));
   return context.json({ ok: true, status: hasChanges ? 'changes_requested' : 'approved' });
 };

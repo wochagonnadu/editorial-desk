@@ -26,19 +26,48 @@ export const processTopicClick = (deps: RouteDeps) => async (context: Context) =
     throw new AppError(400, 'VALIDATION_ERROR', 'invalid topic click payload');
   }
 
-  const [notification] = await deps.db.select().from(notificationTable).where(and(eq(notificationTable.emailToken, token), eq(notificationTable.referenceType, 'topic'))).limit(1);
-  if (!notification || !notification.referenceId || notification.referenceId !== topicId) throw new AppError(401, 'UNAUTHORIZED', 'invalid token');
+  const [notification] = await deps.db
+    .select()
+    .from(notificationTable)
+    .where(
+      and(eq(notificationTable.emailToken, token), eq(notificationTable.referenceType, 'topic')),
+    )
+    .limit(1);
+  if (!notification || !notification.referenceId || notification.referenceId !== topicId)
+    throw new AppError(401, 'UNAUTHORIZED', 'invalid token');
   if (notification.status === 'replied') throw new AppError(409, 'CONFLICT', 'token already used');
-  if (Date.now() - notification.createdAt.getTime() > TOPIC_CLICK_TTL_HOURS * 3600_000) throw new AppError(401, 'UNAUTHORIZED', 'token expired');
+  if (Date.now() - notification.createdAt.getTime() > TOPIC_CLICK_TTL_HOURS * 3600_000)
+    throw new AppError(401, 'UNAUTHORIZED', 'token expired');
 
-  const [topic] = await deps.db.select().from(topicTable).where(and(eq(topicTable.id, topicId), eq(topicTable.companyId, notification.companyId))).limit(1);
+  const [topic] = await deps.db
+    .select()
+    .from(topicTable)
+    .where(and(eq(topicTable.id, topicId), eq(topicTable.companyId, notification.companyId)))
+    .limit(1);
   if (!topic) throw new AppError(404, 'NOT_FOUND', 'topic not found');
 
   const nextStatus = action === 'topic_approve' ? 'approved' : 'rejected';
-  await deps.db.update(topicTable).set({ status: nextStatus }).where(eq(topicTable.id, topic.id));
-  await deps.db.update(notificationTable).set({ status: 'replied', repliedAt: new Date() }).where(eq(notificationTable.id, notification.id));
+  await deps.db
+    .update(topicTable)
+    .set({ status: nextStatus } as Partial<typeof topicTable.$inferInsert>)
+    .where(eq(topicTable.id, topic.id));
+  await deps.db
+    .update(notificationTable)
+    .set({ status: 'replied', repliedAt: new Date() } as Partial<
+      typeof notificationTable.$inferInsert
+    >)
+    .where(eq(notificationTable.id, notification.id));
 
-  const [actor] = await deps.db.select().from(userTable).where(and(eq(userTable.companyId, notification.companyId), eq(userTable.email, notification.recipientEmail))).limit(1);
+  const [actor] = await deps.db
+    .select()
+    .from(userTable)
+    .where(
+      and(
+        eq(userTable.companyId, notification.companyId),
+        eq(userTable.email, notification.recipientEmail),
+      ),
+    )
+    .limit(1);
   await logAudit(deps.db, {
     companyId: notification.companyId,
     actorType: actor ? 'user' : 'system',

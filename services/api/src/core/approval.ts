@@ -70,7 +70,7 @@ export const createFlow = async (
           config.flow_type === 'parallel' || index === 0
             ? withDeadline(config.deadline_hours)
             : null,
-      })),
+      })) as Array<typeof approvalStepTable.$inferInsert>,
     )
     .returning();
 

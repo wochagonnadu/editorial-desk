@@ -110,11 +110,13 @@ export const sendForReview = (deps: RouteDeps) => async (context: Context) => {
 
   await deps.db
     .update(draftTable)
-    .set({ status: 'needs_review', updatedAt: new Date() })
+    .set({ status: 'needs_review', updatedAt: new Date() } as Partial<
+      typeof draftTable.$inferInsert
+    >)
     .where(eq(draftTable.id, draft.id));
   await deps.db
     .update(approvalFlowTable)
-    .set({ status: 'active' })
+    .set({ status: 'active' } as Partial<typeof approvalFlowTable.$inferInsert>)
     .where(eq(approvalFlowTable.id, flow.id));
 
   await logAudit(deps.db, {

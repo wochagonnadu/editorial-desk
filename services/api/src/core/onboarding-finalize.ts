@@ -51,18 +51,16 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
   if (existingProfile) {
     await context.db
       .update(voiceProfileTable)
-      .set({ profileData, updatedAt: new Date() })
+      .set({ profileData, updatedAt: new Date() } as Partial<typeof voiceProfileTable.$inferInsert>)
       .where(eq(voiceProfileTable.id, existingProfile.id));
   } else {
-    await context.db
-      .insert(voiceProfileTable)
-      .values({
-        expertId,
-        status: 'draft',
-        profileData,
-        publicTextsData: {},
-        voiceTestFeedback: [],
-      });
+    await context.db.insert(voiceProfileTable).values({
+      expertId,
+      status: 'draft',
+      profileData,
+      publicTextsData: {},
+      voiceTestFeedback: [],
+    } as unknown as typeof voiceProfileTable.$inferInsert);
   }
 
   const [topic] = await context.db
@@ -74,7 +72,7 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
       sourceType: 'manual',
       status: 'approved',
       proposedBy: 'system',
-    })
+    } as unknown as typeof topicTable.$inferInsert)
     .returning();
   const draftStore = new DrizzleDraftStore(context.db);
   const draft = await draftStore.create({
@@ -96,7 +94,7 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
 
   await context.db
     .update(expertTable)
-    .set({ status: 'voice_testing' })
+    .set({ status: 'voice_testing' } as Partial<typeof expertTable.$inferInsert>)
     .where(eq(expertTable.id, expert.id));
   const emailToken = randomUUID();
   await context.db.insert(notificationTable).values({

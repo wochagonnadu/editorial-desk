@@ -88,7 +88,7 @@ export const forwardReviewer = (deps: RouteDeps) => async (context: Context) => 
       approverId: reviewerId,
       status: 'pending',
       deadlineAt: new Date(Date.now() + flow.deadlineHours * 3600_000),
-    })
+    } as unknown as typeof approvalStepTable.$inferInsert)
     .returning();
 
   const [version] = await deps.db

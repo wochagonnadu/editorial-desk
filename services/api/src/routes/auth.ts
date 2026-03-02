@@ -46,7 +46,10 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     if (!user) {
       const [company] = await deps.db
         .insert(companyTable)
-        .values({ name: companyNameFromEmail(email), domain: 'business' })
+        .values({
+          name: companyNameFromEmail(email),
+          domain: 'business',
+        } as unknown as typeof companyTable.$inferInsert)
         .returning();
       [user] = await deps.db
         .insert(userTable)
@@ -55,7 +58,7 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
           email,
           name: email.split('@')[0] ?? 'Owner',
           role: 'owner',
-        })
+        } as unknown as typeof userTable.$inferInsert)
         .returning();
       await logAudit(deps.db, {
         companyId: company.id,
