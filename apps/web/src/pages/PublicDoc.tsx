@@ -10,42 +10,106 @@ import { fetchPublicDoc, type PublicDoc as PublicDocData } from '../services/doc
 
 const toStatusLabel = (value: string) => value.replaceAll('_', ' ');
 
+type ViewState = 'loading' | 'error' | 'empty' | 'success';
+
+const mapPublicDocError = (error: ApiError | null): { title: string; nextStep: string } => {
+  if (!error) {
+    return {
+      title: 'Could not load document',
+      nextStep: 'Please try again in a minute or ask editorial team to resend the link.',
+    };
+  }
+
+  if (error.code === 'TOKEN_EXPIRED') {
+    return {
+      title: 'This link has expired',
+      nextStep: 'Ask editorial team to send a new review link for the latest version.',
+    };
+  }
+
+  if (error.code === 'STALE_VERSION') {
+    return {
+      title: 'This link points to an old version',
+      nextStep: 'Ask editorial team for a fresh link to review the current draft version.',
+    };
+  }
+
+  if (error.code === 'INVALID_TOKEN') {
+    return {
+      title: 'This link is invalid',
+      nextStep: 'Check that the full URL is copied from the email or request a new link.',
+    };
+  }
+
+  return {
+    title: error.message,
+    nextStep: 'Please try again in a minute or ask editorial team to resend the link.',
+  };
+};
+
 export function PublicDoc() {
   const { draftId = '' } = useParams();
   const [searchParams] = useSearchParams();
   const token = useMemo(() => searchParams.get('token') ?? '', [searchParams]);
   const [doc, setDoc] = useState<PublicDocData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
+  const [viewState, setViewState] = useState<ViewState>('loading');
 
   useEffect(() => {
     const run = async () => {
       if (!draftId || !token) {
-        setError('Magic link is invalid. Please request a new link from editorial team.');
-        setIsLoading(false);
+        setDoc(null);
+        setError(new ApiError(401, 'INVALID_TOKEN', 'This link is invalid'));
+        setViewState('error');
         return;
       }
       try {
+        setDoc(null);
         setError(null);
-        setIsLoading(true);
-        setDoc(await fetchPublicDoc(draftId, token));
+        setViewState('loading');
+        const nextDoc = await fetchPublicDoc(draftId, token);
+        if (!nextDoc.currentVersion || !nextDoc.currentVersion.content.trim()) {
+          setDoc(nextDoc);
+          setViewState('empty');
+          return;
+        }
+        setDoc(nextDoc);
+        setViewState('success');
       } catch (requestError) {
         if (requestError instanceof ApiError) {
-          setError(requestError.message);
+          setError(requestError);
         } else {
-          setError('Could not load document');
+          setError(new ApiError(500, 'API_ERROR', 'Could not load document'));
         }
-      } finally {
-        setIsLoading(false);
+        setViewState('error');
       }
     };
     void run();
   }, [draftId, token]);
 
-  if (isLoading) return <div className="card max-w-3xl mx-auto mt-8">Loading document...</div>;
-  if (error) return <div className="card max-w-3xl mx-auto mt-8 text-red-600">{error}</div>;
-  if (!doc || !doc.currentVersion) {
-    return <div className="card max-w-3xl mx-auto mt-8">Document is empty.</div>;
+  if (viewState === 'loading') {
+    return <div className="card max-w-3xl mx-auto mt-8">Loading document...</div>;
+  }
+
+  if (viewState === 'error') {
+    const message = mapPublicDocError(error);
+    return (
+      <div className="card max-w-3xl mx-auto mt-8">
+        <p className="text-base font-medium text-red-700">{message.title}</p>
+        <p className="text-sm text-ink-600 mt-2">{message.nextStep}</p>
+      </div>
+    );
+  }
+
+  if (viewState === 'empty' || !doc || !doc.currentVersion) {
+    return (
+      <div className="card max-w-3xl mx-auto mt-8">
+        <p className="text-base font-medium text-ink-900">Document is empty</p>
+        <p className="text-sm text-ink-600 mt-2">
+          Ask editorial team to resend the link after a new version is prepared.
+        </p>
+      </div>
+    );
   }
 
   return (
