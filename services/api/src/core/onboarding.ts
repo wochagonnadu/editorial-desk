@@ -51,7 +51,9 @@ const sendStepEmail = async (context: OnboardingContext, expertId: string, step:
   });
   await context.db
     .update(onboardingSequenceTable)
-    .set({ status: 'sent', sentAt: new Date() })
+    .set({ status: 'sent', sentAt: new Date() } as Partial<
+      typeof onboardingSequenceTable.$inferInsert
+    >)
     .where(
       and(
         eq(onboardingSequenceTable.expertId, expertId),
@@ -69,7 +71,7 @@ export const startOnboarding = async (context: OnboardingContext, expertId: stri
     .values([1, 2, 3, 4, 5].map((step) => ({ expertId, stepNumber: step })));
   await context.db
     .update(expertTable)
-    .set({ status: 'onboarding' })
+    .set({ status: 'onboarding' } as Partial<typeof expertTable.$inferInsert>)
     .where(eq(expertTable.id, expertId));
   await sendStepEmail(context, expertId, 1);
 };
@@ -82,7 +84,11 @@ export const processReply = async (
 ) => {
   const [updated] = await context.db
     .update(onboardingSequenceTable)
-    .set({ status: 'replied', repliedAt: new Date(), responseData: { text: responseData } })
+    .set({
+      status: 'replied',
+      repliedAt: new Date(),
+      responseData: { text: responseData },
+    } as Partial<typeof onboardingSequenceTable.$inferInsert>)
     .where(
       and(
         eq(onboardingSequenceTable.expertId, expertId),
