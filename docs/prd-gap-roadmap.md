@@ -80,22 +80,22 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Без миграций БД.
 - Выход: UI перестает быть demo-state и private web начинает жить на реальном API.
 
-### Spec 005: Editorial Doc Surface + Diff UX
+### Spec 006: Editorial Doc Surface + Diff UX
 
 - Scope: magic-link web-doc UX, diff summary/diff view в интерфейсе и письмах.
 - Минимальные backend правки по необходимости.
 
-### Spec 006: Settings + Team Management
+### Spec 007: Settings + Team Management
 
 - Scope: update company/defaults, team users/roles/invite.
 - Почти наверняка потребуются новые backend endpoints.
 
-### Spec 007: Workflow Runtime Hardening
+### Spec 008: Workflow Runtime Hardening
 
 - Scope: выделение `services/worker`, queue-driven orchestration, retries/idempotency visibility.
 - Можно делать после стабилизации product flows, чтобы не усложнять ранний этап.
 
-### Spec 008: Data Model Enhancements (optional)
+### Spec 009: Data Model Enhancements (optional)
 
 - Scope: `landing_request` table, optional `evidence` table, нужные индексы/репорты.
 - Запускать только после подтверждения реальной бизнес-нужды (не заранее).
@@ -119,9 +119,9 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 ## 5) Рекомендуемый порядок (практичный)
 
 1. Сначала **Spec 004** (или Этап A) — это максимальный value и проверка реального продукта.
-2. Затем **Spec 005** — добиваем ключевую UX-обещанку PRD (doc + diff).
-3. Потом **Spec 006** — закрываем управленческие функции для команды.
-4. В конце **Spec 007/008** — выносим runtime и data-усиления без риска затормозить core delivery.
+2. Затем **Spec 006** — добиваем ключевую UX-обещанку PRD (doc + diff).
+3. Потом **Spec 007** — закрываем управленческие функции для команды.
+4. В конце **Spec 008/009** — выносим runtime и data-усиления без риска затормозить core delivery.
 
 ## 6) Мини-вывод
 
