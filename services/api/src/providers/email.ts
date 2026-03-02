@@ -1,7 +1,7 @@
 // PATH: services/api/src/providers/email.ts
-// WHAT: Console-backed EmailPort adapter with reply token support
-// WHY:  Provides provider-agnostic outbound behavior for MVP scaffolding
-// RELEVANT: packages/shared/src/ports/email-port.ts,services/api/src/routes/auth.ts
+// WHAT: EmailPort adapter with stub and Resend outbound providers
+// WHY:  Keeps email delivery pluggable while preserving one app interface
+// RELEVANT: packages/shared/src/ports/email-port.ts,services/api/src/routes/auth.ts,services/api/src/providers/email-resend.ts
 
 import { createHmac, randomUUID } from 'node:crypto';
 import type {
@@ -11,6 +11,7 @@ import type {
   SendMagicLinkInput,
 } from '@newsroom/shared';
 import type { Logger } from './logger';
+import { sendWithResend } from './email-resend';
 
 const createReplyToken = (context: ReplyToContext): string => {
   const payload = `${context.draftId}:${context.version}:${context.expertId}`;
@@ -20,41 +21,51 @@ const createReplyToken = (context: ReplyToContext): string => {
 };
 
 const buildReplyAddress = (context: ReplyToContext): string => {
-  const inboundAddress = process.env.EMAIL_INBOUND_ADDRESS ?? 'reply@mail-dev.vschernyshev.ru';
+  const inboundAddress = process.env.EMAIL_INBOUND_ADDRESS ?? 'reply@vsche.ru';
   const [local, domain] = inboundAddress.split('@');
   return `${local}+${createReplyToken(context)}@${domain}`;
 };
 
-const sendMagicLink = (logger: Logger, input: SendMagicLinkInput): { messageId: string } => {
-  const link = `${input.appUrl.replace(/\/$/, '')}/auth/verify?token=${input.token}`;
+const sendWithStub = async (logger: Logger, input: SendEmailInput, replyTo?: string) => {
   const messageId = randomUUID();
   logger.info('email.send', {
+    provider: 'stub',
     message_id: messageId,
     to: input.to,
-    subject: 'Ссылка для входа в редакцию',
-    link,
-    expires_at: input.expiresAt.toISOString(),
+    subject: input.subject,
+    reply_to: replyTo,
   });
   return { messageId };
+};
+
+const sendByProvider = async (logger: Logger, input: SendEmailInput, replyTo?: string) => {
+  const provider = (process.env.EMAIL_PROVIDER ?? 'stub').toLowerCase();
+  if (provider === 'resend') return sendWithResend(logger, input, replyTo);
+  return sendWithStub(logger, input, replyTo);
+};
+
+const magicLinkEmail = (input: SendMagicLinkInput): SendEmailInput => {
+  const link = `${input.appUrl.replace(/\/$/, '')}/auth/verify?token=${input.token}`;
+  const expires = input.expiresAt.toISOString();
+  return {
+    to: input.to,
+    subject: 'Ссылка для входа в редакцию',
+    html: `<p>Откройте ссылку для входа:</p><p><a href="${link}">${link}</a></p><p>Ссылка действует до ${expires}.</p>`,
+    textBody: `Откройте ссылку для входа: ${link}. Ссылка действует до ${expires}.`,
+    metadata: { kind: 'magic_link' },
+  };
 };
 
 export const createEmailPort = (logger: Logger): EmailPort => ({
   buildReplyToAddress(context) {
     return buildReplyAddress(context);
   },
-  async sendEmail(input: SendEmailInput) {
-    const messageId = randomUUID();
+  async sendEmail(input) {
     const replyTo =
       input.replyTo ?? (input.replyToContext ? buildReplyAddress(input.replyToContext) : undefined);
-    logger.info('email.send', {
-      message_id: messageId,
-      to: input.to,
-      subject: input.subject,
-      reply_to: replyTo,
-    });
-    return { messageId };
+    return sendByProvider(logger, input, replyTo);
   },
-  async sendMagicLink(input: SendMagicLinkInput) {
-    return sendMagicLink(logger, input);
+  async sendMagicLink(input) {
+    return sendByProvider(logger, magicLinkEmail(input));
   },
 });
