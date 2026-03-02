@@ -16,7 +16,9 @@ import { buildApiRouter } from './routes/index.js';
 export const createApp = (): Hono => {
   const app = new Hono();
   const logger = createLogger();
+  logger.info('app.bootstrap.start');
   const { db } = createDbClient();
+  logger.info('app.bootstrap.db_ready');
   const webOrigin = process.env.APP_URL ?? 'http://localhost:5173';
 
   const deps = {
@@ -47,6 +49,8 @@ export const createApp = (): Hono => {
     logger.error('api.unhandled_error', { message: error.message });
     return toErrorResponse(context, error);
   });
+
+  logger.info('app.bootstrap.ready', { web_origin: webOrigin });
 
   return app;
 };
