@@ -49,7 +49,7 @@ export const issueDevMockMagicLink = async (
     magicLinkRevoked: false,
     status: 'sent',
     sentAt: new Date(),
-  });
+  } as unknown as typeof notificationTable.$inferInsert);
 
   return token;
 };

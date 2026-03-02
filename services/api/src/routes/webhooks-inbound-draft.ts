@@ -9,7 +9,9 @@ import { logAudit } from '../core/audit';
 import { draftTable, draftVersionTable, expertTable, notificationTable } from '../providers/db';
 import type { RouteDeps } from './deps';
 
-const parseDraftReplyAddress = (to: string): { draftId: string; version: number; expertId: string } | null => {
+const parseDraftReplyAddress = (
+  to: string,
+): { draftId: string; version: number; expertId: string } | null => {
   const local = to.split('@')[0] ?? '';
   const token = local.split('+')[1] ?? '';
   const match = token.match(/^d_([^_]+)_v_(\d+)_exp_([^_]+)_[A-Za-z0-9_-]+$/);
@@ -17,7 +19,8 @@ const parseDraftReplyAddress = (to: string): { draftId: string; version: number;
   return { draftId: match[1], version: Number(match[2]), expertId: match[3] };
 };
 
-const sameEmail = (left: string, right: string) => left.trim().toLowerCase() === right.trim().toLowerCase();
+const sameEmail = (left: string, right: string) =>
+  left.trim().toLowerCase() === right.trim().toLowerCase();
 
 const docsLink = (draftId: string, token: string) => {
   const apiUrl = (process.env.API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
@@ -31,8 +34,13 @@ export const processDraftInbound = async (
   const token = parseDraftReplyAddress(payload.to ?? '');
   if (!token) return { handled: false, stale: false };
 
-  const [expert] = await deps.db.select().from(expertTable).where(eq(expertTable.id, token.expertId)).limit(1);
-  if (!expert || !payload.from || !sameEmail(expert.email, payload.from)) return { handled: true, stale: false };
+  const [expert] = await deps.db
+    .select()
+    .from(expertTable)
+    .where(eq(expertTable.id, token.expertId))
+    .limit(1);
+  if (!expert || !payload.from || !sameEmail(expert.email, payload.from))
+    return { handled: true, stale: false };
 
   const [draft] = await deps.db
     .select()
@@ -41,12 +49,18 @@ export const processDraftInbound = async (
     .limit(1);
   if (!draft || !draft.currentVersionId) return { handled: true, stale: false };
 
-  const [currentVersion] = await deps.db.select().from(draftVersionTable).where(eq(draftVersionTable.id, draft.currentVersionId)).limit(1);
+  const [currentVersion] = await deps.db
+    .select()
+    .from(draftVersionTable)
+    .where(eq(draftVersionTable.id, draft.currentVersionId))
+    .limit(1);
   if (!currentVersion) return { handled: true, stale: false };
   if (token.version === currentVersion.versionNumber) return { handled: true, stale: false };
 
   const magicToken = randomUUID();
-  const magicLinkExpiresAt = new Date(Date.now() + Number(process.env.MAGIC_LINK_TTL_HOURS ?? 72) * 3600_000);
+  const magicLinkExpiresAt = new Date(
+    Date.now() + Number(process.env.MAGIC_LINK_TTL_HOURS ?? 72) * 3600_000,
+  );
   await deps.db.insert(notificationTable).values({
     companyId: draft.companyId,
     recipientEmail: payload.from,
@@ -59,7 +73,7 @@ export const processDraftInbound = async (
     magicLinkRevoked: false,
     status: 'sent',
     sentAt: new Date(),
-  });
+  } as unknown as typeof notificationTable.$inferInsert);
 
   const link = docsLink(draft.id, magicToken);
   await deps.email.sendEmail({

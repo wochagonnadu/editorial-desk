@@ -96,7 +96,7 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       magicLinkRevoked: false,
       status: 'sent',
       sentAt: new Date(),
-    });
+    } as unknown as typeof notificationTable.$inferInsert);
     await deps.email.sendMagicLink({
       to: email,
       token,

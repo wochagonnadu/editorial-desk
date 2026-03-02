@@ -44,7 +44,7 @@ export const sendApprovalRequest = async (
     emailToken: token,
     status: 'sent',
     sentAt: new Date(),
-  });
+  } as unknown as typeof notificationTable.$inferInsert);
 
   const email = approvalRequestTemplate({
     appUrl: process.env.APP_URL ?? 'http://localhost:5173',
