@@ -4,7 +4,7 @@
 // RELEVANT: services/api/src/routes/auth-token.ts,services/api/src/providers/email.ts
 
 import { randomUUID } from 'node:crypto';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { logAudit } from '../core/audit';
 import { AppError } from '../core/errors';
@@ -76,6 +76,16 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     const expiresAt = new Date(
       Date.now() + Number(process.env.MAGIC_LINK_TTL_HOURS ?? 72) * 3600_000,
     );
+    await deps.db
+      .update(notificationTable)
+      .set({ magicLinkRevoked: true })
+      .where(
+        and(
+          eq(notificationTable.recipientEmail, email),
+          eq(notificationTable.notificationType, 'magic_link'),
+          eq(notificationTable.magicLinkRevoked, false),
+        ),
+      );
     await deps.db.insert(notificationTable).values({
       companyId: user.companyId,
       recipientEmail: email,
@@ -133,6 +143,19 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       .where(eq(userTable.email, notification.recipientEmail))
       .limit(1);
     if (!user) throw new AppError(401, 'INVALID_TOKEN', 'User not found for token');
+
+    const [consumed] = await deps.db
+      .update(notificationTable)
+      .set({ magicLinkRevoked: true, status: 'replied', repliedAt: new Date() })
+      .where(
+        and(
+          eq(notificationTable.id, notification.id),
+          eq(notificationTable.magicLinkRevoked, false),
+        ),
+      )
+      .returning({ id: notificationTable.id });
+    if (!consumed) throw new AppError(401, 'INVALID_TOKEN', 'Magic link is invalid');
+
     const jwt = await signSessionToken({
       userId: user.id,
       companyId: user.companyId,
