@@ -4,7 +4,12 @@
 // RELEVANT: packages/shared/src/ports/email-port.ts,services/api/src/routes/auth.ts
 
 import { createHmac, randomUUID } from 'node:crypto';
-import type { EmailPort, ReplyToContext, SendEmailInput, SendMagicLinkInput } from '@newsroom/shared';
+import type {
+  EmailPort,
+  ReplyToContext,
+  SendEmailInput,
+  SendMagicLinkInput,
+} from '@newsroom/shared';
 import type { Logger } from './logger';
 
 const createReplyToken = (context: ReplyToContext): string => {
@@ -15,7 +20,7 @@ const createReplyToken = (context: ReplyToContext): string => {
 };
 
 const buildReplyAddress = (context: ReplyToContext): string => {
-  const inboundAddress = process.env.EMAIL_INBOUND_ADDRESS ?? 'reply@inbound.newsroom.dev';
+  const inboundAddress = process.env.EMAIL_INBOUND_ADDRESS ?? 'reply@mail-dev.vschernyshev.ru';
   const [local, domain] = inboundAddress.split('@');
   return `${local}+${createReplyToken(context)}@${domain}`;
 };
@@ -39,8 +44,14 @@ export const createEmailPort = (logger: Logger): EmailPort => ({
   },
   async sendEmail(input: SendEmailInput) {
     const messageId = randomUUID();
-    const replyTo = input.replyTo ?? (input.replyToContext ? buildReplyAddress(input.replyToContext) : undefined);
-    logger.info('email.send', { message_id: messageId, to: input.to, subject: input.subject, reply_to: replyTo });
+    const replyTo =
+      input.replyTo ?? (input.replyToContext ? buildReplyAddress(input.replyToContext) : undefined);
+    logger.info('email.send', {
+      message_id: messageId,
+      to: input.to,
+      subject: input.subject,
+      reply_to: replyTo,
+    });
     return { messageId };
   },
   async sendMagicLink(input: SendMagicLinkInput) {

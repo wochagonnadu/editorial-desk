@@ -48,7 +48,7 @@ DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/post
 # Email (provider-agnostic — заполнить для выбранного провайдера)
 EMAIL_PROVIDER=postmark          # postmark | resend | ses
 EMAIL_API_KEY=xxx
-EMAIL_INBOUND_ADDRESS=reply@inbound.newsroom.dev
+EMAIL_INBOUND_ADDRESS=reply@mail-dev.vschernyshev.ru
 EMAIL_WEBHOOK_SECRET=xxx
 
 # LLM (OpenRouter — бесплатные модели)

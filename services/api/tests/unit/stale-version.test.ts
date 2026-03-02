@@ -9,10 +9,13 @@ import type { RouteDeps } from '../../src/routes/deps';
 
 vi.mock('../../src/core/audit', () => ({ logAudit: vi.fn(async () => undefined) }));
 
-const makeDb = (queue: unknown[]) => ({
-  select: () => ({ from: () => ({ where: () => ({ limit: async () => (queue.shift() as unknown[]) ?? [] }) }) }),
-  insert: () => ({ values: async () => undefined }),
-}) as unknown as RouteDeps['db'];
+const makeDb = (queue: unknown[]) =>
+  ({
+    select: () => ({
+      from: () => ({ where: () => ({ limit: async () => (queue.shift() as unknown[]) ?? [] }) }),
+    }),
+    insert: () => ({ values: async () => undefined }),
+  }) as unknown as RouteDeps['db'];
 
 describe('stale inbound detection', () => {
   it('marks inbound reply as stale and sends recovery email', async () => {
@@ -23,7 +26,10 @@ describe('stale inbound detection', () => {
     ]);
     const email = { sendEmail: vi.fn(async () => ({ messageId: 'm-1' })) };
     const deps = { db, email } as unknown as RouteDeps;
-    const result = await processDraftInbound(deps, { from: 'exp@example.com', to: 'reply+d_draft-1_v_1_exp_exp-1_sig@inbound.newsroom.dev' });
+    const result = await processDraftInbound(deps, {
+      from: 'exp@example.com',
+      to: 'reply+d_draft-1_v_1_exp_exp-1_sig@mail-dev.vschernyshev.ru',
+    });
 
     expect(result).toEqual({ handled: true, stale: true });
     expect(email.sendEmail).toHaveBeenCalledTimes(1);
@@ -37,7 +43,10 @@ describe('stale inbound detection', () => {
     ]);
     const email = { sendEmail: vi.fn(async () => ({ messageId: 'm-1' })) };
     const deps = { db, email } as unknown as RouteDeps;
-    const result = await processDraftInbound(deps, { from: 'exp@example.com', to: 'reply+d_draft-1_v_1_exp_exp-1_sig@inbound.newsroom.dev' });
+    const result = await processDraftInbound(deps, {
+      from: 'exp@example.com',
+      to: 'reply+d_draft-1_v_1_exp_exp-1_sig@mail-dev.vschernyshev.ru',
+    });
 
     expect(result).toEqual({ handled: true, stale: false });
     expect(email.sendEmail).not.toHaveBeenCalled();
