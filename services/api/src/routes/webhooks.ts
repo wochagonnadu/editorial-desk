@@ -11,6 +11,11 @@ import type { RouteDeps } from './deps';
 import { processApprovalClick } from './webhooks-click';
 import { processTopicClick } from './webhooks-click-topic';
 import { processDraftInbound } from './webhooks-inbound-draft';
+import {
+  isSvixSignedRequest,
+  resolveInboundPayload,
+  verifyResendSignature,
+} from './webhooks-resend';
 
 interface InboundPayload {
   from?: string;
@@ -21,7 +26,24 @@ interface InboundPayload {
 
 const assertSecret = (actual: string | undefined) => {
   const expected = process.env.EMAIL_WEBHOOK_SECRET;
-  if (expected && actual !== expected) throw new AppError(401, 'UNAUTHORIZED', 'invalid webhook secret');
+  if (expected && actual !== expected)
+    throw new AppError(401, 'UNAUTHORIZED', 'invalid webhook secret');
+};
+
+const assertInboundAuth = (headers: Headers, rawBody: string, xSecret: string | undefined) => {
+  if (isSvixSignedRequest(headers)) {
+    verifyResendSignature(headers, rawBody);
+    return;
+  }
+  assertSecret(xSecret);
+};
+
+const parseBody = (rawBody: string): unknown => {
+  try {
+    return JSON.parse(rawBody || '{}') as unknown;
+  } catch {
+    throw new AppError(400, 'VALIDATION_ERROR', 'invalid json payload');
+  }
 };
 
 export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
@@ -30,8 +52,10 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
   const topicClick = processTopicClick(deps);
 
   router.post('/email/inbound', async (context) => {
-    assertSecret(context.req.header('x-webhook-secret'));
-    const body = (await context.req.json()) as InboundPayload;
+    const rawBody = await context.req.raw.text();
+    assertInboundAuth(context.req.raw.headers, rawBody, context.req.header('x-webhook-secret'));
+    const parsed = parseBody(rawBody);
+    const body = (await resolveInboundPayload(parsed)) as InboundPayload;
 
     const draftResult = await processDraftInbound(deps, body);
     if (draftResult.handled) return context.json({ ok: true, stale: draftResult.stale });
@@ -41,7 +65,12 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
     if (!token) return context.json({ ok: true, ignored: true });
 
     const text = body.textBody ?? body.rawBody ?? '';
-    const result = await processReply({ db: deps.db, email: deps.email }, token.expertId, token.step, text);
+    const result = await processReply(
+      { db: deps.db, email: deps.email },
+      token.expertId,
+      token.step,
+      text,
+    );
     if (result.completed) {
       await finalizeOnboardingVoiceTest({ db: deps.db, email: deps.email }, token.expertId);
     }
@@ -53,8 +82,12 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
   router.post('/email/click', async (context) => {
     assertSecret(context.req.header('x-webhook-secret'));
     const actionFromQuery = context.req.query('action');
-    const rawBody = (await context.req.raw.clone().json().catch(() => ({}))) as Record<string, unknown>;
-    const action = actionFromQuery ?? (typeof rawBody.action === 'string' ? rawBody.action : undefined);
+    const rawBody = (await context.req.raw
+      .clone()
+      .json()
+      .catch(() => ({}))) as Record<string, unknown>;
+    const action =
+      actionFromQuery ?? (typeof rawBody.action === 'string' ? rawBody.action : undefined);
     if (action === 'topic_approve' || action === 'topic_reject') return topicClick(context);
     return approvalClick(context);
   });
