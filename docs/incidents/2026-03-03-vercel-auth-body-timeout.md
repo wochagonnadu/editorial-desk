@@ -38,28 +38,29 @@ RELEVANT: services/api/src/routes/auth.ts,apps/web/src/services/auth.ts,docs/tec
 
 Это оставляем как опорный trace, чтобы в следующих фазах четко видеть: зависание на body parsing или уже после перехода к DB.
 
-## Временное решение
+## Что было корнем
 
-- В API login добавлен fallback чтения email из query (`?email=`), чтобы обойти `req.json()` в проде.
-- Web login переведен на `POST /api/v1/auth/login?email=...` без JSON body.
-- Для web добавлен SPA rewrite в `apps/web/vercel.json`, чтобы magic-link deep-link не давал `404`.
+- Первичный сбой был в чтении request body на runtime-пути (`req.json()`/stream), а не в CORS и не в доступности БД.
+- CORS-ошибка в браузере была вторичным следствием backend timeout (`504` без корректных CORS headers).
+- `db-ping` подтверждал, что Postgres доступен, но сам по себе не диагностировал проблему body parsing.
 
-## Риски временного решения
+## Финальное решение
 
-- Email в query попадает в URL-логи (PII риск).
-- Контракт login временно “раздвоен” (query + JSON).
-- Нужен обязательный cleanup после стабилизации runtime.
+- Для login введен выделенный guarded body reader с timeout и лимитом размера (`REQUEST_TIMEOUT`, `PAYLOAD_TOO_LARGE`, `INVALID_JSON`).
+- Web-контракт возвращен на JSON body-only: `POST /api/v1/auth/login` с `{"email":"..."}` без query email.
+- Debug cleanup: `POST /api/v1/debug/json-echo` удален из surface, оставлен только защищенный `GET /api/v1/debug/db-ping`.
+- Техдолг TD-011 переведен в `closed` после возврата к безопасному контракту.
 
-## План полного cleanup
+## Как диагностировать повторение
 
-1. Стабилизировать body parsing в Vercel Node runtime (adapter/runtime версия, проверка на `json-echo`).
-2. Вернуть web login на JSON body.
-3. Удалить query-workaround из API.
-4. Удалить debug-роуты `/api/v1/debug/*`.
-5. Закрыть запись техдолга в `docs/tech_debt.md` со ссылкой на commit/PR.
+1. Проверить trace в логах login: `auth.login.enter` -> `auth.login.after_parse_body` -> `auth.login.before_user_select`.
+2. Если зависание до `after_parse_body` — это снова body parsing/runtime путь.
+3. Если `after_parse_body` есть, но нет `before_user_select` — смотреть route-логи и валидацию payload.
+4. Если дошли до `before_user_select`, но есть задержка/ошибка — проверять DB путь отдельно через `GET /api/v1/debug/db-ping` c `x-cron-secret`.
+5. Отдельно проверить web deep-link `/auth/verify?token=...`, чтобы исключить фронтовый routing-регресс.
 
-## Критерии готовности к удалению workaround
+## Критерии стабильности после фикса
 
-- `POST /api/v1/debug/json-echo` проходит 30/30 без timeout.
-- `POST /api/v1/auth/login` (JSON body) проходит 20/20 без `504`.
-- В Vercel logs нет `FUNCTION_INVOCATION_TIMEOUT` по login в течение 24 часов.
+- `POST /api/v1/auth/login` (JSON body) проходит без `504`.
+- В логах Vercel нет `FUNCTION_INVOCATION_TIMEOUT` по login в течение 24 часов.
+- В URL login-запросов нет `?email=`.

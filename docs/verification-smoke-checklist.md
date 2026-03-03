@@ -98,7 +98,7 @@ No-Go, если:
 
 - `POST /api/v1/auth/login` (JSON body) не должен давать `504 FUNCTION_INVOCATION_TIMEOUT`.
 - Deep-link `https://<web-domain>/auth/verify?token=...` не должен отдавать Vercel `404`.
-- Если временно включен query-workaround login:
-  - зафиксирован открытый `TD-011` в `docs/tech_debt.md`;
-  - есть план удаления workaround;
-  - перед релизом проверен возврат к JSON body-only контракту.
+- `GET /api/v1/debug/db-ping` использовать только для диагностики DB reachability:
+  - доступ только с корректным `x-cron-secret` (не публиковать endpoint в клиентских сценариях);
+  - не использовать как публичный health-check;
+  - не делать вывод про состояние auth body parsing только по `db-ping`.
