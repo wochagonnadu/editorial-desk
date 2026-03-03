@@ -93,3 +93,12 @@ No-Go, если:
 - невозможно создать или обновить draft;
 - approvals actions не работают;
 - появились новые `partial` без описанного риска.
+
+## 6) Auth timeout incident checks (March 3, 2026)
+
+- `POST /api/v1/auth/login` (JSON body) не должен давать `504 FUNCTION_INVOCATION_TIMEOUT`.
+- Deep-link `https://<web-domain>/auth/verify?token=...` не должен отдавать Vercel `404`.
+- Если временно включен query-workaround login:
+  - зафиксирован открытый `TD-011` в `docs/tech_debt.md`;
+  - есть план удаления workaround;
+  - перед релизом проверен возврат к JSON body-only контракту.
