@@ -10,6 +10,7 @@ import { buildAuditRoutes } from './audit.js';
 import { buildApprovalsRoutes } from './approvals.js';
 import { buildCompanyRoutes } from './companies.js';
 import { buildDashboardRoutes } from './dashboard.js';
+import { buildDebugRoutes } from './debug.js';
 import { buildDocsRoutes } from './docs.js';
 import { buildDraftRoutes } from './drafts.js';
 import { buildExpertRoutes } from './experts.js';
@@ -22,6 +23,7 @@ import type { RouteDeps } from './deps.js';
 export const buildApiRouter = (deps: RouteDeps): Hono => {
   const router = new Hono();
 
+  router.route('/debug', buildDebugRoutes(deps));
   router.route('/auth', buildAuthRoutes(deps));
   router.route('/docs', buildDocsRoutes(deps));
   router.route('/webhooks', buildWebhookRoutes(deps));

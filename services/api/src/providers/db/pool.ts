@@ -17,6 +17,23 @@ const readInt = (value: string | undefined, fallback: number): number => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+export interface DbTargetInfo {
+  host: string;
+  port: string;
+  sslmode: string;
+  connect_timeout: string;
+}
+
+export const describeDatabaseTarget = (connectionString: string): DbTargetInfo => {
+  const parsed = new URL(connectionString);
+  return {
+    host: parsed.hostname || 'unknown',
+    port: parsed.port || '5432',
+    sslmode: parsed.searchParams.get('sslmode') ?? 'unset',
+    connect_timeout: parsed.searchParams.get('connect_timeout') ?? 'unset',
+  };
+};
+
 export const createDbClient = (): { pool: Pool; db: Database } => {
   if (cached) {
     return cached;

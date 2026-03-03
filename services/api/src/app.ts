@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { toErrorResponse } from './core/errors.js';
-import { createDbClient } from './providers/db/index.js';
+import { createDbClient, describeDatabaseTarget } from './providers/db/index.js';
 import { createEmailPort } from './providers/email.js';
 import { createContentPort } from './providers/llm.js';
 import { createLogger } from './providers/logger.js';
@@ -17,6 +17,10 @@ export const createApp = (): Hono => {
   const app = new Hono();
   const logger = createLogger();
   logger.info('app.bootstrap.start');
+  const connectionString = process.env.DATABASE_URL;
+  if (connectionString) {
+    logger.info('app.bootstrap.db_target', { ...describeDatabaseTarget(connectionString) });
+  }
   const { db } = createDbClient();
   logger.info('app.bootstrap.db_ready');
   const webOrigin = process.env.APP_URL ?? 'http://localhost:5173';

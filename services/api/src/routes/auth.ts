@@ -37,7 +37,12 @@ const toErrorMessage = (error: unknown): string =>
 export const buildAuthRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
   router.post('/login', async (context) => {
+    const startedAt = Date.now();
+    deps.logger.info('auth.login.enter', { duration_ms_from_start: 0 });
     const body = await context.req.json();
+    deps.logger.info('auth.login.after_parse_body', {
+      duration_ms_from_start: Date.now() - startedAt,
+    });
     const email = parseEmail((body as { email?: unknown }).email);
     deps.logger.info('auth.login.start', { email });
 
@@ -49,7 +54,16 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       });
     }
 
+    deps.logger.info('auth.login.before_user_select', {
+      email,
+      duration_ms_from_start: Date.now() - startedAt,
+    });
     let [user] = await deps.db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
+    deps.logger.info('auth.login.after_user_select', {
+      email,
+      found_user: Boolean(user),
+      duration_ms_from_start: Date.now() - startedAt,
+    });
     let createdUser = false;
     if (!user) {
       const [company] = await deps.db
@@ -93,6 +107,10 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     const expiresAt = new Date(
       Date.now() + Number(process.env.MAGIC_LINK_TTL_HOURS ?? 72) * 3600_000,
     );
+    deps.logger.info('auth.login.before_notification_insert', {
+      email,
+      duration_ms_from_start: Date.now() - startedAt,
+    });
     await deps.db
       .update(notificationTable)
       .set({ magicLinkRevoked: true } as Partial<typeof notificationTable.$inferInsert>)
@@ -118,6 +136,7 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       email,
       token,
       expires_at: expiresAt.toISOString(),
+      duration_ms_from_start: Date.now() - startedAt,
     });
     try {
       deps.logger.info('auth.login.before_email_send', { email });
