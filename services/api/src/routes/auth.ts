@@ -8,6 +8,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { logAudit } from '../core/audit.js';
+import { isAuthLoginQueryFallbackEnabled } from '../core/config.js';
 import { AppError } from '../core/errors.js';
 import { readJsonBody } from '../core/http/read-json-body.js';
 import { companyTable, notificationTable, userTable } from '../providers/db/index.js';
@@ -38,9 +39,9 @@ const toErrorMessage = (error: unknown): string =>
 
 const parseLoginEmail = async (context: Context, deps: RouteDeps, startedAt: number): Promise<string> => {
   const queryEmail = context.req.query('email');
-  if (queryEmail) {
+  if (queryEmail && isAuthLoginQueryFallbackEnabled()) {
     deps.logger.info('auth.login.email_source', {
-      source: 'query',
+      source: 'query_fallback',
       duration_ms_from_start: Date.now() - startedAt,
     });
     return parseEmail(queryEmail);
