@@ -20,6 +20,7 @@ RELEVANT: services/api/src/routes/auth.ts,apps/web/src/services/auth.ts,docs/tec
 3. `GET /api/v1/debug/db-ping` стабильно отвечал `200` (`~700ms`) -> DB connectivity нормальная.
 4. `POST /api/v1/debug/json-echo` возвращал `408 Body parse timeout` -> зависание на body stream.
 5. После перехода на JSON-only через guarded parser `POST /api/v1/auth/login` давал `408 REQUEST_TIMEOUT` (`20/20`) без `504`.
+6. После расширения CORS на `/v1/*` preflight начал падать с `500 TypeError: this.raw.headers.get is not a function`.
 
 ## Финальное решение
 
@@ -27,12 +28,15 @@ RELEVANT: services/api/src/routes/auth.ts,apps/web/src/services/auth.ts,docs/tec
 - Web login отправляет `X-Auth-Email` и не отправляет email в query/body.
 - Для CORS добавлен `X-Auth-Email` в `allowHeaders`.
 - В auth-логах email маскируется, чтобы снизить PII риск.
+- Vercel entrypoint переведен с `hono/vercel` на `@hono/node-server/vercel` (Node incoming req/res adapter).
+- На 24 часа добавлены безопасные shape-логи входящего request в entrypoint (без значений заголовков) для быстрой верификации.
 
 ## Почему так
 
 - Body parsing в Vercel runtime оказался нестабильным для login-path.
 - Header-based transport не зависит от body stream и устраняет сам класс таймаутов.
 - Это осознанный breaking change в контракте login ради стабильности прод-авторизации.
+- Ошибка `headers.get is not a function` показала adapter mismatch: runtime давал Node request shape, а использовался адаптер под Web Request.
 
 ## План верификации
 
