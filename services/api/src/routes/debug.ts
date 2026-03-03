@@ -5,6 +5,7 @@
 
 import { sql } from 'drizzle-orm';
 import { Hono } from 'hono';
+import { withDbTimeout } from '../core/db/with-db-timeout.js';
 import { AppError } from '../core/errors.js';
 import type { RouteDeps } from './deps.js';
 
@@ -22,13 +23,19 @@ export const buildDebugRoutes = (deps: RouteDeps): Hono => {
     ensureDebugSecret(context.req.header('x-cron-secret'));
     const startedAt = Date.now();
     try {
-      await deps.db.execute(sql`select 1`);
+      await withDbTimeout(deps.db.execute(sql`select 1`));
       return context.json({
         ok: true,
         duration_ms: Date.now() - startedAt,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
+      if (error instanceof AppError && error.code === 'DB_TIMEOUT') {
+        deps.logger.error('debug.db_ping_timeout', {
+          duration_ms: Date.now() - startedAt,
+        });
+        throw error;
+      }
       deps.logger.error('debug.db_ping_failed', {
         duration_ms: Date.now() - startedAt,
         error: error instanceof Error ? error.message : 'unknown error',

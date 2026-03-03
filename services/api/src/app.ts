@@ -13,6 +13,23 @@ import { createLogger } from './providers/logger.js';
 import { buildCronRoutes } from './routes/cron.js';
 import { buildApiRouter } from './routes/index.js';
 
+const isVercelPreviewOrigin = (origin: string): boolean => {
+  try {
+    const parsed = new URL(origin);
+    return parsed.protocol === 'https:' && parsed.hostname.endsWith('.vercel.app');
+  } catch {
+    return false;
+  }
+};
+
+const createCorsOriginResolver = (webOrigin: string) => (origin: string): string => {
+  if (!origin) return webOrigin;
+  if (origin === webOrigin) return origin;
+  if (origin === 'http://localhost:5173') return origin;
+  if (isVercelPreviewOrigin(origin)) return origin;
+  return webOrigin;
+};
+
 export const createApp = (): Hono => {
   const app = new Hono();
   const logger = createLogger();
@@ -52,15 +69,15 @@ export const createApp = (): Hono => {
     return c.json({ status: 'ok' });
   });
 
-  // Local web app talks to API from a different origin (5173 -> 3000)
-  app.use(
-    '/api/*',
-    cors({
-      origin: webOrigin,
-      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization', 'X-Auth-Email'],
-    }),
-  );
+  // Vercel can forward requests as /api/* or stripped /v1/* paths.
+  // CORS must cover both, otherwise preflight can return 404.
+  const corsOptions = {
+    origin: createCorsOriginResolver(webOrigin),
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-Auth-Email'],
+  };
+  app.use('/api/*', cors(corsOptions));
+  app.use('/v1/*', cors(corsOptions));
 
   // Vercel can pass either /api/* or stripped /* paths depending on route matching.
   // Register both prefixes to keep behavior stable across environments.

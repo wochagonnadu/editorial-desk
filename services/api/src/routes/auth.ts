@@ -8,6 +8,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { logAudit } from '../core/audit.js';
+import { withDbTimeout } from '../core/db/with-db-timeout.js';
 import { AppError } from '../core/errors.js';
 import { companyTable, notificationTable, userTable } from '../providers/db/index.js';
 import {
@@ -85,7 +86,9 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       email: maskedEmail,
       duration_ms_from_start: Date.now() - startedAt,
     });
-    let [user] = await deps.db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
+    let [user] = await withDbTimeout(
+      deps.db.select().from(userTable).where(eq(userTable.email, email)).limit(1),
+    );
     deps.logger.info('auth.login.after_user_select', {
       email: maskedEmail,
       found_user: Boolean(user),
@@ -93,29 +96,35 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     });
     let createdUser = false;
     if (!user) {
-      const [company] = await deps.db
-        .insert(companyTable)
-        .values({
-          name: companyNameFromEmail(email),
-          domain: 'business',
-        } as unknown as typeof companyTable.$inferInsert)
-        .returning();
-      [user] = await deps.db
-        .insert(userTable)
-        .values({
+      const [company] = await withDbTimeout(
+        deps.db
+          .insert(companyTable)
+          .values({
+            name: companyNameFromEmail(email),
+            domain: 'business',
+          } as unknown as typeof companyTable.$inferInsert)
+          .returning(),
+      );
+      [user] = await withDbTimeout(
+        deps.db
+          .insert(userTable)
+          .values({
+            companyId: company.id,
+            email,
+            name: email.split('@')[0] ?? 'Owner',
+            role: 'owner',
+          } as unknown as typeof userTable.$inferInsert)
+          .returning(),
+      );
+      await withDbTimeout(
+        logAudit(deps.db, {
           companyId: company.id,
-          email,
-          name: email.split('@')[0] ?? 'Owner',
-          role: 'owner',
-        } as unknown as typeof userTable.$inferInsert)
-        .returning();
-      await logAudit(deps.db, {
-        companyId: company.id,
-        actorType: 'system',
-        action: 'user.created',
-        entityType: 'user',
-        entityId: user.id,
-      });
+          actorType: 'system',
+          action: 'user.created',
+          entityType: 'user',
+          entityId: user.id,
+        }),
+      );
       createdUser = true;
     }
     deps.logger.info('auth.login.after_user_lookup', {
@@ -138,27 +147,31 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       email: maskedEmail,
       duration_ms_from_start: Date.now() - startedAt,
     });
-    await deps.db
-      .update(notificationTable)
-      .set({ magicLinkRevoked: true } as Partial<typeof notificationTable.$inferInsert>)
-      .where(
-        and(
-          eq(notificationTable.recipientEmail, email),
-          eq(notificationTable.notificationType, 'magic_link'),
-          eq(notificationTable.magicLinkRevoked, false),
+    await withDbTimeout(
+      deps.db
+        .update(notificationTable)
+        .set({ magicLinkRevoked: true } as Partial<typeof notificationTable.$inferInsert>)
+        .where(
+          and(
+            eq(notificationTable.recipientEmail, email),
+            eq(notificationTable.notificationType, 'magic_link'),
+            eq(notificationTable.magicLinkRevoked, false),
+          ),
         ),
-      );
-    await deps.db.insert(notificationTable).values({
-      companyId: user.companyId,
-      recipientEmail: email,
-      notificationType: 'magic_link',
-      emailToken: randomUUID(),
-      magicLinkToken: token,
-      magicLinkExpiresAt: expiresAt,
-      magicLinkRevoked: false,
-      status: 'sent',
-      sentAt: new Date(),
-    } as unknown as typeof notificationTable.$inferInsert);
+    );
+    await withDbTimeout(
+      deps.db.insert(notificationTable).values({
+        companyId: user.companyId,
+        recipientEmail: email,
+        notificationType: 'magic_link',
+        emailToken: randomUUID(),
+        magicLinkToken: token,
+        magicLinkExpiresAt: expiresAt,
+        magicLinkRevoked: false,
+        status: 'sent',
+        sentAt: new Date(),
+      } as unknown as typeof notificationTable.$inferInsert),
+    );
     deps.logger.info('auth.login.after_token_store', {
       email: maskedEmail,
       token,
@@ -204,39 +217,45 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       });
     }
 
-    const [notification] = await deps.db
-      .select()
-      .from(notificationTable)
-      .where(eq(notificationTable.magicLinkToken, token))
-      .orderBy(desc(notificationTable.createdAt))
-      .limit(1);
+    const [notification] = await withDbTimeout(
+      deps.db
+        .select()
+        .from(notificationTable)
+        .where(eq(notificationTable.magicLinkToken, token))
+        .orderBy(desc(notificationTable.createdAt))
+        .limit(1),
+    );
     if (!notification || notification.magicLinkRevoked || !notification.magicLinkExpiresAt) {
       throw new AppError(401, 'INVALID_TOKEN', 'Magic link is invalid');
     }
     if (notification.magicLinkExpiresAt.getTime() < Date.now()) {
       throw new AppError(401, 'TOKEN_EXPIRED', 'Magic link expired');
     }
-    const [user] = await deps.db
-      .select()
-      .from(userTable)
-      .where(eq(userTable.email, notification.recipientEmail))
-      .limit(1);
+    const [user] = await withDbTimeout(
+      deps.db
+        .select()
+        .from(userTable)
+        .where(eq(userTable.email, notification.recipientEmail))
+        .limit(1),
+    );
     if (!user) throw new AppError(401, 'INVALID_TOKEN', 'User not found for token');
 
-    const [consumed] = await deps.db
-      .update(notificationTable)
-      .set({
-        magicLinkRevoked: true,
-        status: 'replied',
-        repliedAt: new Date(),
-      } as Partial<typeof notificationTable.$inferInsert>)
-      .where(
-        and(
-          eq(notificationTable.id, notification.id),
-          eq(notificationTable.magicLinkRevoked, false),
-        ),
-      )
-      .returning({ id: notificationTable.id });
+    const [consumed] = await withDbTimeout(
+      deps.db
+        .update(notificationTable)
+        .set({
+          magicLinkRevoked: true,
+          status: 'replied',
+          repliedAt: new Date(),
+        } as Partial<typeof notificationTable.$inferInsert>)
+        .where(
+          and(
+            eq(notificationTable.id, notification.id),
+            eq(notificationTable.magicLinkRevoked, false),
+          ),
+        )
+        .returning({ id: notificationTable.id }),
+    );
     if (!consumed) throw new AppError(401, 'INVALID_TOKEN', 'Magic link is invalid');
 
     const jwt = await signSessionToken({

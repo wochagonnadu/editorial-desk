@@ -50,15 +50,46 @@ const createDeps = (): RouteDeps => {
   };
 };
 
+const createDepsWithHangingSelect = (): RouteDeps => {
+  const db = {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: () => new Promise<never>(() => undefined),
+        }),
+      }),
+    }),
+  } as unknown as RouteDeps['db'];
+
+  const content: ContentPort = {
+    streamText: async () => (async function* () {})(),
+    generateObject: async <T>() => ({} as T),
+  };
+
+  return {
+    db,
+    content,
+    logger: createLogger(),
+    email: {
+      buildReplyToAddress: () => 'reply@vsche.ru',
+      sendEmail: async () => ({ messageId: 'ok' }),
+      sendMagicLink: async () => ({ messageId: 'ok' }),
+    },
+  };
+};
+
 describe('auth login email failure', () => {
   const originalBypass = process.env.DEV_DISABLE_AUTH;
   const originalMock = process.env.DEV_MOCK_MAGIC_LINK;
+  const originalDbTimeout = process.env.DB_OPERATION_TIMEOUT_MS;
 
   afterEach(() => {
     if (originalBypass === undefined) delete process.env.DEV_DISABLE_AUTH;
     else process.env.DEV_DISABLE_AUTH = originalBypass;
     if (originalMock === undefined) delete process.env.DEV_MOCK_MAGIC_LINK;
     else process.env.DEV_MOCK_MAGIC_LINK = originalMock;
+    if (originalDbTimeout === undefined) delete process.env.DB_OPERATION_TIMEOUT_MS;
+    else process.env.DB_OPERATION_TIMEOUT_MS = originalDbTimeout;
   });
 
   it('returns 502 EMAIL_DELIVERY_FAILED', async () => {
@@ -95,6 +126,26 @@ describe('auth login email failure', () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
       error: { code: 'VALIDATION_ERROR' },
+    });
+  });
+
+  it('returns 503 DB_TIMEOUT when user lookup hangs', async () => {
+    process.env.DEV_DISABLE_AUTH = 'false';
+    process.env.DEV_MOCK_MAGIC_LINK = 'false';
+    process.env.DB_OPERATION_TIMEOUT_MS = '5';
+
+    const app = new Hono();
+    app.onError((error, context) => toErrorResponse(context, error));
+    app.route('/', buildAuthRoutes(createDepsWithHangingSelect()));
+
+    const response = await app.request('http://local/login', {
+      method: 'POST',
+      headers: { 'x-auth-email': 'mail@mail.com' },
+    });
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'DB_TIMEOUT' },
     });
   });
 });
