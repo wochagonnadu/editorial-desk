@@ -8,6 +8,8 @@ import type { SendEmailInput } from '@newsroom/shared';
 import { buildEmailTlsOptionsFromEnv } from './email-tls.js';
 import type { Logger } from './logger.js';
 
+const DEFAULT_RESEND_TIMEOUT_MS = 8_000;
+
 const parseResponseText = (text: string): { id?: string; message?: string } => {
   if (!text) return {};
   try {
@@ -17,9 +19,16 @@ const parseResponseText = (text: string): { id?: string; message?: string } => {
   }
 };
 
+const readPositiveInt = (raw: string | undefined, fallback: number): number => {
+  const parsed = Number.parseInt(raw ?? '', 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+};
+
 const postResend = async (
   apiKey: string,
   payload: string,
+  timeoutMs: number,
 ): Promise<{ status: number; text: string }> =>
   new Promise((resolve, reject) => {
     const tls = buildEmailTlsOptionsFromEnv();
@@ -46,6 +55,9 @@ const postResend = async (
         });
       },
     );
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error(`Resend request timeout after ${timeoutMs}ms`));
+    });
     req.on('error', reject);
     req.write(payload);
     req.end();
@@ -66,7 +78,8 @@ export const sendWithResend = async (logger: Logger, input: SendEmailInput, repl
       ? Object.entries(input.metadata).map(([name, value]) => ({ name, value }))
       : undefined,
   });
-  const response = await postResend(apiKey, payload);
+  const timeoutMs = readPositiveInt(process.env.EMAIL_SEND_TIMEOUT_MS, DEFAULT_RESEND_TIMEOUT_MS);
+  const response = await postResend(apiKey, payload, timeoutMs);
   const data = parseResponseText(response.text);
   if (response.status < 200 || response.status >= 300 || !data.id) {
     logger.error('email.resend_send_failed', {

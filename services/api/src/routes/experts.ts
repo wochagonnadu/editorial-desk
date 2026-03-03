@@ -6,6 +6,7 @@
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { ExpertStatus } from '@newsroom/shared';
+import { readJsonBody } from '../core/http/read-json-body.js';
 import { AppError } from '../core/errors.js';
 import { startOnboarding } from '../core/onboarding.js';
 import { DrizzleExpertStore, onboardingSequenceTable, voiceProfileTable } from '../providers/db/index.js';
@@ -25,7 +26,13 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
 
   router.post('/', async (context) => {
     const authUser = getAuthUser(context);
-    const body = (await context.req.json()) as Record<string, unknown>;
+    const log = deps.logger.child({
+      module: 'experts.create',
+      company_id: authUser.companyId,
+      actor: authUser.userId,
+    });
+    log.info('experts.create.enter');
+    const body = await readJsonBody<Record<string, unknown>>(context.req.raw);
     const created = await expertStore.create({
       companyId: authUser.companyId,
       name: parseString(body.name, 'name'),
@@ -35,7 +42,20 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       publicTextUrls: Array.isArray(body.public_text_urls) ? body.public_text_urls.map(String) : [],
       status: 'pending',
     });
-    await startOnboarding({ db: deps.db, email: deps.email }, created.id);
+    log.info('experts.create.persisted', { expert_id: created.id });
+    try {
+      await startOnboarding({ db: deps.db, email: deps.email }, created.id);
+    } catch (error) {
+      log.error('experts.create.onboarding_failed', {
+        expert_id: created.id,
+        error_message: error instanceof Error ? error.message : String(error),
+      });
+      if (error instanceof Error && error.message.toLowerCase().includes('timeout')) {
+        throw new AppError(503, 'EMAIL_TIMEOUT', 'Onboarding email request timed out');
+      }
+      throw error;
+    }
+    log.info('experts.create.onboarding_started', { expert_id: created.id });
     return context.json({ id: created.id, status: 'onboarding' }, 201);
   });
   router.get('/', async (context) => {
