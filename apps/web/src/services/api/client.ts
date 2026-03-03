@@ -27,7 +27,13 @@ const defaultBaseUrl =
     ? 'http://localhost:3000'
     : window.location.origin;
 
-const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+type ImportMetaWithOptionalEnv = ImportMeta & {
+  env?: {
+    VITE_API_BASE_URL?: string;
+  };
+};
+
+const configuredBaseUrl = (import.meta as ImportMetaWithOptionalEnv).env?.VITE_API_BASE_URL?.trim();
 
 const API_BASE_URL =
   configuredBaseUrl ||
