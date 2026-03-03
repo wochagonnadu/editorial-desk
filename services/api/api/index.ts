@@ -4,7 +4,7 @@
 // RELEVANT: services/api/src/app.ts,services/api/vercel.json
 
 import { serve } from '@hono/node-server';
-import { handle } from '@hono/node-server/vercel';
+import { handle } from 'hono/vercel';
 import { createApp } from '../src/app.js';
 
 console.log('api.entry.create_app.start');
