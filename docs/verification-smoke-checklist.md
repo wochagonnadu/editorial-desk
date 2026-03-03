@@ -103,3 +103,15 @@ No-Go, если:
   - зафиксирован открытый `TD-011` в `docs/tech_debt.md`;
   - есть план наблюдения 24 часа по Vercel логам;
   - в `specs/001-virtual-newsroom-mvp/contracts/api.md` отражен актуальный контракт.
+
+## 7) Vercel runtime baseline for form routes (March 3, 2026)
+
+- Для `services/api` env `NODEJS_HELPERS=0` обязателен в Preview и Production.
+- Любое изменение этой переменной требует повторного smoke для form-routes:
+  - `POST /api/v1/experts`
+  - `POST /api/v1/topics`
+  - `POST /api/v1/landing/requests`
+  - `POST /api/v1/approvals/:stepId/forward`
+  - `POST /api/v1/drafts/*` form endpoints
+  - `POST /api/v1/webhooks/email/inbound`
+- Критерий стабильности после деплоя: 24 часа без `FUNCTION_INVOCATION_TIMEOUT` и `Body parse timeout` по form-routes.
