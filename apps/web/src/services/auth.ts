@@ -18,6 +18,10 @@ export type SessionData = {
   user: SessionUser;
 };
 
+type LoginRequest = {
+  email: string;
+};
+
 type VerifyResponse = {
   token: string;
   user: {
@@ -34,8 +38,10 @@ type LoginResponse = {
 };
 
 export const loginWithMagicLink = async (email: string): Promise<LoginResponse> => {
-  const raw = await apiRequest<unknown>(`/api/v1/auth/login?email=${encodeURIComponent(email)}`, {
+  const payload: LoginRequest = { email };
+  const raw = await apiRequest<unknown>('/api/v1/auth/login', {
     method: 'POST',
+    body: payload,
   });
   return mapDto<LoginResponse>(raw);
 };
