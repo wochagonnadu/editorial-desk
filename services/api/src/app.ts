@@ -58,7 +58,7 @@ export const createApp = (): Hono => {
     cors({
       origin: webOrigin,
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization'],
+      allowHeaders: ['Content-Type', 'Authorization', 'X-Auth-Email'],
     }),
   );
 

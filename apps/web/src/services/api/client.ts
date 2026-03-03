@@ -45,19 +45,28 @@ type RequestOptions = {
   token?: string;
   body?: unknown;
   signal?: AbortSignal;
+  headers?: HeadersInit;
 };
 
 export const apiRequest = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
-  const { method = 'GET', token, body, signal } = options;
+  const { method = 'GET', token, body, signal, headers } = options;
+  const requestHeaders = new Headers({
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  });
+  if (body !== undefined) {
+    requestHeaders.set('Content-Type', 'application/json');
+  }
+  if (headers) {
+    new Headers(headers).forEach((value, key) => {
+      requestHeaders.set(key, value);
+    });
+  }
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     signal,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
+    headers: requestHeaders,
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
 
   if (!response.ok) {

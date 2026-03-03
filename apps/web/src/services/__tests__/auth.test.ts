@@ -1,12 +1,12 @@
 // PATH: apps/web/src/services/__tests__/auth.test.ts
-// WHAT: Validates login service sends JSON-only payload without query email
-// WHY:  Prevents PII leak in URL and locks web contract to body-based auth
+// WHAT: Validates login service sends X-Auth-Email header without URL/body email
+// WHY:  Prevents body-parse instability and keeps email out of query string
 // RELEVANT: apps/web/src/services/auth.ts,apps/web/src/services/api/client.ts,specs/007-vercel-auth-json-body-recovery/tasks.md
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-test('loginWithMagicLink uses JSON body and no email in query string', async (t) => {
+test('loginWithMagicLink uses X-Auth-Email header and no email in query/body', async (t) => {
   const originalFetch = globalThis.fetch;
   const hadWindow = Object.prototype.hasOwnProperty.call(globalThis, 'window');
   const originalWindow = (globalThis as { window?: unknown }).window;
@@ -49,7 +49,8 @@ test('loginWithMagicLink uses JSON body and no email in query string', async (t)
   assert.equal(call.url, 'http://localhost:3000/api/v1/auth/login');
   assert.equal(call.url.includes('?email='), false);
   assert.equal(call.init?.method, 'POST');
-  assert.equal(call.init?.body, JSON.stringify({ email: 'mail@mail.com' }));
+  assert.equal(call.init?.body, undefined);
   const headers = new Headers((call.init?.headers ?? {}) as HeadersInit);
-  assert.equal(headers.get('content-type'), 'application/json');
+  assert.equal(headers.get('x-auth-email'), 'mail@mail.com');
+  assert.equal(headers.get('content-type'), null);
 });

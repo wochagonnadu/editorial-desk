@@ -71,13 +71,30 @@ describe('auth login email failure', () => {
 
     const response = await app.request('http://local/login', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: 'mail@mail.com' }),
+      headers: { 'x-auth-email': 'mail@mail.com' },
     });
 
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toMatchObject({
       error: { code: 'EMAIL_DELIVERY_FAILED' },
+    });
+  });
+
+  it('returns 400 VALIDATION_ERROR when x-auth-email is missing', async () => {
+    process.env.DEV_DISABLE_AUTH = 'false';
+    process.env.DEV_MOCK_MAGIC_LINK = 'false';
+
+    const app = new Hono();
+    app.onError((error, context) => toErrorResponse(context, error));
+    app.route('/', buildAuthRoutes(createDeps()));
+
+    const response = await app.request('http://local/login', {
+      method: 'POST',
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'VALIDATION_ERROR' },
     });
   });
 });

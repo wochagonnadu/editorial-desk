@@ -11,7 +11,7 @@ RELEVANT: services/api/src/routes/auth.ts,apps/web/src/services/auth.ts,docs/tec
 
 - Симптом в web: CORS-ошибка и `504 Gateway Timeout` при отправке magic-link.
 - Фактическая причина: runtime timeout функции Vercel (`FUNCTION_INVOCATION_TIMEOUT`), а не CORS.
-- Точка зависания: чтение JSON body (`await req.json()`), до бизнес-логики login.
+- Точка зависания: чтение request body (`await req.json()` и stream-reader), до бизнес-логики login.
 
 ## Что наблюдали
 
@@ -19,29 +19,30 @@ RELEVANT: services/api/src/routes/auth.ts,apps/web/src/services/auth.ts,docs/tec
 2. `POST /api/v1/auth/login` зависал до 25 секунд и падал в `504`.
 3. `GET /api/v1/debug/db-ping` стабильно отвечал `200` (`~700ms`) -> DB connectivity нормальная.
 4. `POST /api/v1/debug/json-echo` возвращал `408 Body parse timeout` -> зависание на body stream.
+5. После перехода на JSON-only через guarded parser `POST /api/v1/auth/login` давал `408 REQUEST_TIMEOUT` (`20/20`) без `504`.
 
-## Временное решение
+## Финальное решение
 
-- В API login добавлен fallback чтения email из query (`?email=`), чтобы обойти `req.json()` в проде.
-- Web login переведен на `POST /api/v1/auth/login?email=...` без JSON body.
-- Для web добавлен SPA rewrite в `apps/web/vercel.json`, чтобы magic-link deep-link не давал `404`.
+- Контракт login изменен на header-only: API читает email из `X-Auth-Email`.
+- Web login отправляет `X-Auth-Email` и не отправляет email в query/body.
+- Для CORS добавлен `X-Auth-Email` в `allowHeaders`.
+- В auth-логах email маскируется, чтобы снизить PII риск.
 
-## Риски временного решения
+## Почему так
 
-- Email в query попадает в URL-логи (PII риск).
-- Контракт login временно “раздвоен” (query + JSON).
-- Нужен обязательный cleanup после стабилизации runtime.
+- Body parsing в Vercel runtime оказался нестабильным для login-path.
+- Header-based transport не зависит от body stream и устраняет сам класс таймаутов.
+- Это осознанный breaking change в контракте login ради стабильности прод-авторизации.
 
-## План полного cleanup
+## План верификации
 
-1. Стабилизировать body parsing в Vercel Node runtime (adapter/runtime версия, проверка на `json-echo`).
-2. Вернуть web login на JSON body.
-3. Удалить query-workaround из API.
-4. Удалить debug-роуты `/api/v1/debug/*`.
-5. Закрыть запись техдолга в `docs/tech_debt.md` со ссылкой на commit/PR.
+1. Smoke `POST /api/v1/auth/login` с `X-Auth-Email`: 20/20 без `408` и `504`.
+2. Проверить `GET /api/v1/auth/verify`: без регрессии.
+3. Проверить логи Vercel 24 часа: нет `FUNCTION_INVOCATION_TIMEOUT` для login.
+4. После стабилизации закрыть TD-011 ссылкой на commit/PR.
 
-## Критерии готовности к удалению workaround
+## Критерии готовности
 
-- `POST /api/v1/debug/json-echo` проходит 30/30 без timeout.
-- `POST /api/v1/auth/login` (JSON body) проходит 20/20 без `504`.
+- `POST /api/v1/auth/login` с `X-Auth-Email` стабилен и не зависит от body parsing.
+- В web/API нет передачи email через query string.
 - В Vercel logs нет `FUNCTION_INVOCATION_TIMEOUT` по login в течение 24 часов.

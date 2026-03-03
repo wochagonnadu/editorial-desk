@@ -96,9 +96,10 @@ No-Go, если:
 
 ## 6) Auth timeout incident checks (March 3, 2026)
 
-- `POST /api/v1/auth/login` (JSON body) не должен давать `504 FUNCTION_INVOCATION_TIMEOUT`.
+- `POST /api/v1/auth/login` с `X-Auth-Email` не должен давать `504 FUNCTION_INVOCATION_TIMEOUT` и `408 REQUEST_TIMEOUT`.
 - Deep-link `https://<web-domain>/auth/verify?token=...` не должен отдавать Vercel `404`.
-- Если временно включен query-workaround login:
+- Email не должен попадать в query/body login-запроса.
+- Если login-контракт менялся недавно:
   - зафиксирован открытый `TD-011` в `docs/tech_debt.md`;
-  - есть план удаления workaround;
-  - перед релизом проверен возврат к JSON body-only контракту.
+  - есть план наблюдения 24 часа по Vercel логам;
+  - в `specs/001-virtual-newsroom-mvp/contracts/api.md` отражен актуальный контракт.

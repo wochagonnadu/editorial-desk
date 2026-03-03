@@ -8,9 +8,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { logAudit } from '../core/audit.js';
-import { isAuthLoginQueryFallbackEnabled } from '../core/config.js';
 import { AppError } from '../core/errors.js';
-import { readJsonBody } from '../core/http/read-json-body.js';
 import { companyTable, notificationTable, userTable } from '../providers/db/index.js';
 import {
   DEV_BYPASS_TOKEN,
@@ -23,10 +21,14 @@ import { signSessionToken } from './auth-token.js';
 import type { RouteDeps } from './deps.js';
 
 const parseEmail = (value: unknown): string => {
-  if (typeof value !== 'string' || !value.includes('@')) {
+  if (typeof value !== 'string') {
     throw new AppError(400, 'VALIDATION_ERROR', 'email must be valid');
   }
-  return value.trim().toLowerCase();
+  const email = value.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'email must be valid');
+  }
+  return email;
 };
 
 const companyNameFromEmail = (email: string): string => {
@@ -34,28 +36,32 @@ const companyNameFromEmail = (email: string): string => {
   return `Company ${name}`;
 };
 
+const maskEmailForLogs = (email: string): string => {
+  const [local = '', domain = ''] = email.split('@');
+  const maskedLocal =
+    local.length <= 2 ? `${local.slice(0, 1)}*` : `${local.slice(0, 2)}***`;
+  const [domainName = '', ...rest] = domain.split('.');
+  const maskedDomain = domainName ? `${domainName.slice(0, 1)}***` : '***';
+  const suffix = rest.length > 0 ? `.${rest.join('.')}` : '';
+  return `${maskedLocal}@${maskedDomain}${suffix}`;
+};
+
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'unknown error';
 
-const parseLoginEmail = async (context: Context, deps: RouteDeps, startedAt: number): Promise<string> => {
-  const queryEmail = context.req.query('email');
-  if (queryEmail && isAuthLoginQueryFallbackEnabled()) {
-    deps.logger.info('auth.login.email_source', {
-      source: 'query_fallback',
-      duration_ms_from_start: Date.now() - startedAt,
-    });
-    return parseEmail(queryEmail);
+const parseLoginEmail = (context: Context, deps: RouteDeps, startedAt: number): string => {
+  const headerEmail = context.req.header('x-auth-email');
+  if (!headerEmail) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'x-auth-email header is required');
   }
-
-  const body = await readJsonBody<{ email?: unknown }>(context.req.raw);
-  deps.logger.info('auth.login.after_parse_body', {
+  deps.logger.info('auth.login.after_parse_email_header', {
     duration_ms_from_start: Date.now() - startedAt,
   });
   deps.logger.info('auth.login.email_source', {
-    source: 'json',
+    source: 'header',
     duration_ms_from_start: Date.now() - startedAt,
   });
-  return parseEmail(body.email);
+  return parseEmail(headerEmail);
 };
 
 export const buildAuthRoutes = (deps: RouteDeps): Hono => {
@@ -63,11 +69,12 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
   router.post('/login', async (context) => {
     const startedAt = Date.now();
     deps.logger.info('auth.login.enter', { duration_ms_from_start: 0 });
-    const email = await parseLoginEmail(context, deps, startedAt);
-    deps.logger.info('auth.login.start', { email });
+    const email = parseLoginEmail(context, deps, startedAt);
+    const maskedEmail = maskEmailForLogs(email);
+    deps.logger.info('auth.login.start', { email: maskedEmail });
 
     if (isDevAuthBypassEnabled()) {
-      deps.logger.warn('auth.dev_bypass_login', { email });
+      deps.logger.warn('auth.dev_bypass_login', { email: maskedEmail });
       return context.json({
         message: `DEV auth bypass enabled. Token: ${DEV_BYPASS_TOKEN}`,
         dev_magic_token: DEV_BYPASS_TOKEN,
@@ -75,12 +82,12 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     }
 
     deps.logger.info('auth.login.before_user_select', {
-      email,
+      email: maskedEmail,
       duration_ms_from_start: Date.now() - startedAt,
     });
     let [user] = await deps.db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
     deps.logger.info('auth.login.after_user_select', {
-      email,
+      email: maskedEmail,
       found_user: Boolean(user),
       duration_ms_from_start: Date.now() - startedAt,
     });
@@ -112,14 +119,14 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       createdUser = true;
     }
     deps.logger.info('auth.login.after_user_lookup', {
-      email,
+      email: maskedEmail,
       user_id: user.id,
       created_user: createdUser,
     });
 
     const mockToken = await issueDevMockMagicLink(deps, { companyId: user.companyId, email });
     if (mockToken) {
-      deps.logger.info('auth.login_link_sent_mock', { email, token: mockToken });
+      deps.logger.info('auth.login_link_sent_mock', { email: maskedEmail, token: mockToken });
       return context.json({ message: `DEV mock token: ${mockToken}`, dev_magic_token: mockToken });
     }
 
@@ -128,7 +135,7 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       Date.now() + Number(process.env.MAGIC_LINK_TTL_HOURS ?? 72) * 3600_000,
     );
     deps.logger.info('auth.login.before_notification_insert', {
-      email,
+      email: maskedEmail,
       duration_ms_from_start: Date.now() - startedAt,
     });
     await deps.db
@@ -153,13 +160,13 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       sentAt: new Date(),
     } as unknown as typeof notificationTable.$inferInsert);
     deps.logger.info('auth.login.after_token_store', {
-      email,
+      email: maskedEmail,
       token,
       expires_at: expiresAt.toISOString(),
       duration_ms_from_start: Date.now() - startedAt,
     });
     try {
-      deps.logger.info('auth.login.before_email_send', { email });
+      deps.logger.info('auth.login.before_email_send', { email: maskedEmail });
       await deps.email.sendMagicLink({
         to: email,
         token,
@@ -168,14 +175,14 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       });
     } catch (error) {
       deps.logger.error('auth.login_email_send_failed', {
-        email,
+        email: maskedEmail,
         provider: (process.env.EMAIL_PROVIDER ?? 'stub').toLowerCase(),
         error: toErrorMessage(error),
       });
       throw new AppError(502, 'EMAIL_DELIVERY_FAILED', 'Failed to send login email');
     }
-    deps.logger.info('auth.login.email_sent', { email });
-    deps.logger.info('auth.login_link_sent', { email });
+    deps.logger.info('auth.login.email_sent', { email: maskedEmail });
+    deps.logger.info('auth.login_link_sent', { email: maskedEmail });
     return context.json({ message: 'Login link sent to email' });
   });
   router.get('/verify', async (context) => {
