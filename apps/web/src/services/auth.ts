@@ -34,9 +34,8 @@ type LoginResponse = {
 };
 
 export const loginWithMagicLink = async (email: string): Promise<LoginResponse> => {
-  const raw = await apiRequest<unknown>('/api/v1/auth/login', {
+  const raw = await apiRequest<unknown>(`/api/v1/auth/login?email=${encodeURIComponent(email)}`, {
     method: 'POST',
-    body: { email },
   });
   return mapDto<LoginResponse>(raw);
 };

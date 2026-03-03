@@ -5,6 +5,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
+import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { logAudit } from '../core/audit.js';
 import { AppError } from '../core/errors.js';
@@ -34,16 +35,52 @@ const companyNameFromEmail = (email: string): string => {
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'unknown error';
 
+const parseJsonWithTimeout = async (
+  context: Context,
+  timeoutMs: number,
+): Promise<{ email?: unknown }> => {
+  let timeoutId: NodeJS.Timeout | null = null;
+  try {
+    const parsePromise = context.req.json() as Promise<{ email?: unknown }>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(
+        () => reject(new AppError(408, 'REQUEST_TIMEOUT', 'Body parse timeout')),
+        timeoutMs,
+      );
+    });
+    return await Promise.race([parsePromise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
+const parseLoginEmail = async (context: Context, deps: RouteDeps, startedAt: number): Promise<string> => {
+  const queryEmail = context.req.query('email');
+  if (queryEmail) {
+    deps.logger.info('auth.login.email_source', {
+      source: 'query',
+      duration_ms_from_start: Date.now() - startedAt,
+    });
+    return parseEmail(queryEmail);
+  }
+
+  const body = await parseJsonWithTimeout(context, 3_000);
+  deps.logger.info('auth.login.after_parse_body', {
+    duration_ms_from_start: Date.now() - startedAt,
+  });
+  deps.logger.info('auth.login.email_source', {
+    source: 'json',
+    duration_ms_from_start: Date.now() - startedAt,
+  });
+  return parseEmail(body.email);
+};
+
 export const buildAuthRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
   router.post('/login', async (context) => {
     const startedAt = Date.now();
     deps.logger.info('auth.login.enter', { duration_ms_from_start: 0 });
-    const body = await context.req.json();
-    deps.logger.info('auth.login.after_parse_body', {
-      duration_ms_from_start: Date.now() - startedAt,
-    });
-    const email = parseEmail((body as { email?: unknown }).email);
+    const email = await parseLoginEmail(context, deps, startedAt);
     deps.logger.info('auth.login.start', { email });
 
     if (isDevAuthBypassEnabled()) {
