@@ -9,6 +9,7 @@ import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { logAudit } from '../core/audit.js';
 import { AppError } from '../core/errors.js';
+import { readJsonBody } from '../core/http/read-json-body.js';
 import { companyTable, notificationTable, userTable } from '../providers/db/index.js';
 import {
   DEV_BYPASS_TOKEN,
@@ -35,25 +36,6 @@ const companyNameFromEmail = (email: string): string => {
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'unknown error';
 
-const parseJsonWithTimeout = async (
-  context: Context,
-  timeoutMs: number,
-): Promise<{ email?: unknown }> => {
-  let timeoutId: NodeJS.Timeout | null = null;
-  try {
-    const parsePromise = context.req.json() as Promise<{ email?: unknown }>;
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(
-        () => reject(new AppError(408, 'REQUEST_TIMEOUT', 'Body parse timeout')),
-        timeoutMs,
-      );
-    });
-    return await Promise.race([parsePromise, timeoutPromise]);
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-};
-
 const parseLoginEmail = async (context: Context, deps: RouteDeps, startedAt: number): Promise<string> => {
   const queryEmail = context.req.query('email');
   if (queryEmail) {
@@ -64,7 +46,7 @@ const parseLoginEmail = async (context: Context, deps: RouteDeps, startedAt: num
     return parseEmail(queryEmail);
   }
 
-  const body = await parseJsonWithTimeout(context, 3_000);
+  const body = await readJsonBody<{ email?: unknown }>(context.req.raw);
   deps.logger.info('auth.login.after_parse_body', {
     duration_ms_from_start: Date.now() - startedAt,
   });
