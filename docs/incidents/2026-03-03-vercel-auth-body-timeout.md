@@ -20,6 +20,24 @@ RELEVANT: services/api/src/routes/auth.ts,apps/web/src/services/auth.ts,docs/tec
 3. `GET /api/v1/debug/db-ping` стабильно отвечал `200` (`~700ms`) -> DB connectivity нормальная.
 4. `POST /api/v1/debug/json-echo` возвращал `408 Body parse timeout` -> зависание на body stream.
 
+## Последняя подтвержденная репродукция (фактические метки времени)
+
+Все метки ниже в `UTC+03:00` (из git-истории инцидентных правок 2026-03-03):
+
+- `2026-03-03T11:38:56+03:00` — добавлен `db-ping` и диагностика timeout (`fix(api): add db connectivity diagnostics for vercel login timeout`).
+- `2026-03-03T12:24:03+03:00` — добавлен `json-echo` probe и восстановлен node adapter (`fix(api): restore node vercel adapter and add json body parse probe`).
+- `2026-03-03T12:35:02+03:00` — введен query fallback в login (`fix(auth): avoid vercel body-parse timeout by using query email fallback`).
+
+Практический вывод: окно последней рабочей репродукции body timeout — до включения fallback, между `11:38` и `12:35` 3 марта 2026.
+
+## Baseline лог-трейс login (Phase A)
+
+- `auth.login.enter` -> вход в обработчик `POST /api/v1/auth/login`.
+- `auth.login.after_parse_body` -> логируется после успешного чтения body (для query fallback этот шаг может отсутствовать).
+- `auth.login.before_user_select` -> граница перед первым запросом в БД.
+
+Это оставляем как опорный trace, чтобы в следующих фазах четко видеть: зависание на body parsing или уже после перехода к DB.
+
 ## Временное решение
 
 - В API login добавлен fallback чтения email из query (`?email=`), чтобы обойти `req.json()` в проде.
