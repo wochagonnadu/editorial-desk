@@ -1,12 +1,13 @@
 // PATH: services/api/src/providers/db/pool.ts
 // WHAT: Database pool and Drizzle client factory
 // WHY:  Centralizes DB connection lifecycle for API providers
-// RELEVANT: services/api/src/providers/db/schema.ts,services/api/src/routes/index.ts
+// RELEVANT: services/api/src/providers/db/schema.ts,services/api/src/providers/db/ssl.ts,services/api/src/routes/index.ts
 
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema.js';
+import { buildPgSslConfigFromEnv } from './ssl.js';
 
 export type Database = NodePgDatabase<typeof schema>;
 
@@ -22,7 +23,8 @@ export const createDbClient = (): { pool: Pool; db: Database } => {
     throw new Error('DATABASE_URL is required');
   }
 
-  const pool = new Pool({ connectionString });
+  const ssl = buildPgSslConfigFromEnv();
+  const pool = new Pool({ connectionString, ssl });
   const db = drizzle(pool, { schema });
   cached = { pool, db };
   return cached;
