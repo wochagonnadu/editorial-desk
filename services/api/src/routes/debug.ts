@@ -4,6 +4,7 @@
 // RELEVANT: services/api/src/routes/index.ts,services/api/src/routes/deps.ts,services/api/src/providers/db/pool.ts
 
 import { sql } from 'drizzle-orm';
+import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { AppError } from '../core/errors.js';
 import type { RouteDeps } from './deps.js';
@@ -13,6 +14,14 @@ const ensureDebugSecret = (headerValue: string | undefined): void => {
   if (!secret || !headerValue || headerValue !== secret) {
     throw new AppError(401, 'UNAUTHORIZED', 'Invalid debug secret');
   }
+};
+
+const parseJsonWithTimeout = async (context: Context, timeoutMs: number) => {
+  const parsePromise = context.req.json();
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new AppError(408, 'REQUEST_TIMEOUT', 'Body parse timeout')), timeoutMs);
+  });
+  return Promise.race([parsePromise, timeoutPromise]);
 };
 
 export const buildDebugRoutes = (deps: RouteDeps): Hono => {
@@ -35,6 +44,14 @@ export const buildDebugRoutes = (deps: RouteDeps): Hono => {
       });
       throw new AppError(502, 'DB_UNAVAILABLE', 'Database ping failed');
     }
+  });
+
+  router.post('/json-echo', async (context) => {
+    ensureDebugSecret(context.req.header('x-cron-secret'));
+    deps.logger.info('debug.json_echo.enter');
+    const parsed = await parseJsonWithTimeout(context, 3_000);
+    deps.logger.info('debug.json_echo.after_parse');
+    return context.json({ ok: true, parsed });
   });
 
   return router;
