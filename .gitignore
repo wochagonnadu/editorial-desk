@@ -19,3 +19,6 @@ specs/
 apps/web-incoming
 supabase-ca.pem
 
+docs/
+.opencode
+.specify
