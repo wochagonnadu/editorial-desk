@@ -24,7 +24,7 @@ pnpm install
 
 # 2. Скопировать .env и заполнить ключи
 cp .env.example .env
-# Заполнить: DATABASE_URL, DB_SSL_CA_B64, EMAIL_*, OPENROUTER_API_KEY
+# Заполнить: DATABASE_URL, EMAIL_*, OPENROUTER_API_KEY
 
 # 3. Применить миграции
 pnpm --filter @newsroom/api run db:migrate
@@ -44,7 +44,6 @@ pnpm dev
 ```env
 # Database (Supabase managed или локальный PostgreSQL)
 DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?sslmode=verify-full
-DB_SSL_CA_B64=base64-encoded-pem-ca-chain
 
 # Email (provider-agnostic — заполнить для выбранного провайдера)
 EMAIL_PROVIDER=postmark          # postmark | resend | ses
@@ -65,12 +64,6 @@ MAGIC_LINK_TTL_HOURS=72
 # App
 APP_URL=http://localhost:5173
 API_URL=http://localhost:3000
-```
-
-`DB_SSL_CA_B64` — это base64 от PEM-цепочки CA. Пример генерации:
-
-```bash
-base64 -i supabase-ca.pem | tr -d '\n'
 ```
 
 Для реальной отправки через Resend в сетях с TLS interception (корпоративный прокси),
@@ -145,7 +138,6 @@ pnpm --filter @newsroom/api run db:studio
 2. Проверь, что `services/api/vercel.json` подхватился (rewrites + 2 cron job).
 3. В Project Environment Variables добавь:
    - `DATABASE_URL` (`sslmode=verify-full` для Supabase pooler)
-   - `DB_SSL_CA_B64` (base64 PEM CA chain)
    - `EMAIL_PROVIDER`, `EMAIL_API_KEY`, `EMAIL_INBOUND_ADDRESS`, `EMAIL_WEBHOOK_SECRET`
    - `EMAIL_TLS_CA_B64` (опционально), `EMAIL_TLS_REJECT_UNAUTHORIZED`
    - `OPENROUTER_API_KEY`
