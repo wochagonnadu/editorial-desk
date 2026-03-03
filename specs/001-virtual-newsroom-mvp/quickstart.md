@@ -52,6 +52,8 @@ EMAIL_API_KEY=xxx
 EMAIL_FROM=Editorial Desk <no-reply@vsche.ru>
 EMAIL_INBOUND_ADDRESS=reply@vsche.ru
 EMAIL_WEBHOOK_SECRET=xxx
+EMAIL_TLS_CA_B64=                # optional: base64 PEM CA chain for outbound HTTPS
+EMAIL_TLS_REJECT_UNAUTHORIZED=true
 
 # LLM (OpenRouter — бесплатные модели)
 OPENROUTER_API_KEY=sk-or-v1-xxx
@@ -70,6 +72,10 @@ API_URL=http://localhost:3000
 ```bash
 base64 -i supabase-ca.pem | tr -d '\n'
 ```
+
+Для реальной отправки через Resend в сетях с TLS interception (корпоративный прокси),
+передай их CA в `EMAIL_TLS_CA_B64` тем же способом (base64 от PEM).  
+`EMAIL_TLS_REJECT_UNAUTHORIZED=false` используй только как временную диагностику.
 
 ## Project Structure
 
@@ -141,6 +147,7 @@ pnpm --filter @newsroom/api run db:studio
    - `DATABASE_URL` (`sslmode=verify-full` для Supabase pooler)
    - `DB_SSL_CA_B64` (base64 PEM CA chain)
    - `EMAIL_PROVIDER`, `EMAIL_API_KEY`, `EMAIL_INBOUND_ADDRESS`, `EMAIL_WEBHOOK_SECRET`
+   - `EMAIL_TLS_CA_B64` (опционально), `EMAIL_TLS_REJECT_UNAUTHORIZED`
    - `OPENROUTER_API_KEY`
    - `JWT_SECRET`, `MAGIC_LINK_TTL_HOURS`, `CRON_SECRET`
    - `APP_URL`, `API_URL`

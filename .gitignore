@@ -17,3 +17,5 @@ Thumbs.db
 specs/
 
 apps/web-incoming
+supabase-ca.pem
+

@@ -18,21 +18,28 @@ import {
 import { issueDevMockMagicLink } from './auth-dev-mock.js';
 import { signSessionToken } from './auth-token.js';
 import type { RouteDeps } from './deps.js';
+
 const parseEmail = (value: unknown): string => {
   if (typeof value !== 'string' || !value.includes('@')) {
     throw new AppError(400, 'VALIDATION_ERROR', 'email must be valid');
   }
   return value.trim().toLowerCase();
 };
+
 const companyNameFromEmail = (email: string): string => {
   const name = email.split('@')[1]?.split('.')[0] ?? 'company';
   return `Company ${name}`;
 };
+
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : 'unknown error';
+
 export const buildAuthRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
   router.post('/login', async (context) => {
     const body = await context.req.json();
     const email = parseEmail((body as { email?: unknown }).email);
+    deps.logger.info('auth.login.start', { email });
 
     if (isDevAuthBypassEnabled()) {
       deps.logger.warn('auth.dev_bypass_login', { email });
@@ -43,6 +50,7 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     }
 
     let [user] = await deps.db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
+    let createdUser = false;
     if (!user) {
       const [company] = await deps.db
         .insert(companyTable)
@@ -67,7 +75,13 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
         entityType: 'user',
         entityId: user.id,
       });
+      createdUser = true;
     }
+    deps.logger.info('auth.login.after_user_lookup', {
+      email,
+      user_id: user.id,
+      created_user: createdUser,
+    });
 
     const mockToken = await issueDevMockMagicLink(deps, { companyId: user.companyId, email });
     if (mockToken) {
@@ -100,12 +114,28 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
       status: 'sent',
       sentAt: new Date(),
     } as unknown as typeof notificationTable.$inferInsert);
-    await deps.email.sendMagicLink({
-      to: email,
+    deps.logger.info('auth.login.after_token_store', {
+      email,
       token,
-      expiresAt,
-      appUrl: process.env.APP_URL ?? 'http://localhost:5173',
+      expires_at: expiresAt.toISOString(),
     });
+    try {
+      deps.logger.info('auth.login.before_email_send', { email });
+      await deps.email.sendMagicLink({
+        to: email,
+        token,
+        expiresAt,
+        appUrl: process.env.APP_URL ?? 'http://localhost:5173',
+      });
+    } catch (error) {
+      deps.logger.error('auth.login_email_send_failed', {
+        email,
+        provider: (process.env.EMAIL_PROVIDER ?? 'stub').toLowerCase(),
+        error: toErrorMessage(error),
+      });
+      throw new AppError(502, 'EMAIL_DELIVERY_FAILED', 'Failed to send login email');
+    }
+    deps.logger.info('auth.login.email_sent', { email });
     deps.logger.info('auth.login_link_sent', { email });
     return context.json({ message: 'Login link sent to email' });
   });

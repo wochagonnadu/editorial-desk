@@ -66,7 +66,19 @@ export const createApp = (): Hono => {
   app.route('/cron', buildCronRoutes(deps));
 
   app.onError((error, context) => {
-    logger.error('api.unhandled_error', { message: error.message });
+    const isError = error instanceof Error;
+    const cause =
+      isError && error.cause instanceof Error
+        ? error.cause.message
+        : isError && typeof error.cause === 'string'
+          ? error.cause
+          : undefined;
+    logger.error('api.unhandled_error', {
+      event: 'api.unhandled_error',
+      name: isError ? error.name : 'UnknownError',
+      error_message: isError ? error.message : String(error),
+      cause,
+    });
     return toErrorResponse(context, error);
   });
 
