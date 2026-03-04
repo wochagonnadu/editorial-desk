@@ -30,6 +30,9 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
     .where(eq(expertTable.id, expertId))
     .limit(1);
   if (!expert) throw new Error('expert not found');
+  if (expert.status !== 'onboarding') {
+    return { skipped: true as const, reason: 'already_finalized' as const };
+  }
 
   const steps = await context.db
     .select()
@@ -92,10 +95,6 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
     diffFromPrevious: { type: 'voice_test' },
   });
 
-  await context.db
-    .update(expertTable)
-    .set({ status: 'voice_testing' } as Partial<typeof expertTable.$inferInsert>)
-    .where(eq(expertTable.id, expert.id));
   const emailToken = randomUUID();
   await context.db.insert(notificationTable).values({
     companyId: expert.companyId,
@@ -115,5 +114,9 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
     process.env.APP_URL ?? 'http://localhost:5173',
   );
   await context.email.sendEmail({ to: expert.email, ...template });
+  await context.db
+    .update(expertTable)
+    .set({ status: 'voice_testing' } as Partial<typeof expertTable.$inferInsert>)
+    .where(eq(expertTable.id, expert.id));
   return { draftId: draft.id, versionNumber: version.versionNumber };
 };

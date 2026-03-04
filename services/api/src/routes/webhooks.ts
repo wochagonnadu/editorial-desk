@@ -102,6 +102,16 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
       await finalizeOnboardingVoiceTest({ db: deps.db, email: deps.email }, token.expertId);
     }
 
+    if (result.status === 'ignored') {
+      deps.logger.info('webhook.inbound.ignored', {
+        reason: 'onboarding_reply_ignored',
+        code: result.code,
+        expert_id: token.expertId,
+        step: token.step,
+      });
+      return context.json({ ok: true, ignored: true, code: result.code });
+    }
+
     deps.logger.info('webhook.inbound_processed', { expert_id: token.expertId, step: token.step });
     return context.json({ ok: true });
   });

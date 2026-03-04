@@ -14,6 +14,15 @@ export interface OnboardingContext {
   email: EmailPort;
 }
 
+export type ProcessReplyCode = 'PROCESSED' | 'MISSING_STEP' | 'INVALID_ORDER' | 'ALREADY_PROCESSED';
+
+export interface ProcessReplyResult {
+  status: 'processed' | 'ignored';
+  code: ProcessReplyCode;
+  completed: boolean;
+  nextStep?: number;
+}
+
 export const buildOnboardingReplyAddress = (
   expertId: string,
   step: number,
@@ -81,7 +90,47 @@ export const processReply = async (
   expertId: string,
   step: number,
   responseData: string,
-) => {
+): Promise<ProcessReplyResult> => {
+  if (step < 1 || step > 5) {
+    return { status: 'ignored', code: 'INVALID_ORDER', completed: false };
+  }
+
+  const steps = await context.db
+    .select()
+    .from(onboardingSequenceTable)
+    .where(eq(onboardingSequenceTable.expertId, expertId));
+  const currentStep = steps.find((row) => row.stepNumber === step);
+  if (!currentStep) {
+    return { status: 'ignored', code: 'MISSING_STEP', completed: false };
+  }
+
+  const hasIncompletePreviousStep = steps
+    .filter((row) => row.stepNumber < step)
+    .some((row) => row.status !== 'replied');
+  if (hasIncompletePreviousStep) {
+    return { status: 'ignored', code: 'INVALID_ORDER', completed: false };
+  }
+
+  if (currentStep.status === 'replied') {
+    if (step === 5) {
+      return { status: 'ignored', code: 'ALREADY_PROCESSED', completed: true };
+    }
+    const nextStep = step + 1;
+    const nextRow = steps.find((row) => row.stepNumber === nextStep);
+    if (!nextRow) {
+      return { status: 'ignored', code: 'MISSING_STEP', completed: false };
+    }
+    if (nextRow.status === 'pending') {
+      await sendStepEmail(context, expertId, nextStep);
+      return { status: 'processed', code: 'PROCESSED', completed: false, nextStep };
+    }
+    return { status: 'ignored', code: 'ALREADY_PROCESSED', completed: false };
+  }
+
+  if (currentStep.status !== 'sent') {
+    return { status: 'ignored', code: 'INVALID_ORDER', completed: false };
+  }
+
   const [updated] = await context.db
     .update(onboardingSequenceTable)
     .set({
@@ -93,19 +142,25 @@ export const processReply = async (
       and(
         eq(onboardingSequenceTable.expertId, expertId),
         eq(onboardingSequenceTable.stepNumber, step),
+        eq(onboardingSequenceTable.status, 'sent'),
       ),
     )
     .returning({ id: onboardingSequenceTable.id });
 
   if (!updated) {
-    throw new Error(`onboarding step is missing for expert=${expertId} step=${step}`);
+    return {
+      status: 'ignored',
+      code: 'ALREADY_PROCESSED',
+      completed: step === 5,
+    };
   }
 
   if (step < 5) {
-    await sendStepEmail(context, expertId, step + 1);
-    return { completed: false, nextStep: step + 1 };
+    const nextStep = step + 1;
+    await sendStepEmail(context, expertId, nextStep);
+    return { status: 'processed', code: 'PROCESSED', completed: false, nextStep };
   }
-  return { completed: true };
+  return { status: 'processed', code: 'PROCESSED', completed: true };
 };
 
 export const checkStalled = async (context: OnboardingContext, expertId: string) => {
