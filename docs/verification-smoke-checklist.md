@@ -118,7 +118,7 @@ No-Go, если:
 
 ## 8) Post-deploy runbook для form create-flow (Spec 009)
 
-- Окно наблюдения 24h: `STARTED_AT_UTC=2026-03-04T00:00:00Z`.
+- Окно наблюдения (текущий релиз при низком трафике): 1h, `STARTED_AT_UTC=2026-03-04T09:10:05Z`.
 - Для create-flow смотрим stage-логи `flow.stage` по `flow`:
   - `auth.login`
   - `experts.create`
@@ -128,7 +128,7 @@ No-Go, если:
   - `FUNCTION_INVOCATION_TIMEOUT` на POST form-routes;
   - `REQUEST_TIMEOUT` / `Body parse timeout` в API-логах;
   - всплеск `INVALID_JSON` на валидных UI-сценариях.
-- Что фиксируем в отчете после 24h:
+- Что фиксируем в отчете после окна наблюдения:
   - количество `flow.stage` со `status=error` по каждому flow;
   - наличие/отсутствие timeout-инцидентов;
   - решение `go` или `no-go` с коротким комментарием.
