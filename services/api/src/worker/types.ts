@@ -44,6 +44,8 @@ export interface WorkerJobContext {
   timeoutMs: number;
 }
 
+export type WorkerRunStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'ignored';
+
 export interface WorkerJobResult {
   status: 'succeeded' | 'ignored';
   reason?: string;

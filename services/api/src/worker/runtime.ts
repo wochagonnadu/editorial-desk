@@ -3,13 +3,11 @@
 // WHY:  Gives a minimal executable contract before queue migration in Phase C
 // RELEVANT: services/api/src/worker/retry-policy.ts,services/api/src/worker/registry.ts
 
-import { calculateBackoffMs, resolveRetryPolicy } from './retry-policy.js';
+import { resolveRetryPolicy } from './retry-policy.js';
 import type { WorkerRegistry } from './registry.js';
 import type { Logger } from '../providers/logger.js';
-import type { WorkerJob } from './types.js';
-import { sleep, withTimeout } from './runtime-utils.js';
-
-export type WorkerRunStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'ignored';
+import { runJobWithRetry } from './runtime-runner.js';
+import type { WorkerJob, WorkerRunStatus } from './types.js';
 
 interface WorkerState {
   status: WorkerRunStatus;
@@ -25,6 +23,7 @@ export interface WorkerRuntime {
     status: WorkerRunStatus;
     metrics?: Record<string, number>;
   } | null>;
+  getStatus(jobKey: string): WorkerRunStatus | null;
 }
 
 export const createInMemoryWorkerRuntime = (deps: {
@@ -35,13 +34,35 @@ export const createInMemoryWorkerRuntime = (deps: {
   const jobs = new Map<string, WorkerJob>();
   const state = new Map<string, WorkerState>();
 
+  const setState = (jobKey: string, next: WorkerState) => {
+    state.set(jobKey, next);
+  };
+
   return {
     enqueue(job) {
-      if (state.has(job.jobKey)) return { status: 'ignored', jobKey: job.jobKey };
+      const existing = state.get(job.jobKey);
+      if (existing) {
+        deps.logger.info('worker.job.ignored', {
+          job: job.name,
+          key: job.jobKey,
+          attempt: existing.attempts,
+          duration_ms: 0,
+          result: 'ignored',
+          reason: 'duplicate_job_key',
+          previous_status: existing.status,
+        });
+        return { status: 'ignored', jobKey: job.jobKey };
+      }
       jobs.set(job.jobKey, job);
-      state.set(job.jobKey, { status: 'queued', attempts: 0 });
+      setState(job.jobKey, { status: 'queued', attempts: 0 });
       queue.push(job.jobKey);
-      deps.logger.info('worker.job.queued', { job: job.name, key: job.jobKey, result: 'queued' });
+      deps.logger.info('worker.job.queued', {
+        job: job.name,
+        key: job.jobKey,
+        attempt: 0,
+        duration_ms: 0,
+        result: 'queued',
+      });
       return { status: 'queued', jobKey: job.jobKey };
     },
     async runNext() {
@@ -52,51 +73,25 @@ export const createInMemoryWorkerRuntime = (deps: {
 
       const policy = resolveRetryPolicy(job.policy);
       const handler = deps.registry.get(job.name);
-      state.set(jobKey, { status: 'running', attempts: 0 });
-
-      for (let attempt = 1; attempt <= policy.maxAttempts; attempt += 1) {
-        state.set(jobKey, { status: 'running', attempts: attempt });
-        try {
-          const result = await withTimeout(
-            handler(job, { logger: deps.logger, attempt, timeoutMs: policy.timeoutMs }),
-            policy.timeoutMs,
-          );
-          state.set(jobKey, { status: result.status, attempts: attempt });
-          deps.logger.info('worker.job.done', {
-            job: job.name,
-            key: jobKey,
-            attempt,
-            result: result.status,
-            reason: result.reason,
-          });
-          return { jobKey, jobName: job.name, status: result.status, metrics: result.metrics };
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          const isLastAttempt = attempt >= policy.maxAttempts;
-          if (isLastAttempt) {
-            state.set(jobKey, { status: 'failed', attempts: attempt, lastError: message });
-            deps.logger.error('worker.job.failed', {
-              job: job.name,
-              key: jobKey,
-              attempt,
-              result: 'failed',
-              error_message: message,
-            });
-            return { jobKey, jobName: job.name, status: 'failed' };
-          }
-          const delayMs = calculateBackoffMs(attempt + 1, policy);
-          deps.logger.warn('worker.job.retrying', {
-            job: job.name,
-            key: jobKey,
-            attempt,
-            result: 'retrying',
-            delay_ms: delayMs,
-            error_message: message,
-          });
-          await sleep(delayMs);
-        }
-      }
-      return { jobKey, jobName: job.name, status: 'failed' };
+      setState(jobKey, { status: 'running', attempts: 0 });
+      const executed = await runJobWithRetry({
+        job,
+        handler,
+        policy,
+        logger: deps.logger,
+        setState(status, attempt, lastError) {
+          setState(jobKey, { status, attempts: attempt, lastError });
+        },
+      });
+      return {
+        jobKey,
+        jobName: job.name,
+        status: executed.status,
+        metrics: executed.metrics,
+      };
+    },
+    getStatus(jobKey) {
+      return state.get(jobKey)?.status ?? null;
     },
   };
 };
