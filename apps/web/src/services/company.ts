@@ -12,6 +12,23 @@ export type CompanySettings = {
   language: string;
 };
 
+export type UpdateCompanySettingsInput = {
+  name?: string;
+  domain?: string;
+  language?: string;
+};
+
 export const fetchCompanySettings = async (token: string): Promise<CompanySettings> => {
   return apiRequest<CompanySettings>('/api/v1/companies/me', { token });
+};
+
+export const updateCompanySettings = async (
+  token: string,
+  input: UpdateCompanySettingsInput,
+): Promise<CompanySettings> => {
+  return apiRequest<CompanySettings>('/api/v1/companies/me', {
+    method: 'PATCH',
+    token,
+    body: input,
+  });
 };
