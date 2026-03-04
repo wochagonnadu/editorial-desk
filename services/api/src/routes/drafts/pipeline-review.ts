@@ -14,6 +14,7 @@ import {
   verifyHighRiskClaims,
 } from '../../core/factcheck.js';
 import { AppError } from '../../core/errors.js';
+import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
 import {
   DrizzleDraftStore,
   claimTable,
@@ -121,7 +122,7 @@ export const factcheckDraft = (deps: RouteDeps) => async (context: Context) => {
 export const reviseDraft = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);
   const draftId = context.req.param('id');
-  const body = (await context.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
   const instructions = typeof body.instructions === 'string' ? body.instructions.trim() : '';
   if (!instructions) throw new AppError(400, 'VALIDATION_ERROR', 'instructions are required');
 

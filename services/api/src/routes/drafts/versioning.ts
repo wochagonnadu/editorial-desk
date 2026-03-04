@@ -7,6 +7,7 @@ import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { logAudit } from '../../core/audit.js';
 import { AppError } from '../../core/errors.js';
+import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
 import { DrizzleDraftStore, draftTable } from '../../providers/db/index.js';
 import { getAuthUser } from '../auth-middleware.js';
 import type { RouteDeps } from '../deps.js';
@@ -14,7 +15,7 @@ import type { RouteDeps } from '../deps.js';
 export const saveDraftVersion = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);
   const draftId = context.req.param('id');
-  const body = (await context.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
   const content = typeof body.content === 'string' ? body.content.trim() : '';
   if (!content) throw new AppError(400, 'VALIDATION_ERROR', 'content is required');
 

@@ -7,14 +7,20 @@ import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { AppError } from '../../core/errors.js';
 import { logAudit } from '../../core/audit.js';
-import { claimTable, commentTable, draftTable, factcheckReportTable } from '../../providers/db/index.js';
+import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
+import {
+  claimTable,
+  commentTable,
+  draftTable,
+  factcheckReportTable,
+} from '../../providers/db/index.js';
 import { getAuthUser } from '../auth-middleware.js';
 import type { RouteDeps } from '../deps.js';
 
 export const createDraftComment = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);
   const draftId = context.req.param('id');
-  const body = (await context.req.json()) as Record<string, unknown>;
+  const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
   if (typeof body.text !== 'string' || body.text.trim().length < 2)
     throw new AppError(400, 'VALIDATION_ERROR', 'comment text is required');
 

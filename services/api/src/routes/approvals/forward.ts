@@ -8,6 +8,7 @@ import type { Context } from 'hono';
 import { logAudit } from '../../core/audit.js';
 import { buildDiffSummaryBullets } from '../../core/diff-summary.js';
 import { AppError } from '../../core/errors.js';
+import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
 import {
   approvalFlowTable,
   approvalStepTable,
@@ -22,7 +23,7 @@ import { getAuthUser } from '../auth-middleware.js';
 import type { RouteDeps } from '../deps.js';
 
 const parseBody = async (context: Context) =>
-  (await context.req.json().catch(() => ({}))) as Record<string, unknown>;
+  readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
 
 const reviewerType = async (deps: RouteDeps, reviewerId: string): Promise<'user' | 'expert'> => {
   const [user] = await deps.db

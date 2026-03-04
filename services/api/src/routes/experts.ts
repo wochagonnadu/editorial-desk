@@ -6,10 +6,14 @@
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { ExpertStatus } from '@newsroom/shared';
-import { readJsonBody } from '../core/http/read-json-body.js';
+import { readJsonBodyStrict } from '../core/http/read-json-body.js';
 import { AppError } from '../core/errors.js';
 import { startOnboarding } from '../core/onboarding.js';
-import { DrizzleExpertStore, onboardingSequenceTable, voiceProfileTable } from '../providers/db/index.js';
+import {
+  DrizzleExpertStore,
+  onboardingSequenceTable,
+  voiceProfileTable,
+} from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
 import type { RouteDeps } from './deps.js';
 import { requestTwoMinutes } from './experts-ping.js';
@@ -32,7 +36,7 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       actor: authUser.userId,
     });
     log.info('experts.create.enter');
-    const body = await readJsonBody<Record<string, unknown>>(context.req.raw);
+    const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
     const created = await expertStore.create({
       companyId: authUser.companyId,
       name: parseString(body.name, 'name'),

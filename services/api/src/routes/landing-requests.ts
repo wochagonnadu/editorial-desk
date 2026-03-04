@@ -5,6 +5,7 @@
 
 import { Hono } from 'hono';
 import { AppError } from '../core/errors.js';
+import { readJsonBodyStrict } from '../core/http/read-json-body.js';
 import type { RouteDeps } from './deps.js';
 
 const parseRequired = (value: unknown, field: string): string => {
@@ -26,7 +27,7 @@ export const buildLandingRequestRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
 
   router.post('/requests', async (context) => {
-    const body = (await context.req.json().catch(() => ({}))) as Record<string, unknown>;
+    const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
     const name = parseRequired(body.name, 'name');
     const email = parseEmail(body.email);
     const company = typeof body.company === 'string' ? body.company.trim() : '';

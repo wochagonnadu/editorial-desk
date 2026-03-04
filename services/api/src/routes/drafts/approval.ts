@@ -10,6 +10,7 @@ import type { ApprovalConfig } from '../../core/approval.js';
 import { logAudit } from '../../core/audit.js';
 import { buildDiffSummaryBullets } from '../../core/diff-summary.js';
 import { AppError } from '../../core/errors.js';
+import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
 import {
   approvalFlowTable,
   draftTable,
@@ -45,7 +46,7 @@ const parseConfig = (body: Record<string, unknown>): ApprovalConfig => {
 export const sendForReview = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);
   const draftId = context.req.param('id');
-  const body = (await context.req.json()) as Record<string, unknown>;
+  const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
   const config = parseConfig(body);
 
   const [draft] = await deps.db

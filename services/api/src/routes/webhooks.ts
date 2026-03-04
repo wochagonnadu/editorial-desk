@@ -5,6 +5,8 @@
 
 import { Hono } from 'hono';
 import { AppError } from '../core/errors.js';
+import { createInvalidJsonError } from '../core/http/body-reader-errors.js';
+import { readJsonBodyOptional, readRawBodyStrict } from '../core/http/read-json-body.js';
 import { finalizeOnboardingVoiceTest } from '../core/onboarding-finalize.js';
 import { parseOnboardingReplyAddress, processReply } from '../core/onboarding.js';
 import type { RouteDeps } from './deps.js';
@@ -42,7 +44,7 @@ const parseBody = (rawBody: string): unknown => {
   try {
     return JSON.parse(rawBody || '{}') as unknown;
   } catch {
-    throw new AppError(400, 'VALIDATION_ERROR', 'invalid json payload');
+    throw createInvalidJsonError('Invalid JSON body');
   }
 };
 
@@ -52,7 +54,7 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
   const topicClick = processTopicClick(deps);
 
   router.post('/email/inbound', async (context) => {
-    const rawBody = await context.req.raw.text();
+    const rawBody = await readRawBodyStrict(context.req.raw);
     assertInboundAuth(context.req.raw.headers, rawBody, context.req.header('x-webhook-secret'));
     const parsed = parseBody(rawBody);
     const body = (await resolveInboundPayload(parsed)) as InboundPayload;
@@ -106,15 +108,12 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
 
   router.post('/email/click', async (context) => {
     assertSecret(context.req.header('x-webhook-secret'));
+    const body = await readJsonBodyOptional<Record<string, unknown>>(context.req.raw);
     const actionFromQuery = context.req.query('action');
-    const rawBody = (await context.req.raw
-      .clone()
-      .json()
-      .catch(() => ({}))) as Record<string, unknown>;
-    const action =
-      actionFromQuery ?? (typeof rawBody.action === 'string' ? rawBody.action : undefined);
-    if (action === 'topic_approve' || action === 'topic_reject') return topicClick(context);
-    return approvalClick(context);
+    const action = actionFromQuery ?? (typeof body?.action === 'string' ? body.action : undefined);
+    if (action === 'topic_approve' || action === 'topic_reject')
+      return topicClick(context, body ?? {});
+    return approvalClick(context, body ?? {});
   });
 
   router.get('/email/click', async (context) => {

@@ -7,6 +7,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { AppError } from '../core/errors.js';
 import { logAudit } from '../core/audit.js';
+import { readJsonBodyStrict } from '../core/http/read-json-body.js';
 import { expertTable, topicTable } from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
 import type { RouteDeps } from './deps.js';
@@ -54,7 +55,7 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
 
   router.post('/', async (context) => {
     const authUser = getAuthUser(context);
-    const body = (await context.req.json()) as Record<string, unknown>;
+    const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
     if (typeof body.title !== 'string' || body.title.trim().length < 3) {
       throw new AppError(400, 'VALIDATION_ERROR', 'title is required');
     }
@@ -104,7 +105,7 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
   router.post('/:id/reject', async (context) => {
     const authUser = getAuthUser(context);
     const topicId = context.req.param('id');
-    const body = (await context.req.json().catch(() => ({}))) as Record<string, unknown>;
+    const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
     const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
     const [topic] = await deps.db
       .select()
