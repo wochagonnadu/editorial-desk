@@ -18,6 +18,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Hardening onboarding 1→5 закрыт в Spec 011: цепочка проходит до voice rating email на preview.
 - [x] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md` (Spec 010, Phases A-D).
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
+- [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
 
 ## 1) Что уже совпадает с PRD
 
@@ -69,9 +70,9 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 ## 2.3 P2 (эволюция к полной архитектуре PRD)
 
-9. **Worker/queue слой как отдельный runtime еще не выделен**
-   - PRD предполагает `services/worker` и явную оркестрацию.
-   - Сейчас orchestration в основном внутри API.
+9. **Worker/queue слой как отдельный runtime** ✅
+   - Добавлен рабочий runtime-контур c enqueue/execute, idempotency key, retry policy и статусами выполнения.
+   - Критичные cron задачи (approval overdue, onboarding reminders/escalations, monthly digest) исполняются через worker handlers.
 
 10. **Landing request хранится без DB-следа**
    - Сейчас landing CTA шлет email, но не пишет заявку в отдельную сущность.
@@ -124,7 +125,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 2. [x] Отдельно проработать и проверить e2e onboarding эксперта до 5 email шагов (включая retries/таймауты/наблюдаемость).
 3. [ ] Дожать `006-editorial-doc-surface-diff-ux` до PRD parity по doc/magic-link/diff.
 4. [x] Вернуться к `Settings + Team Management` контрактам (новые write/read endpoint-ы).
-5. [ ] После стабилизации продукта решать `worker/runtime` и optional data-моделирование (`landing_request`, `evidence`).
+5. [x] После стабилизации продукта закрыт `worker/runtime` (Spec 013); optional data-моделирование (`landing_request`, `evidence`) остается на `014`.
 
 ## 6) Мини-вывод
 
@@ -188,3 +189,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Добавлен team API-контур: список пользователей, смена роли, приглашения с идемпотентностью по `company_id + email`.
 - Зафиксированы edge-правила: повторный invite возвращает `reused=true`, self role change блокируется `CONFLICT`.
 - Settings UI переведен на новые контракты (`save settings`, `invite user`, `change role`) с loading/error состояниями.
+
+### Changelog 013 (коротко)
+
+- Добавлен worker runtime контракт (`enqueue/execute`, `job_key`, retry/backoff/timeout) и отдельный entrypoint.
+- Перенесены критичные cron side effects в worker handlers: approval overdue reminders, onboarding reminders/escalations, monthly digest.
+- Добавлены worker-логи `worker.job.*` с обязательными полями (`job`, `key`, `attempt`, `duration_ms`, `result`).
+- Добавлены unit-тесты на duplicate enqueue, transient retry и terminal fail; полный API test suite проходит.

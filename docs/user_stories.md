@@ -100,6 +100,8 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - `done`: auth/login/verify, dashboard/drafts/versions/comments/factcheck/approvals покрыты endpoint-ами и отмечены как закрытый P0-контур в roadmap.
 - `partial`: где есть рабочая база, но нет подтвержденной e2e-надежности или есть расхождение сигналов (например, календарь, UX-детали лендинга).
 - `gap`: где roadmap/gap-map явно фиксируют отсутствующий контракт или write-функциональность (расширенный save Expert Setup, 12-week strategy output, generation/tonality settings).
+- Runtime блок из roadmap по worker/queue для критичных cron задач закрыт в Spec 013; активный P2 data-gap остается только за `014`.
 
 ## Зависимости на следующую спеку
 - Активных зависимостей на `011-expert-onboarding-5-step-hardening` не осталось: onboarding Step 1->5 закрыт и подтвержден вручную + тестами.
+- Активных зависимостей на `013-worker-runtime-hardening` не осталось: worker runtime и критичные retry/idempotency сценарии подтверждены тестами.

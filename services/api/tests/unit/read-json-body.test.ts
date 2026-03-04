@@ -34,8 +34,12 @@ describe('readJsonBodyStrict', () => {
     const delayedStream = new ReadableStream<Uint8Array>({
       start(controller) {
         setTimeout(() => {
-          controller.enqueue(encoder.encode('{"email":"mail@mail.com"}'));
-          controller.close();
+          try {
+            controller.enqueue(encoder.encode('{"email":"mail@mail.com"}'));
+            controller.close();
+          } catch {
+            // Stream can be closed by timeout path before delayed enqueue fires.
+          }
         }, 50);
       },
     });
