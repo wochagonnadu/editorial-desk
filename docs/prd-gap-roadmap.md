@@ -17,6 +17,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Базовый UI-контур больше не считается demo-only в критичных продуктовых потоках.
 - [x] Hardening onboarding 1→5 закрыт в Spec 011: цепочка проходит до voice rating email на preview.
 - [x] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md` (Spec 010, Phases A-D).
+- [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 
 ## 1) Что уже совпадает с PRD
 
@@ -54,9 +55,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
    - В PRD есть требование видеть, что изменилось между версиями.
    - Сейчас в письмах есть summary и действия, но нет полноценного diff-view UX.
 
-6. **Settings read-only по сути**
-   - Есть `GET /api/v1/companies/me`, но нет update endpoints.
-   - Нет полноценных team/user-role endpoint-ов для управляемой команды из UI.
+6. **Settings read-only по сути** ✅
+   - Добавлен `PATCH /api/v1/companies/me` с owner guard и audit.
+   - Добавлены team endpoints `GET /api/v1/team/users`, `PATCH /api/v1/team/users/:id/role`, `POST /api/v1/team/invites`.
+   - UI `/app/settings` подключен к write/read контрактам и больше не read-only.
 
 7. **Expert Setup расширенный save не закрыт контрактом**
    - Создание эксперта есть, но сохранение richer profile (tags/sources/background) не покрыто единым endpoint-ом.
@@ -121,7 +123,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 1. [x] Проверка и настройка USER STORIES в `docs/user_stories.md` (сверка с фактическим scope 001–009).
 2. [x] Отдельно проработать и проверить e2e onboarding эксперта до 5 email шагов (включая retries/таймауты/наблюдаемость).
 3. [ ] Дожать `006-editorial-doc-surface-diff-ux` до PRD parity по doc/magic-link/diff.
-4. [ ] Вернуться к `Settings + Team Management` контрактам (новые write/read endpoint-ы).
+4. [x] Вернуться к `Settings + Team Management` контрактам (новые write/read endpoint-ы).
 5. [ ] После стабилизации продукта решать `worker/runtime` и optional data-моделирование (`landing_request`, `evidence`).
 
 ## 6) Мини-вывод
@@ -179,3 +181,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Подключены reminder/escalation правила в daily cron с фиксируемым `stalled` статусом.
 - Добавлены onboarding observability логи и API/web статус текущего шага.
 - Добавлены unit+integration тесты и smoke-артефакт ручного прогона preview.
+
+### Changelog 012 (коротко)
+
+- Добавлен `PATCH /api/v1/companies/me` с валидацией полей, owner-only доступом и audit event `company.settings_updated`.
+- Добавлен team API-контур: список пользователей, смена роли, приглашения с идемпотентностью по `company_id + email`.
+- Зафиксированы edge-правила: повторный invite возвращает `reused=true`, self role change блокируется `CONFLICT`.
+- Settings UI переведен на новые контракты (`save settings`, `invite user`, `change role`) с loading/error состояниями.

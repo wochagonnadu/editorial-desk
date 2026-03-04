@@ -84,8 +84,9 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 
 ## Epic K — Настройки
 
-1. [gap][must] Как пользователь, я хочу сохранять workspace-настройки через Settings, чтобы команда работала с едиными параметрами.
+1. [done] Как пользователь, я хочу сохранять workspace-настройки через Settings, чтобы команда работала с едиными параметрами.
 2. [gap][should] Как пользователь, я хочу управлять параметрами генерации/тональностью в Settings, чтобы поддерживать консистентный стиль.
+3. [done] Как владелец, я хочу приглашать участников и менять роли в Settings, чтобы управлять командой без обходных сценариев.
 
 ## Epic L — Качество и нефункциональные истории
 
@@ -98,7 +99,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 ## Факты сверки (roadmap + gap-map)
 - `done`: auth/login/verify, dashboard/drafts/versions/comments/factcheck/approvals покрыты endpoint-ами и отмечены как закрытый P0-контур в roadmap.
 - `partial`: где есть рабочая база, но нет подтвержденной e2e-надежности или есть расхождение сигналов (например, календарь, UX-детали лендинга).
-- `gap`: где roadmap/gap-map явно фиксируют отсутствующий контракт или write-функциональность (Settings update/team management, расширенный save Expert Setup, 12-week strategy output).
+- `gap`: где roadmap/gap-map явно фиксируют отсутствующий контракт или write-функциональность (расширенный save Expert Setup, 12-week strategy output, generation/tonality settings).
 
 ## Зависимости на следующую спеку
 - Активных зависимостей на `011-expert-onboarding-5-step-hardening` не осталось: onboarding Step 1->5 закрыт и подтвержден вручную + тестами.
