@@ -54,4 +54,20 @@ describe('webhooks resend normalization', () => {
     expect(payload.to).toBe('reply+onb_exp_exp-2_step_2@vsche.ru');
     expect(parseOnboardingReplyAddress(payload.to ?? '')).toEqual({ expertId: 'exp-2', step: 2 });
   });
+
+  it('returns idempotent normalization for duplicated inbound payload', async () => {
+    const raw = {
+      from: { email: 'EXPERT@MAIL.COM' },
+      to: [{ address: 'reply+onb_exp_exp-5_step_5@vsche.ru' }],
+      textBody: 'duplicate inbound reply',
+      rawBody: '<p>duplicate inbound reply</p>',
+    };
+
+    const first = await resolveInboundPayload(raw);
+    const second = await resolveInboundPayload(raw);
+
+    expect(first).toEqual(second);
+    expect(first.to).toBe('reply+onb_exp_exp-5_step_5@vsche.ru');
+    expect(parseOnboardingReplyAddress(first.to ?? '')).toEqual({ expertId: 'exp-5', step: 5 });
+  });
 });
