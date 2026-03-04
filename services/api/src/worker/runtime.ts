@@ -19,7 +19,12 @@ interface WorkerState {
 
 export interface WorkerRuntime {
   enqueue(job: WorkerJob): { status: 'queued' | 'ignored'; jobKey: string };
-  runNext(): Promise<{ jobKey: string; status: WorkerRunStatus } | null>;
+  runNext(): Promise<{
+    jobKey: string;
+    jobName: WorkerJob['name'];
+    status: WorkerRunStatus;
+    metrics?: Record<string, number>;
+  } | null>;
 }
 
 export const createInMemoryWorkerRuntime = (deps: {
@@ -64,7 +69,7 @@ export const createInMemoryWorkerRuntime = (deps: {
             result: result.status,
             reason: result.reason,
           });
-          return { jobKey, status: result.status };
+          return { jobKey, jobName: job.name, status: result.status, metrics: result.metrics };
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           const isLastAttempt = attempt >= policy.maxAttempts;
@@ -77,7 +82,7 @@ export const createInMemoryWorkerRuntime = (deps: {
               result: 'failed',
               error_message: message,
             });
-            return { jobKey, status: 'failed' };
+            return { jobKey, jobName: job.name, status: 'failed' };
           }
           const delayMs = calculateBackoffMs(attempt + 1, policy);
           deps.logger.warn('worker.job.retrying', {
@@ -91,7 +96,7 @@ export const createInMemoryWorkerRuntime = (deps: {
           await sleep(delayMs);
         }
       }
-      return { jobKey, status: 'failed' };
+      return { jobKey, jobName: job.name, status: 'failed' };
     },
   };
 };

@@ -18,8 +18,13 @@ export interface RetryPolicy {
 }
 
 export interface WorkerJobPayloadMap {
-  'approval.overdue.dispatch': { stepId: string; reminderCount: number; escalation: boolean };
-  'onboarding.reminder.cycle': { stepId: string; reminderCount: number; expertId: string };
+  'approval.overdue.dispatch': { stepId: string; reminderCount: number };
+  'onboarding.reminder.cycle': {
+    stepId: string;
+    stepNumber: number;
+    reminderCount: number;
+    expertId: string;
+  };
   'digest.monthly.send': { companyId: string; ownerId: string; period: string };
 }
 
@@ -42,6 +47,7 @@ export interface WorkerJobContext {
 export interface WorkerJobResult {
   status: 'succeeded' | 'ignored';
   reason?: string;
+  metrics?: Record<string, number>;
 }
 
 export type WorkerJobHandler<T extends WorkerJobName = WorkerJobName> = (

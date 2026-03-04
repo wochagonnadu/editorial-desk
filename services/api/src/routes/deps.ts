@@ -6,10 +6,12 @@
 import type { ContentPort, EmailPort } from '@newsroom/shared';
 import type { Database } from '../providers/db/pool.js';
 import type { Logger } from '../providers/logger.js';
+import type { WorkerRuntime } from '../worker/runtime.js';
 
 export interface RouteDeps {
   db: Database;
   email: EmailPort;
   content: ContentPort;
   logger: Logger;
+  worker?: WorkerRuntime;
 }

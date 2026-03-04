@@ -4,6 +4,7 @@
 // RELEVANT: services/api/api/worker.ts,services/api/src/worker/runtime.ts
 
 export * from './handlers.js';
+export * from './bootstrap.js';
 export * from './job-key.js';
 export * from './registry.js';
 export * from './retry-policy.js';

@@ -10,6 +10,7 @@ import { createDbClient, describeDatabaseTarget } from './providers/db/index.js'
 import { createEmailPort } from './providers/email.js';
 import { createContentPort } from './providers/llm.js';
 import { createLogger } from './providers/logger.js';
+import { createWorkerRuntime } from './worker/bootstrap.js';
 import { buildCronRoutes } from './routes/cron.js';
 import { buildApiRouter } from './routes/index.js';
 
@@ -22,13 +23,15 @@ const isVercelPreviewOrigin = (origin: string): boolean => {
   }
 };
 
-const createCorsOriginResolver = (webOrigin: string) => (origin: string): string => {
-  if (!origin) return webOrigin;
-  if (origin === webOrigin) return origin;
-  if (origin === 'http://localhost:5173') return origin;
-  if (isVercelPreviewOrigin(origin)) return origin;
-  return webOrigin;
-};
+const createCorsOriginResolver =
+  (webOrigin: string) =>
+  (origin: string): string => {
+    if (!origin) return webOrigin;
+    if (origin === webOrigin) return origin;
+    if (origin === 'http://localhost:5173') return origin;
+    if (isVercelPreviewOrigin(origin)) return origin;
+    return webOrigin;
+  };
 
 export const createApp = (): Hono => {
   const app = new Hono();
@@ -42,12 +45,13 @@ export const createApp = (): Hono => {
   logger.info('app.bootstrap.db_ready');
   const webOrigin = process.env.APP_URL ?? 'http://localhost:5173';
 
-  const deps = {
+  const baseDeps = {
     db,
     email: createEmailPort(logger),
     content: createContentPort(),
     logger,
   };
+  const deps = { ...baseDeps, worker: createWorkerRuntime(baseDeps) };
 
   app.use('*', async (context, next) => {
     const startedAt = Date.now();

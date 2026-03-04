@@ -45,6 +45,19 @@ export interface OnboardingReminderCycleResult {
   stalledExperts: number;
 }
 
+export interface OnboardingReminderJob {
+  stepId: string;
+  expertId: string;
+  stepNumber: number;
+  reminderCount: number;
+}
+
+export interface OnboardingReminderJobResult {
+  status: 'sent' | 'ignored';
+  escalated: boolean;
+  stalled: boolean;
+}
+
 const FIRST_REMINDER_DELAY_HOURS = 48;
 const SECOND_REMINDER_DELAY_HOURS = 96;
 const MAX_REMINDER_COUNT = 2;
@@ -243,50 +256,81 @@ export const runOnboardingReminderCycle = async (
   let stalledExperts = 0;
 
   for (const step of overdue) {
-    const attempt = step.reminderCount + 1;
-    const startedAt = Date.now();
-    await sendStepEmail(context, step.expertId, step.stepNumber, {
-      attempt,
-      reason: 'reminder',
+    const result = await processOnboardingReminderJob(context, {
+      stepId: step.id,
+      expertId: step.expertId,
+      stepNumber: step.stepNumber,
+      reminderCount: step.reminderCount,
     });
-    await incrementReminderCount(context, step.id);
+    if (result.status === 'ignored') continue;
     remindersSent += 1;
-
-    logOnboardingEvent(context, 'onboarding.reminder_sent', {
-      expert_id: step.expertId,
-      step: step.stepNumber,
-      attempt,
-      message_provider: 'email',
-      duration_ms: Date.now() - startedAt,
-      result: 'sent',
-    });
-
-    const nextReminderCount = step.reminderCount + 1;
-    if (nextReminderCount < MAX_REMINDER_COUNT) continue;
-
-    const escalationStartedAt = Date.now();
-    const escalated = await escalateToManagers(
-      context,
-      step.expertId,
-      step.stepNumber,
-      nextReminderCount,
-    );
-    if (!escalated) continue;
-
-    escalationsSent += 1;
-    await markStalled(context, step.expertId, step.id);
-    stalledExperts += 1;
-    logOnboardingEvent(context, 'onboarding.escalated', {
-      expert_id: step.expertId,
-      step: step.stepNumber,
-      attempt: nextReminderCount,
-      message_provider: 'email',
-      duration_ms: Date.now() - escalationStartedAt,
-      result: 'stalled',
-    });
+    if (result.escalated) escalationsSent += 1;
+    if (result.stalled) stalledExperts += 1;
   }
 
   return { remindersSent, escalationsSent, stalledExperts };
+};
+
+export const processOnboardingReminderJob = async (
+  context: OnboardingContext,
+  job: OnboardingReminderJob,
+): Promise<OnboardingReminderJobResult> => {
+  const [step] = await context.db
+    .select()
+    .from(onboardingSequenceTable)
+    .where(eq(onboardingSequenceTable.id, job.stepId))
+    .limit(1);
+  if (!step) return { status: 'ignored', escalated: false, stalled: false };
+  if (step.expertId !== job.expertId || step.stepNumber !== job.stepNumber) {
+    return { status: 'ignored', escalated: false, stalled: false };
+  }
+  if (
+    step.status !== 'sent' ||
+    step.reminderCount !== job.reminderCount ||
+    !isReminderDue(step, new Date())
+  ) {
+    return { status: 'ignored', escalated: false, stalled: false };
+  }
+
+  const attempt = step.reminderCount + 1;
+  const startedAt = Date.now();
+  await sendStepEmail(context, step.expertId, step.stepNumber, {
+    attempt,
+    reason: 'reminder',
+  });
+  await incrementReminderCount(context, step.id);
+  logOnboardingEvent(context, 'onboarding.reminder_sent', {
+    expert_id: step.expertId,
+    step: step.stepNumber,
+    attempt,
+    message_provider: 'email',
+    duration_ms: Date.now() - startedAt,
+    result: 'sent',
+  });
+
+  const nextReminderCount = step.reminderCount + 1;
+  if (nextReminderCount < MAX_REMINDER_COUNT) {
+    return { status: 'sent', escalated: false, stalled: false };
+  }
+
+  const escalationStartedAt = Date.now();
+  const escalated = await escalateToManagers(
+    context,
+    step.expertId,
+    step.stepNumber,
+    nextReminderCount,
+  );
+  if (!escalated) return { status: 'sent', escalated: false, stalled: false };
+  await markStalled(context, step.expertId, step.id);
+  logOnboardingEvent(context, 'onboarding.escalated', {
+    expert_id: step.expertId,
+    step: step.stepNumber,
+    attempt: nextReminderCount,
+    message_provider: 'email',
+    duration_ms: Date.now() - escalationStartedAt,
+    result: 'stalled',
+  });
+  return { status: 'sent', escalated: true, stalled: true };
 };
 
 export const startOnboarding = async (context: OnboardingContext, expertId: string) => {

@@ -3,12 +3,12 @@
 // WHY:  Keeps digest flow isolated from daily reminder dispatcher
 // RELEVANT: services/api/src/routes/cron.ts,services/api/src/core/reports.ts
 
-import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { monthlyDigestTemplate } from '../core/email-templates/digest.js';
-import { buildMonthlyReport, monthRange } from '../core/reports.js';
-import { companyTable, notificationTable, userTable } from '../providers/db/index.js';
+import { monthRange } from '../core/reports.js';
+import { digestJobKey } from '../worker/job-key.js';
+import { companyTable, userTable } from '../providers/db/index.js';
+import { enqueueJob, runQueuedJobs } from './cron-worker.js';
 import type { RouteDeps } from './deps.js';
 
 const currentPeriod = () => {
@@ -24,35 +24,22 @@ export const buildDigestCronHandler =
     monthRange(period);
 
     const companies = await deps.db.select().from(companyTable);
-    let digestsSent = 0;
 
     for (const company of companies) {
-      const report = await buildMonthlyReport(deps.db, company.id, period);
       const owners = await deps.db
         .select()
         .from(userTable)
         .where(and(eq(userTable.companyId, company.id), eq(userTable.role, 'owner')));
       for (const owner of owners) {
-        await deps.db.insert(notificationTable).values({
-          companyId: company.id,
-          recipientEmail: owner.email,
-          notificationType: 'digest',
-          referenceType: 'company',
-          referenceId: company.id,
-          emailToken: randomUUID(),
-          status: 'sent',
-          sentAt: new Date(),
-        } as unknown as typeof notificationTable.$inferInsert);
-        const message = monthlyDigestTemplate(report);
-        await deps.email.sendEmail({
-          to: owner.email,
-          subject: message.subject,
-          html: message.html,
-          textBody: message.textBody,
+        enqueueJob(deps, {
+          name: 'digest.monthly.send',
+          jobKey: digestJobKey(company.id, owner.id, period),
+          payload: { companyId: company.id, ownerId: owner.id, period },
+          enqueuedAt: new Date().toISOString(),
         });
-        digestsSent += 1;
       }
     }
 
-    return context.json({ digests_sent: digestsSent, period });
+    const totals = await runQueuedJobs(deps);
+    return context.json({ digests_sent: totals.digests_sent ?? 0, period });
   };
