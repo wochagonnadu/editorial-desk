@@ -6,9 +6,15 @@
 import type { CompanyDomain } from './company-user.js';
 import type { EntityId, ISODateTime } from './common.js';
 
-export type ExpertStatus = 'pending' | 'onboarding' | 'voice_testing' | 'active' | 'inactive';
+export type ExpertStatus =
+  | 'pending'
+  | 'onboarding'
+  | 'voice_testing'
+  | 'active'
+  | 'inactive'
+  | 'stalled';
 export type VoiceProfileStatus = 'draft' | 'confirmed';
-export type OnboardingStepStatus = 'pending' | 'sent' | 'replied' | 'skipped';
+export type OnboardingStepStatus = 'pending' | 'sent' | 'replied' | 'skipped' | 'stalled';
 
 export interface Expert {
   id: EntityId;

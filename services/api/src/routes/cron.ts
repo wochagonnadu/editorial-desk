@@ -6,6 +6,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { checkDeadlines } from '../core/approval.js';
+import { runOnboardingReminderCycle } from '../core/onboarding.js';
 import { reminderTemplate } from '../core/email-templates/approval.js';
 import { AppError } from '../core/errors.js';
 import { sendWeeklyProposals } from '../core/topics.js';
@@ -108,6 +109,11 @@ export const buildCronRoutes = (deps: RouteDeps): Hono => {
       }
     }
 
+    const onboardingCycle = await runOnboardingReminderCycle({
+      db: deps.db,
+      email: deps.email,
+    });
+
     let weeklyTopicProposalsSent = 0;
     if (new Date().getUTCDay() === 1) {
       const companies = await deps.db.select().from(companyTable);
@@ -122,6 +128,9 @@ export const buildCronRoutes = (deps: RouteDeps): Hono => {
     return context.json({
       reminders_sent: remindersSent,
       escalations_sent: escalationsSent,
+      onboarding_reminders_sent: onboardingCycle.remindersSent,
+      onboarding_escalations_sent: onboardingCycle.escalationsSent,
+      onboarding_stalled_experts: onboardingCycle.stalledExperts,
       weekly_topic_proposals_sent: weeklyTopicProposalsSent,
     });
   });

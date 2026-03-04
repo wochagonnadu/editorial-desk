@@ -7,6 +7,7 @@ import { and, eq } from 'drizzle-orm';
 import type { EmailPort } from '@newsroom/shared';
 import type { Database } from '../providers/db/index.js';
 import { expertTable, onboardingSequenceTable, userTable } from '../providers/db/index.js';
+import { logAudit } from './audit.js';
 import { getOnboardingTemplate } from './email-templates/onboarding.js';
 
 export interface OnboardingContext {
@@ -22,6 +23,36 @@ export interface ProcessReplyResult {
   completed: boolean;
   nextStep?: number;
 }
+
+interface OverdueOnboardingStep {
+  id: string;
+  expertId: string;
+  stepNumber: number;
+  reminderCount: number;
+  sentAt: Date | null;
+}
+
+export interface OnboardingReminderCycleResult {
+  remindersSent: number;
+  escalationsSent: number;
+  stalledExperts: number;
+}
+
+const FIRST_REMINDER_DELAY_HOURS = 48;
+const SECOND_REMINDER_DELAY_HOURS = 96;
+const MAX_REMINDER_COUNT = 2;
+
+const hoursSince = (date: Date, now: Date): number => {
+  return (now.getTime() - date.getTime()) / (60 * 60 * 1000);
+};
+
+const isReminderDue = (step: OverdueOnboardingStep, now: Date): boolean => {
+  if (!step.sentAt) return false;
+  const ageHours = hoursSince(step.sentAt, now);
+  if (step.reminderCount <= 0) return ageHours >= FIRST_REMINDER_DELAY_HOURS;
+  if (step.reminderCount === 1) return ageHours >= SECOND_REMINDER_DELAY_HOURS;
+  return false;
+};
 
 export const buildOnboardingReplyAddress = (
   expertId: string,
@@ -69,6 +100,125 @@ const sendStepEmail = async (context: OnboardingContext, expertId: string, step:
         eq(onboardingSequenceTable.stepNumber, step),
       ),
     );
+};
+
+const incrementReminderCount = async (context: OnboardingContext, stepId: string) => {
+  const [step] = await context.db
+    .select()
+    .from(onboardingSequenceTable)
+    .where(eq(onboardingSequenceTable.id, stepId))
+    .limit(1);
+  if (!step) return;
+
+  await context.db
+    .update(onboardingSequenceTable)
+    .set({ reminderCount: step.reminderCount + 1 } as Partial<
+      typeof onboardingSequenceTable.$inferInsert
+    >)
+    .where(eq(onboardingSequenceTable.id, stepId));
+};
+
+const markStalled = async (context: OnboardingContext, expertId: string, stepId: string) => {
+  await context.db
+    .update(expertTable)
+    .set({ status: 'stalled' } as Partial<typeof expertTable.$inferInsert>)
+    .where(eq(expertTable.id, expertId));
+  await context.db
+    .update(onboardingSequenceTable)
+    .set({ status: 'stalled' } as Partial<typeof onboardingSequenceTable.$inferInsert>)
+    .where(eq(onboardingSequenceTable.id, stepId));
+};
+
+const escalateToManagers = async (
+  context: OnboardingContext,
+  expertId: string,
+  stepNumber: number,
+  reminderCount: number,
+) => {
+  const [expert] = await context.db
+    .select()
+    .from(expertTable)
+    .where(eq(expertTable.id, expertId))
+    .limit(1);
+  if (!expert) return false;
+
+  const managers = await context.db
+    .select()
+    .from(userTable)
+    .where(eq(userTable.companyId, expert.companyId));
+  if (managers.length === 0) return false;
+
+  await Promise.all(
+    managers.map((manager) =>
+      context.email.sendEmail({
+        to: manager.email,
+        subject: `Onboarding stalled for ${expert.name}`,
+        textBody: `Expert ${expert.name} is stalled on step ${stepNumber} after ${reminderCount} reminders.`,
+        html: `<p>Expert <strong>${expert.name}</strong> is stalled on step <strong>${stepNumber}</strong> after ${reminderCount} reminders.</p>`,
+      }),
+    ),
+  );
+
+  await logAudit(context.db, {
+    companyId: expert.companyId,
+    actorType: 'system',
+    action: 'onboarding.escalated',
+    entityType: 'expert',
+    entityId: expert.id,
+    metadata: { step: stepNumber, reminder_count: reminderCount },
+  });
+
+  return true;
+};
+
+export const listOverdueSentSteps = async (
+  context: OnboardingContext,
+  now: Date = new Date(),
+): Promise<OverdueOnboardingStep[]> => {
+  const sentSteps = await context.db
+    .select({
+      id: onboardingSequenceTable.id,
+      expertId: onboardingSequenceTable.expertId,
+      stepNumber: onboardingSequenceTable.stepNumber,
+      reminderCount: onboardingSequenceTable.reminderCount,
+      sentAt: onboardingSequenceTable.sentAt,
+    })
+    .from(onboardingSequenceTable)
+    .where(eq(onboardingSequenceTable.status, 'sent'));
+
+  return sentSteps.filter((step) => isReminderDue(step, now));
+};
+
+export const runOnboardingReminderCycle = async (
+  context: OnboardingContext,
+): Promise<OnboardingReminderCycleResult> => {
+  const overdue = await listOverdueSentSteps(context);
+  let remindersSent = 0;
+  let escalationsSent = 0;
+  let stalledExperts = 0;
+
+  for (const step of overdue) {
+    await sendStepEmail(context, step.expertId, step.stepNumber);
+    await incrementReminderCount(context, step.id);
+    remindersSent += 1;
+
+    const nextReminderCount = step.reminderCount + 1;
+    if (nextReminderCount < MAX_REMINDER_COUNT) continue;
+
+    const escalated = await escalateToManagers(
+      context,
+      step.expertId,
+      step.stepNumber,
+      nextReminderCount,
+    );
+    if (!escalated) continue;
+
+    escalationsSent += 1;
+    await markStalled(context, step.expertId, step.id);
+    stalledExperts += 1;
+  }
+
+  return { remindersSent, escalationsSent, stalledExperts };
 };
 
 export const startOnboarding = async (context: OnboardingContext, expertId: string) => {
@@ -164,6 +314,14 @@ export const processReply = async (
 };
 
 export const checkStalled = async (context: OnboardingContext, expertId: string) => {
+  const [expert] = await context.db
+    .select()
+    .from(expertTable)
+    .where(eq(expertTable.id, expertId))
+    .limit(1);
+  if (!expert) return false;
+  if (expert.status === 'stalled') return true;
+
   const pending = await context.db
     .select()
     .from(onboardingSequenceTable)
@@ -173,28 +331,5 @@ export const checkStalled = async (context: OnboardingContext, expertId: string)
         eq(onboardingSequenceTable.status, 'sent'),
       ),
     );
-  const stalled = pending.some((step) => step.reminderCount >= 3);
-  if (!stalled) return false;
-
-  const [expert] = await context.db
-    .select()
-    .from(expertTable)
-    .where(eq(expertTable.id, expertId))
-    .limit(1);
-  if (!expert) return true;
-  const managers = await context.db
-    .select()
-    .from(userTable)
-    .where(eq(userTable.companyId, expert.companyId));
-  await Promise.all(
-    managers.map((manager) =>
-      context.email.sendEmail({
-        to: manager.email,
-        subject: `Onboarding stalled for ${expert.name}`,
-        textBody: `Expert ${expert.name} has missed 3 reminders.`,
-        html: `<p>Expert ${expert.name} has missed 3 reminders.</p>`,
-      }),
-    ),
-  );
-  return true;
+  return pending.some((step) => step.reminderCount >= MAX_REMINDER_COUNT);
 };
