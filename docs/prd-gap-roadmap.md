@@ -126,6 +126,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 3. [ ] Дожать `006-editorial-doc-surface-diff-ux` до PRD parity по doc/magic-link/diff.
 4. [x] Вернуться к `Settings + Team Management` контрактам (новые write/read endpoint-ы).
 5. [x] После стабилизации продукта закрыт `worker/runtime` (Spec 013); optional data-моделирование (`landing_request`, `evidence`) остается на `014`.
+6. [x] `014-data-model-enhancements-optional` закрыт как проектный контракт: зафиксированы сущности, bridge-режим, индексы, smoke-проверки и doc-sync.
 
 ## 6) Мини-вывод
 
@@ -196,3 +197,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Перенесены критичные cron side effects в worker handlers: approval overdue reminders, onboarding reminders/escalations, monthly digest.
 - Добавлены worker-логи `worker.job.*` с обязательными полями (`job`, `key`, `attempt`, `duration_ms`, `result`).
 - Добавлены unit-тесты на duplicate enqueue, transient retry и terminal fail; полный API test suite проходит.
+
+### Changelog 014 (коротко)
+
+- Зафиксирован контракт `landing_request`: жизненный цикл, поля для funnel/SLA, дедуп и идемпотентность.
+- Спроектирован optional `evidence` table с bridge-режимом совместимости к `factcheck_report.results` JSON.
+- Определен минимальный набор индексов под отчетные фильтры (`period/source/status` и `claim/time/status`).
+- Добавлен smoke-checklist для проверки аналитики/аудита и fallback-поведения до включения read-preferred.
