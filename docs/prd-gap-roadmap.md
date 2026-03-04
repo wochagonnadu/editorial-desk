@@ -16,7 +16,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Закрыт P0-блок из Spec 004 (API adapter integration + auth + audit в web).
 - [x] Базовый UI-контур больше не считается demo-only в критичных продуктовых потоках.
 - [!] В ручных тестах onboarding эксперта дошел только до email Step 1 (цепочка 1→5 требует отдельного hardening).
-- [ ] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md`.
+- [x] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md` (Spec 010, Phases A-D).
 
 ## 1) Что уже совпадает с PRD
 
@@ -118,7 +118,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 ## 5) Что дальше (практичный порядок)
 
-1. [ ] Проверка и настройка USER STORIES в `docs/user_stories.md` (сверка с фактическим scope 001–009).
+1. [x] Проверка и настройка USER STORIES в `docs/user_stories.md` (сверка с фактическим scope 001–009).
 2. [ ] Отдельно проработать и проверить e2e onboarding эксперта до 5 email шагов (включая retries/таймауты/наблюдаемость).
 3. [ ] Дожать `006-editorial-doc-surface-diff-ux` до PRD parity по doc/magic-link/diff.
 4. [ ] Вернуться к `Settings + Team Management` контрактам (новые write/read endpoint-ы).
@@ -155,3 +155,19 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 5. `014-data-model-enhancements-optional`
    - Scope: `landing_request` как отдельная сущность, optional `evidence` table и минимальные индексы под отчеты.
    - Результат: улучшенная аналитика/аудит без преждевременного усложнения MVP.
+
+## 8) Синхронизация с user stories (итог 010)
+
+Конфликтов формулировок между `docs/prd-gap-roadmap.md` и `docs/user_stories.md` не найдено.
+
+Правила синхронизации после 010:
+- незакрытые backend-контракты из roadmap (Settings write/team management, Expert Setup save) в user stories помечены как `gap`;
+- риск onboarding Step 1->5 в roadmap отражен в user stories тегом `dep:011`;
+- закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
+
+### Changelog 010 (коротко)
+
+- Размечены все user stories статусами `done | partial | gap`.
+- Для `partial/gap` назначены приоритеты `must | should | could`.
+- Формулировки историй уточнены под фактический scope `001-009` без завышенных ожиданий.
+- Истории, зависящие от hardening onboarding, помечены тегом `dep:011`.
