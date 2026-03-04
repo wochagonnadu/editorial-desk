@@ -15,7 +15,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 - [x] Закрыт P0-блок из Spec 004 (API adapter integration + auth + audit в web).
 - [x] Базовый UI-контур больше не считается demo-only в критичных продуктовых потоках.
-- [!] В ручных тестах onboarding эксперта дошел только до email Step 1 (цепочка 1→5 требует отдельного hardening).
+- [x] Hardening onboarding 1→5 закрыт в Spec 011: цепочка проходит до voice rating email на preview.
 - [x] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md` (Spec 010, Phases A-D).
 
 ## 1) Что уже совпадает с PRD
@@ -61,9 +61,9 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 7. **Expert Setup расширенный save не закрыт контрактом**
    - Создание эксперта есть, но сохранение richer profile (tags/sources/background) не покрыто единым endpoint-ом.
 
-8. **Надежность 5-шагового onboarding email процесса не подтверждена e2e**
-   - Факт из ручного теста: пришел только Step 1 при добавлении эксперта.
-   - Нужна отдельная проработка цепочки Step 1→5: триггеры, задержки, retries, observability, и проверка на Vercel/runtime-ограничениях.
+8. **Надежность 5-шагового onboarding email процесса подтверждена в Spec 011** ✅
+   - Подтвержден e2e проход Step 1→5 и финальное письмо voice rating на preview.
+   - Добавлены guards/idempotency, retries/reminders/escalation, наблюдаемость и тесты.
 
 ## 2.3 P2 (эволюция к полной архитектуре PRD)
 
@@ -119,7 +119,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 ## 5) Что дальше (практичный порядок)
 
 1. [x] Проверка и настройка USER STORIES в `docs/user_stories.md` (сверка с фактическим scope 001–009).
-2. [ ] Отдельно проработать и проверить e2e onboarding эксперта до 5 email шагов (включая retries/таймауты/наблюдаемость).
+2. [x] Отдельно проработать и проверить e2e onboarding эксперта до 5 email шагов (включая retries/таймауты/наблюдаемость).
 3. [ ] Дожать `006-editorial-doc-surface-diff-ux` до PRD parity по doc/magic-link/diff.
 4. [ ] Вернуться к `Settings + Team Management` контрактам (новые write/read endpoint-ы).
 5. [ ] После стабилизации продукта решать `worker/runtime` и optional data-моделирование (`landing_request`, `evidence`).
@@ -128,7 +128,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 Мы сохранили идею Editorial Desk и закрыли большой технологический разрыв через 001–009, включая вынужденные стабилизационные спеки по runtime/email.
 
-Сейчас главный практический риск сместился в надежность реального onboarding-цикла эксперта (Step 1→5) и в PRD parity по doc/diff/settings.
+Сейчас главный практический риск сместился в PRD parity по doc/diff/settings; onboarding Step 1→5 закрыт в Spec 011.
 
 Дальше лучше идти короткими итерациями: сначала user stories + e2e onboarding, потом оставшиеся продуктовые gap-ы.
 
@@ -162,7 +162,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 Правила синхронизации после 010:
 - незакрытые backend-контракты из roadmap (Settings write/team management, Expert Setup save) в user stories помечены как `gap`;
-- риск onboarding Step 1->5 в roadmap отражен в user stories тегом `dep:011`;
+- риск onboarding Step 1->5 закрыт в Spec 011 и снят как активная зависимость;
 - закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
 
 ### Changelog 010 (коротко)
@@ -171,3 +171,11 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Для `partial/gap` назначены приоритеты `must | should | could`.
 - Формулировки историй уточнены под фактический scope `001-009` без завышенных ожиданий.
 - Истории, зависящие от hardening onboarding, помечены тегом `dep:011`.
+
+### Changelog 011 (коротко)
+
+- Закрыт e2e onboarding эксперта по цепочке Step 1->5 с финализацией в voice rating email.
+- Добавлены idempotency/ordering guards в webhook onboarding и безопасный `ignored` path без 500.
+- Подключены reminder/escalation правила в daily cron с фиксируемым `stalled` статусом.
+- Добавлены onboarding observability логи и API/web статус текущего шага.
+- Добавлены unit+integration тесты и smoke-артефакт ручного прогона preview.
