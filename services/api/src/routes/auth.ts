@@ -10,6 +10,7 @@ import { Hono } from 'hono';
 import { logAudit } from '../core/audit.js';
 import { withDbTimeout } from '../core/db/with-db-timeout.js';
 import { AppError } from '../core/errors.js';
+import { logStage } from '../core/observability/log-stage.js';
 import { companyTable, notificationTable, userTable } from '../providers/db/index.js';
 import {
   DEV_BYPASS_TOKEN,
@@ -39,8 +40,7 @@ const companyNameFromEmail = (email: string): string => {
 
 const maskEmailForLogs = (email: string): string => {
   const [local = '', domain = ''] = email.split('@');
-  const maskedLocal =
-    local.length <= 2 ? `${local.slice(0, 1)}*` : `${local.slice(0, 2)}***`;
+  const maskedLocal = local.length <= 2 ? `${local.slice(0, 1)}*` : `${local.slice(0, 2)}***`;
   const [domainName = '', ...rest] = domain.split('.');
   const maskedDomain = domainName ? `${domainName.slice(0, 1)}***` : '***';
   const suffix = rest.length > 0 ? `.${rest.join('.')}` : '';
@@ -72,6 +72,13 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     deps.logger.info('auth.login.enter', { duration_ms_from_start: 0 });
     const email = parseLoginEmail(context, deps, startedAt);
     const maskedEmail = maskEmailForLogs(email);
+    logStage(deps.logger, {
+      flow: 'auth.login',
+      stage: 'enter',
+      status: 'start',
+      durationMs: 0,
+      details: { email: maskedEmail },
+    });
     deps.logger.info('auth.login.start', { email: maskedEmail });
 
     if (isDevAuthBypassEnabled()) {
@@ -136,6 +143,15 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
     const mockToken = await issueDevMockMagicLink(deps, { companyId: user.companyId, email });
     if (mockToken) {
       deps.logger.info('auth.login_link_sent_mock', { email: maskedEmail, token: mockToken });
+      logStage(deps.logger, {
+        flow: 'auth.login',
+        stage: 'completed',
+        status: 'ok',
+        companyId: user.companyId,
+        actorId: user.id,
+        durationMs: Date.now() - startedAt,
+        details: { mode: 'dev_mock' },
+      });
       return context.json({ message: `DEV mock token: ${mockToken}`, dev_magic_token: mockToken });
     }
 
@@ -192,10 +208,26 @@ export const buildAuthRoutes = (deps: RouteDeps): Hono => {
         provider: (process.env.EMAIL_PROVIDER ?? 'stub').toLowerCase(),
         error: toErrorMessage(error),
       });
+      logStage(deps.logger, {
+        flow: 'auth.login',
+        stage: 'email_send',
+        status: 'error',
+        companyId: user.companyId,
+        actorId: user.id,
+        durationMs: Date.now() - startedAt,
+      });
       throw new AppError(502, 'EMAIL_DELIVERY_FAILED', 'Failed to send login email');
     }
     deps.logger.info('auth.login.email_sent', { email: maskedEmail });
     deps.logger.info('auth.login_link_sent', { email: maskedEmail });
+    logStage(deps.logger, {
+      flow: 'auth.login',
+      stage: 'completed',
+      status: 'ok',
+      companyId: user.companyId,
+      actorId: user.id,
+      durationMs: Date.now() - startedAt,
+    });
     return context.json({ message: 'Login link sent to email' });
   });
   router.get('/verify', async (context) => {

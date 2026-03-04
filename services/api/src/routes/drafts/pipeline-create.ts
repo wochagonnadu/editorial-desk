@@ -8,6 +8,7 @@ import type { Context } from 'hono';
 import { createDraft, createVersion, transitionDraftStatus } from '../../core/drafts.js';
 import { AppError } from '../../core/errors.js';
 import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
+import { logStage } from '../../core/observability/log-stage.js';
 import {
   DrizzleDraftStore,
   draftTable,
@@ -23,7 +24,16 @@ const readBody = async (context: Context) =>
   readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
 
 export const createDraftFromTopic = (deps: RouteDeps) => async (context: Context) => {
+  const startedAt = Date.now();
   const authUser = getAuthUser(context);
+  logStage(deps.logger, {
+    flow: 'drafts.create',
+    stage: 'enter',
+    status: 'start',
+    companyId: authUser.companyId,
+    actorId: authUser.userId,
+    durationMs: 0,
+  });
   const body = await readBody(context);
   if (typeof body.topic_id !== 'string')
     throw new AppError(400, 'VALIDATION_ERROR', 'topic_id is required');
@@ -33,6 +43,15 @@ export const createDraftFromTopic = (deps: RouteDeps) => async (context: Context
     authUser.companyId,
     body.topic_id,
   );
+  logStage(deps.logger, {
+    flow: 'drafts.create',
+    stage: 'completed',
+    status: 'ok',
+    companyId: authUser.companyId,
+    actorId: authUser.userId,
+    entityId: draft.id,
+    durationMs: Date.now() - startedAt,
+  });
   return context.json(
     {
       id: draft.id,

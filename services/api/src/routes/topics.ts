@@ -8,6 +8,7 @@ import { Hono } from 'hono';
 import { AppError } from '../core/errors.js';
 import { logAudit } from '../core/audit.js';
 import { readJsonBodyStrict } from '../core/http/read-json-body.js';
+import { logStage } from '../core/observability/log-stage.js';
 import { expertTable, topicTable } from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
 import type { RouteDeps } from './deps.js';
@@ -54,7 +55,16 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
   });
 
   router.post('/', async (context) => {
+    const startedAt = Date.now();
     const authUser = getAuthUser(context);
+    logStage(deps.logger, {
+      flow: 'topics.create',
+      stage: 'enter',
+      status: 'start',
+      companyId: authUser.companyId,
+      actorId: authUser.userId,
+      durationMs: 0,
+    });
     const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
     if (typeof body.title !== 'string' || body.title.trim().length < 3) {
       throw new AppError(400, 'VALIDATION_ERROR', 'title is required');
@@ -72,6 +82,16 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
         proposedBy: 'manager',
       } as unknown as typeof topicTable.$inferInsert)
       .returning();
+
+    logStage(deps.logger, {
+      flow: 'topics.create',
+      stage: 'completed',
+      status: 'ok',
+      companyId: authUser.companyId,
+      actorId: authUser.userId,
+      entityId: topic.id,
+      durationMs: Date.now() - startedAt,
+    });
 
     return context.json({ id: topic.id, status: topic.status }, 201);
   });

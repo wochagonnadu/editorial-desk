@@ -115,3 +115,20 @@ No-Go, если:
   - `POST /api/v1/drafts/*` form endpoints
   - `POST /api/v1/webhooks/email/inbound`
 - Критерий стабильности после деплоя: 24 часа без `FUNCTION_INVOCATION_TIMEOUT` и `Body parse timeout` по form-routes.
+
+## 8) Post-deploy runbook для form create-flow (Spec 009)
+
+- Окно наблюдения 24h: `STARTED_AT_UTC=2026-03-04T00:00:00Z`.
+- Для create-flow смотрим stage-логи `flow.stage` по `flow`:
+  - `auth.login`
+  - `experts.create`
+  - `topics.create`
+  - `drafts.create`
+- Блокирующие сигналы (No-Go):
+  - `FUNCTION_INVOCATION_TIMEOUT` на POST form-routes;
+  - `REQUEST_TIMEOUT` / `Body parse timeout` в API-логах;
+  - всплеск `INVALID_JSON` на валидных UI-сценариях.
+- Что фиксируем в отчете после 24h:
+  - количество `flow.stage` со `status=error` по каждому flow;
+  - наличие/отсутствие timeout-инцидентов;
+  - решение `go` или `no-go` с коротким комментарием.

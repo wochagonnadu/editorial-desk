@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { ExpertStatus } from '@newsroom/shared';
 import { readJsonBodyStrict } from '../core/http/read-json-body.js';
+import { logStage } from '../core/observability/log-stage.js';
 import { AppError } from '../core/errors.js';
 import { startOnboarding } from '../core/onboarding.js';
 import {
@@ -35,6 +36,15 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       company_id: authUser.companyId,
       actor: authUser.userId,
     });
+    const startedAt = Date.now();
+    logStage(deps.logger, {
+      flow: 'experts.create',
+      stage: 'enter',
+      status: 'start',
+      companyId: authUser.companyId,
+      actorId: authUser.userId,
+      durationMs: 0,
+    });
     log.info('experts.create.enter');
     const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
     const created = await expertStore.create({
@@ -47,6 +57,15 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       status: 'pending',
     });
     log.info('experts.create.persisted', { expert_id: created.id });
+    logStage(deps.logger, {
+      flow: 'experts.create',
+      stage: 'persisted',
+      status: 'ok',
+      companyId: authUser.companyId,
+      actorId: authUser.userId,
+      entityId: created.id,
+      durationMs: Date.now() - startedAt,
+    });
     try {
       await startOnboarding({ db: deps.db, email: deps.email }, created.id);
     } catch (error) {
@@ -54,12 +73,30 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
         expert_id: created.id,
         error_message: error instanceof Error ? error.message : String(error),
       });
+      logStage(deps.logger, {
+        flow: 'experts.create',
+        stage: 'onboarding',
+        status: 'error',
+        companyId: authUser.companyId,
+        actorId: authUser.userId,
+        entityId: created.id,
+        durationMs: Date.now() - startedAt,
+      });
       if (error instanceof Error && error.message.toLowerCase().includes('timeout')) {
         throw new AppError(503, 'EMAIL_TIMEOUT', 'Onboarding email request timed out');
       }
       throw error;
     }
     log.info('experts.create.onboarding_started', { expert_id: created.id });
+    logStage(deps.logger, {
+      flow: 'experts.create',
+      stage: 'completed',
+      status: 'ok',
+      companyId: authUser.companyId,
+      actorId: authUser.userId,
+      entityId: created.id,
+      durationMs: Date.now() - startedAt,
+    });
     return context.json({ id: created.id, status: 'onboarding' }, 201);
   });
   router.get('/', async (context) => {
