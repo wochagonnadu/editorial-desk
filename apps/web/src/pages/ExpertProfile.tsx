@@ -19,6 +19,12 @@ const toRelative = (value: string) => {
   return `${Math.floor(sec / 86400)} days ago`;
 };
 
+const onboardingStatusLabel: Record<'active' | 'stalled' | 'completed', string> = {
+  active: 'Active',
+  stalled: 'Stalled',
+  completed: 'Completed',
+};
+
 export function ExpertProfile() {
   const { id = '' } = useParams();
   const { session } = useSession();
@@ -156,8 +162,22 @@ export function ExpertProfile() {
               <section className="card space-y-3">
                 <h2 className="text-lg font-serif font-medium">Onboarding</h2>
                 <p className="text-sm text-ink-500">
+                  Chain status: {onboardingStatusLabel[expert.onboardingStatus]}
+                </p>
+                <p className="text-sm text-ink-500">
+                  Current step: {expert.currentStep ?? 'all steps completed'}
+                </p>
+                <p className="text-sm text-ink-500">
                   Progress: {expert.onboardingProgress}/5 steps
                 </p>
+                {expert.lastEventAt ? (
+                  <p className="text-sm text-ink-500">
+                    Last event: {toRelative(expert.lastEventAt)}
+                  </p>
+                ) : null}
+                {expert.stalledReason ? (
+                  <p className="text-sm text-ink-500">Stalled reason: {expert.stalledReason}</p>
+                ) : null}
                 <p className="text-sm text-ink-500">
                   Public sources: {expert.publicTextUrls.length}
                 </p>

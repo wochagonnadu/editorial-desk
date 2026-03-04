@@ -6,6 +6,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { EmailPort } from '@newsroom/shared';
 import type { Database } from '../providers/db/index.js';
+import type { Logger } from '../providers/logger.js';
 import { expertTable, onboardingSequenceTable, userTable } from '../providers/db/index.js';
 import { logAudit } from './audit.js';
 import { getOnboardingTemplate } from './email-templates/onboarding.js';
@@ -13,6 +14,7 @@ import { getOnboardingTemplate } from './email-templates/onboarding.js';
 export interface OnboardingContext {
   db: Database;
   email: EmailPort;
+  logger?: Logger;
 }
 
 export type ProcessReplyCode = 'PROCESSED' | 'MISSING_STEP' | 'INVALID_ORDER' | 'ALREADY_PROCESSED';
@@ -30,6 +32,11 @@ interface OverdueOnboardingStep {
   stepNumber: number;
   reminderCount: number;
   sentAt: Date | null;
+}
+
+interface SendStepEmailOptions {
+  attempt: number;
+  reason: 'initial' | 'next_step' | 'reminder';
 }
 
 export interface OnboardingReminderCycleResult {
@@ -54,6 +61,14 @@ const isReminderDue = (step: OverdueOnboardingStep, now: Date): boolean => {
   return false;
 };
 
+const logOnboardingEvent = (
+  context: OnboardingContext,
+  message: string,
+  payload: Record<string, unknown>,
+) => {
+  context.logger?.info(message, payload);
+};
+
 export const buildOnboardingReplyAddress = (
   expertId: string,
   step: number,
@@ -73,33 +88,63 @@ export const parseOnboardingReplyAddress = (
   return { expertId: match[1], step: Number(match[2]) };
 };
 
-const sendStepEmail = async (context: OnboardingContext, expertId: string, step: number) => {
+const sendStepEmail = async (
+  context: OnboardingContext,
+  expertId: string,
+  step: number,
+  options: SendStepEmailOptions,
+) => {
+  const startedAt = Date.now();
   const [expert] = await context.db
     .select()
     .from(expertTable)
     .where(eq(expertTable.id, expertId))
     .limit(1);
   if (!expert) throw new Error('expert not found');
-  const template = getOnboardingTemplate(step, expert.name);
-  const inbound = process.env.EMAIL_INBOUND_ADDRESS ?? 'reply@mail-dev.vschernyshev.ru';
-  const replyTo = buildOnboardingReplyAddress(expertId, step, inbound);
-  await context.email.sendEmail({
-    to: expert.email,
-    ...template,
-    replyTo,
-    metadata: { step: String(step) },
-  });
-  await context.db
-    .update(onboardingSequenceTable)
-    .set({ status: 'sent', sentAt: new Date() } as Partial<
-      typeof onboardingSequenceTable.$inferInsert
-    >)
-    .where(
-      and(
-        eq(onboardingSequenceTable.expertId, expertId),
-        eq(onboardingSequenceTable.stepNumber, step),
-      ),
-    );
+  try {
+    const template = getOnboardingTemplate(step, expert.name);
+    const inbound = process.env.EMAIL_INBOUND_ADDRESS ?? 'reply@mail-dev.vschernyshev.ru';
+    const replyTo = buildOnboardingReplyAddress(expertId, step, inbound);
+    await context.email.sendEmail({
+      to: expert.email,
+      ...template,
+      replyTo,
+      metadata: { step: String(step) },
+    });
+    await context.db
+      .update(onboardingSequenceTable)
+      .set({ status: 'sent', sentAt: new Date() } as Partial<
+        typeof onboardingSequenceTable.$inferInsert
+      >)
+      .where(
+        and(
+          eq(onboardingSequenceTable.expertId, expertId),
+          eq(onboardingSequenceTable.stepNumber, step),
+        ),
+      );
+
+    logOnboardingEvent(context, 'onboarding.step_sent', {
+      expert_id: expertId,
+      step,
+      attempt: options.attempt,
+      message_provider: 'email',
+      duration_ms: Date.now() - startedAt,
+      result: 'sent',
+      reason: options.reason,
+    });
+  } catch (error) {
+    logOnboardingEvent(context, 'onboarding.step_sent', {
+      expert_id: expertId,
+      step,
+      attempt: options.attempt,
+      message_provider: 'email',
+      duration_ms: Date.now() - startedAt,
+      result: 'error',
+      reason: options.reason,
+      error_message: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 };
 
 const incrementReminderCount = async (context: OnboardingContext, stepId: string) => {
@@ -198,13 +243,28 @@ export const runOnboardingReminderCycle = async (
   let stalledExperts = 0;
 
   for (const step of overdue) {
-    await sendStepEmail(context, step.expertId, step.stepNumber);
+    const attempt = step.reminderCount + 1;
+    const startedAt = Date.now();
+    await sendStepEmail(context, step.expertId, step.stepNumber, {
+      attempt,
+      reason: 'reminder',
+    });
     await incrementReminderCount(context, step.id);
     remindersSent += 1;
+
+    logOnboardingEvent(context, 'onboarding.reminder_sent', {
+      expert_id: step.expertId,
+      step: step.stepNumber,
+      attempt,
+      message_provider: 'email',
+      duration_ms: Date.now() - startedAt,
+      result: 'sent',
+    });
 
     const nextReminderCount = step.reminderCount + 1;
     if (nextReminderCount < MAX_REMINDER_COUNT) continue;
 
+    const escalationStartedAt = Date.now();
     const escalated = await escalateToManagers(
       context,
       step.expertId,
@@ -216,6 +276,14 @@ export const runOnboardingReminderCycle = async (
     escalationsSent += 1;
     await markStalled(context, step.expertId, step.id);
     stalledExperts += 1;
+    logOnboardingEvent(context, 'onboarding.escalated', {
+      expert_id: step.expertId,
+      step: step.stepNumber,
+      attempt: nextReminderCount,
+      message_provider: 'email',
+      duration_ms: Date.now() - escalationStartedAt,
+      result: 'stalled',
+    });
   }
 
   return { remindersSent, escalationsSent, stalledExperts };
@@ -232,7 +300,7 @@ export const startOnboarding = async (context: OnboardingContext, expertId: stri
     .update(expertTable)
     .set({ status: 'onboarding' } as Partial<typeof expertTable.$inferInsert>)
     .where(eq(expertTable.id, expertId));
-  await sendStepEmail(context, expertId, 1);
+  await sendStepEmail(context, expertId, 1, { attempt: 0, reason: 'initial' });
 };
 
 export const processReply = async (
@@ -241,8 +309,21 @@ export const processReply = async (
   step: number,
   responseData: string,
 ): Promise<ProcessReplyResult> => {
+  const startedAt = Date.now();
+  const ignored = (code: ProcessReplyCode, completed = false): ProcessReplyResult => {
+    logOnboardingEvent(context, 'onboarding.step_replied', {
+      expert_id: expertId,
+      step,
+      attempt: 0,
+      message_provider: 'email',
+      duration_ms: Date.now() - startedAt,
+      result: 'ignored',
+      code,
+    });
+    return { status: 'ignored', code, completed };
+  };
   if (step < 1 || step > 5) {
-    return { status: 'ignored', code: 'INVALID_ORDER', completed: false };
+    return ignored('INVALID_ORDER');
   }
 
   const steps = await context.db
@@ -251,34 +332,34 @@ export const processReply = async (
     .where(eq(onboardingSequenceTable.expertId, expertId));
   const currentStep = steps.find((row) => row.stepNumber === step);
   if (!currentStep) {
-    return { status: 'ignored', code: 'MISSING_STEP', completed: false };
+    return ignored('MISSING_STEP');
   }
 
   const hasIncompletePreviousStep = steps
     .filter((row) => row.stepNumber < step)
     .some((row) => row.status !== 'replied');
   if (hasIncompletePreviousStep) {
-    return { status: 'ignored', code: 'INVALID_ORDER', completed: false };
+    return ignored('INVALID_ORDER');
   }
 
   if (currentStep.status === 'replied') {
     if (step === 5) {
-      return { status: 'ignored', code: 'ALREADY_PROCESSED', completed: true };
+      return ignored('ALREADY_PROCESSED', true);
     }
     const nextStep = step + 1;
     const nextRow = steps.find((row) => row.stepNumber === nextStep);
     if (!nextRow) {
-      return { status: 'ignored', code: 'MISSING_STEP', completed: false };
+      return ignored('MISSING_STEP');
     }
     if (nextRow.status === 'pending') {
-      await sendStepEmail(context, expertId, nextStep);
+      await sendStepEmail(context, expertId, nextStep, { attempt: 0, reason: 'next_step' });
       return { status: 'processed', code: 'PROCESSED', completed: false, nextStep };
     }
-    return { status: 'ignored', code: 'ALREADY_PROCESSED', completed: false };
+    return ignored('ALREADY_PROCESSED');
   }
 
   if (currentStep.status !== 'sent') {
-    return { status: 'ignored', code: 'INVALID_ORDER', completed: false };
+    return ignored('INVALID_ORDER');
   }
 
   const [updated] = await context.db
@@ -298,18 +379,31 @@ export const processReply = async (
     .returning({ id: onboardingSequenceTable.id });
 
   if (!updated) {
-    return {
-      status: 'ignored',
-      code: 'ALREADY_PROCESSED',
-      completed: step === 5,
-    };
+    return ignored('ALREADY_PROCESSED', step === 5);
   }
 
   if (step < 5) {
     const nextStep = step + 1;
-    await sendStepEmail(context, expertId, nextStep);
+    await sendStepEmail(context, expertId, nextStep, { attempt: 0, reason: 'next_step' });
+    logOnboardingEvent(context, 'onboarding.step_replied', {
+      expert_id: expertId,
+      step,
+      attempt: 0,
+      message_provider: 'email',
+      duration_ms: Date.now() - startedAt,
+      result: 'processed',
+      next_step: nextStep,
+    });
     return { status: 'processed', code: 'PROCESSED', completed: false, nextStep };
   }
+  logOnboardingEvent(context, 'onboarding.step_replied', {
+    expert_id: expertId,
+    step,
+    attempt: 0,
+    message_provider: 'email',
+    duration_ms: Date.now() - startedAt,
+    result: 'completed',
+  });
   return { status: 'processed', code: 'PROCESSED', completed: true };
 };
 

@@ -93,7 +93,7 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
     }
 
     const result = await processReply(
-      { db: deps.db, email: deps.email },
+      { db: deps.db, email: deps.email, logger: deps.logger },
       token.expertId,
       token.step,
       text,

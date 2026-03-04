@@ -67,7 +67,7 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       durationMs: Date.now() - startedAt,
     });
     try {
-      await startOnboarding({ db: deps.db, email: deps.email }, created.id);
+      await startOnboarding({ db: deps.db, email: deps.email, logger: deps.logger }, created.id);
     } catch (error) {
       log.error('experts.create.onboarding_failed', {
         expert_id: created.id,
@@ -152,7 +152,26 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       .from(onboardingSequenceTable)
       .where(eq(onboardingSequenceTable.expertId, expertId))
       .orderBy(onboardingSequenceTable.stepNumber);
-    return context.json({ expert_id: expertId, steps });
+
+    const currentStep = steps.find((step) => step.status !== 'replied');
+    const lastEventAt = steps
+      .flatMap((step) => [step.repliedAt, step.sentAt, step.createdAt])
+      .filter((value): value is Date => value instanceof Date)
+      .sort((left, right) => right.getTime() - left.getTime())[0];
+
+    const hasStalledStep = steps.some((step) => step.status === 'stalled');
+    const allReplied = steps.length > 0 && steps.every((step) => step.status === 'replied');
+    const onboardingStatus = hasStalledStep ? 'stalled' : allReplied ? 'completed' : 'active';
+    const stalledReason = hasStalledStep ? 'max_reminders_reached' : null;
+
+    return context.json({
+      expert_id: expertId,
+      onboarding_status: onboardingStatus,
+      current_step: currentStep?.stepNumber ?? null,
+      last_event_at: lastEventAt?.toISOString() ?? null,
+      stalled_reason: stalledReason,
+      steps,
+    });
   });
 
   router.post('/:id/ping', requestTwoMinutes(deps, expertStore));

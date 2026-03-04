@@ -112,6 +112,7 @@ export const buildCronRoutes = (deps: RouteDeps): Hono => {
     const onboardingCycle = await runOnboardingReminderCycle({
       db: deps.db,
       email: deps.email,
+      logger: deps.logger,
     });
 
     let weeklyTopicProposalsSent = 0;

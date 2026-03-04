@@ -20,6 +20,10 @@ export type ExpertDetail = ExpertItem & {
   domain: string;
   publicTextUrls: string[];
   profileData: Record<string, unknown>;
+  onboardingStatus: 'active' | 'stalled' | 'completed';
+  currentStep: number | null;
+  lastEventAt: string | null;
+  stalledReason: string | null;
 };
 
 type ExpertListResponse = {
@@ -46,6 +50,14 @@ type ExpertDetailResponse = {
   voiceProfileData: Record<string, unknown>;
 };
 
+type OnboardingStatusResponse = {
+  onboardingStatus: 'active' | 'stalled' | 'completed';
+  currentStep: number | null;
+  lastEventAt: string | null;
+  stalledReason: string | null;
+  steps: Array<{ status: string }>;
+};
+
 export type CreateExpertInput = {
   name: string;
   roleTitle: string;
@@ -69,8 +81,12 @@ export const fetchExperts = async (token: string): Promise<ExpertItem[]> => {
 };
 
 export const fetchExpertDetail = async (token: string, id: string): Promise<ExpertDetail> => {
-  const raw = await apiRequest<unknown>(`/api/v1/experts/${id}`, { token });
-  const data = mapDto<ExpertDetailResponse>(raw);
+  const [rawDetail, rawOnboarding] = await Promise.all([
+    apiRequest<unknown>(`/api/v1/experts/${id}`, { token }),
+    apiRequest<unknown>(`/api/v1/experts/${id}/onboarding`, { token }),
+  ]);
+  const data = mapDto<ExpertDetailResponse>(rawDetail);
+  const onboarding = mapDto<OnboardingStatusResponse>(rawOnboarding);
   return {
     id: data.id,
     name: data.name,
@@ -79,9 +95,13 @@ export const fetchExpertDetail = async (token: string, id: string): Promise<Expe
     domain: data.domain,
     status: data.status,
     publicTextUrls: data.publicTextUrls,
-    onboardingProgress: 0,
+    onboardingProgress: onboarding.steps.filter((step) => step.status === 'replied').length,
     voiceProfileStatus: data.voiceProfileStatus,
     profileData: data.voiceProfileData,
+    onboardingStatus: onboarding.onboardingStatus,
+    currentStep: onboarding.currentStep,
+    lastEventAt: onboarding.lastEventAt,
+    stalledReason: onboarding.stalledReason,
   };
 };
 
