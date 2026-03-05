@@ -185,7 +185,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: добавить в Settings управляемые параметры generation voice/тональности (guardrails, defaults, preview) как workspace-политику для LLM-пайплайна.
     - Результат: editorial tone задается один раз и применяется системно, а не «на глаз» в каждом драфте.
 
-12. `021-web-ux-reliability-mobile-nav`
+12. `021-web-ux-reliability-mobile-nav` ✅
     - Scope: закрыть must-gap по UX-надежности: мобильный скролл без обрезаний, стабильная навигация back/forward, logout в 1 клик, явные loading/error состояния в ключевых действиях.
     - Результат: базовые сценарии проходят на телефоне и desktop одинаково предсказуемо, без потери контекста.
 
@@ -283,3 +283,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Добавлен preview-контур `POST /api/v1/companies/me/generation-preview` без создания `draft/draft_version`, но с тем же prompt stack.
 - В `draft.generate` и `draft.revise` прокинут `workspace_generation_policy_json`; приоритет policy зафиксирован в prompt templates.
 - Добавлен fallback/валидация policy и тесты на сценарии `save->reload`, `preview`, `generate+revise` для стабильного editorial tone.
+
+### Changelog 021 (коротко)
+
+- App shell обновлен для UX-надежности: mobile/tablet nav pattern, убраны обрезания из-за `100vh`/nested overflow, desktop sidebar сохранен.
+- Навигация и auth history усилены: единые `push/replace` правила, logout переведен в 1 явное действие из shell (`clearSession` + `replace` на `/login`).
+- В `CreateDraft`, `DraftEditor`, `Approvals`, `Settings` добавлены action-level loading/error состояния и защита от повторных submit.
+- Phase E smoke зафиксирован через MCP Chrome DevTools; остаточная desktop/tablet проверка с полным DraftEditor-сценарием вынесена в `docs/tech_debt.md`.

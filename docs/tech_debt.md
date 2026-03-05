@@ -32,3 +32,9 @@ RELEVANT: specs/004-api-adapter-integration/api-compat-matrix.md,docs/verificati
 | TD-011 | Auth runtime (prod) | Login переведен на `X-Auth-Email` (header-only), чтобы обойти нестабильный body parsing. | Breaking change контракта login, риск рассинхрона клиентов и остаточных 5xx/408. | Подтвердить 24h стабильности в Vercel логах, обновить всех клиентов и закрыть запись ссылкой на commit/PR. | High      | open   |
 | TD-012 | Worker handlers      | В `services/api/src/worker/handlers.ts` оставлен fallback `workerHandlers` со статусом `ignored` для резерва. | Можно случайно использовать fallback вместо реальных handler-ов и получить silent ignore. | Проверить, что в runtime используется только `createWorkerHandlers`, после проверки удалить fallback `workerHandlers`. | Medium    | open   |
 | TD-013 | Topics + Factcheck UX | В web нет явного UI для `topics.suggest`, а в редакторе исторически смешивались flow фактчека и отправки на approval; контекст проверяемых claim/evidence был неполным. | Пользователь не понимает, что именно проверено и когда можно отправлять на review; часть LLM-возможностей недоступна из UI. | Выделить отдельный UI поток `Suggest topics`, закрепить раздельные кнопки `Run factcheck`/`Send for approval`, показывать claim/evidence/links в карточках и синхронизировать runbook T1.5. | High      | open   |
+
+## Spec 021 carry-over
+
+## Phase E - UX verification via MCP Chrome DevTools (GPT-5.3 Codex: medium)
+
+- [ ] Прогнать desktop/tablet smoke (desktop-first) для ключевых сценариев и навигации.
