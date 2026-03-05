@@ -160,6 +160,34 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
    - Scope: `landing_request` как отдельная сущность, optional `evidence` table и минимальные индексы под отчеты.
    - Результат: улучшенная аналитика/аудит без преждевременного усложнения MVP.
 
+6. `015-llm-gateway-foundation`
+   - Scope: ввести единый LLM gateway слой (provider adapter, prompt/version registry, timeout/retry/fallback, cost/latency/trace logging, базовые safety guardrails).
+   - Результат: интеграция моделей становится управляемой и повторяемой, без размазанной логики вызовов по сервисам.
+
+7. `016-editorial-doc-prd-parity`
+   - Scope: дожать `006` до полного doc/magic-link сценария: live document surface, явный version context, reviewer-friendly diff summary + diff view.
+   - Результат: ревьюер видит «что поменялось и почему» прямо в документе, без ручного сопоставления версий из письма.
+
+8. `017-expert-setup-rich-profile-save`
+   - Scope: закрыть gap по Expert Setup save: единый write/read контракт для role/tone/contacts/tags/sources/background с валидацией и audit trail.
+   - Результат: профиль эксперта сохраняется полноценно и стабильно, генерация получает предсказуемый входной контекст.
+
+9. `018-content-strategy-12w-output`
+   - Scope: реализовать structured output для Content Strategy Builder (12-week plan: pillars/clusters/FAQ/interlinking) + базовые действия копирования в работу через LLM gateway.
+   - Результат: пользователь получает не «черный ящик», а применимый план, который можно сразу конвертировать в черновики.
+
+10. `019-approvals-calendar-flow-hardening`
+    - Scope: довести approvals queue до рабочего менеджерского цикла (approve/request changes без тупиков) и синхронизировать с календарным планом публикаций.
+    - Результат: выпуск не стопорится на ручных обходах, статусы материалов предсказуемо двигаются до публикации.
+
+11. `020-settings-generation-controls`
+    - Scope: добавить в Settings управляемые параметры generation voice/тональности (guardrails, defaults, preview) как workspace-политику для LLM-пайплайна.
+    - Результат: editorial tone задается один раз и применяется системно, а не «на глаз» в каждом драфте.
+
+12. `021-web-ux-reliability-mobile-nav`
+    - Scope: закрыть must-gap по UX-надежности: мобильный скролл без обрезаний, стабильная навигация back/forward, logout в 1 клик, явные loading/error состояния в ключевых действиях.
+    - Результат: базовые сценарии проходят на телефоне и desktop одинаково предсказуемо, без потери контекста.
+
 ## 8) Синхронизация с user stories (итог 010)
 
 Конфликтов формулировок между `docs/prd-gap-roadmap.md` и `docs/user_stories.md` не найдено.
