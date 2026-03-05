@@ -39,6 +39,7 @@ export function DraftEditor() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingReview, setIsSendingReview] = useState(false);
+  const [isRunningFactcheck, setIsRunningFactcheck] = useState(false);
   const [diffSourceVersionId, setDiffSourceVersionId] = useState('');
   const [diffTargetVersionId, setDiffTargetVersionId] = useState('');
   const [editorVersionId, setEditorVersionId] = useState('');
@@ -200,12 +201,13 @@ export function DraftEditor() {
 
   const handleSendForReview = async () => {
     if (!session || !detail) return;
+    if (!detail.hasCompletedFactcheck) {
+      setError('Run factcheck first before sending to approval');
+      return;
+    }
     try {
       setError(null);
       setIsSendingReview(true);
-      if (!detail.hasCompletedFactcheck) {
-        await runDraftFactcheck(session.token, detail.id);
-      }
       await sendDraftForReview(session.token, detail.id, detail.expertId);
       await load();
     } catch (requestError) {
@@ -217,6 +219,35 @@ export function DraftEditor() {
     } finally {
       setIsSendingReview(false);
     }
+  };
+
+  const handleRunFactcheck = async () => {
+    if (!session || !detail) return;
+    try {
+      setError(null);
+      setIsRunningFactcheck(true);
+      await runDraftFactcheck(session.token, detail.id);
+      await load();
+      setActiveTab('factcheck');
+    } catch (requestError) {
+      if (requestError instanceof ApiError) {
+        setError(requestError.message);
+      } else {
+        setError('Could not run factcheck');
+      }
+    } finally {
+      setIsRunningFactcheck(false);
+    }
+  };
+
+  const jumpToClaim = (claimText?: string) => {
+    if (!claimText || claimText.trim().length < 6) return;
+    const index = content.toLowerCase().indexOf(claimText.toLowerCase());
+    if (index < 0) return;
+    const textarea = document.querySelector('textarea');
+    if (!(textarea instanceof HTMLTextAreaElement)) return;
+    textarea.focus();
+    textarea.setSelectionRange(index, index + claimText.length);
   };
 
   const handleCreateComment = async () => {
@@ -290,15 +321,28 @@ export function DraftEditor() {
           <button className="btn-secondary" onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save draft'}
           </button>
-          <button className="btn-primary" onClick={handleSendForReview} disabled={isSendingReview}>
-            {isSendingReview
-              ? 'Running checks...'
-              : detail.hasCompletedFactcheck
-                ? 'Send for approval'
-                : 'Factcheck + send for approval'}
+          <button
+            className="btn-secondary"
+            onClick={handleRunFactcheck}
+            disabled={isRunningFactcheck}
+          >
+            {isRunningFactcheck ? 'Running factcheck...' : 'Run factcheck'}
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleSendForReview}
+            disabled={isSendingReview || !detail.hasCompletedFactcheck}
+          >
+            {isSendingReview ? 'Sending...' : 'Send for approval'}
           </button>
         </div>
       </header>
+
+      {!detail.hasCompletedFactcheck ? (
+        <div className="px-8 py-2 text-xs text-ink-700 bg-beige-50 border-b border-ink-100">
+          Approval is available only after successful factcheck.
+        </div>
+      ) : null}
 
       {error ? (
         <div className="px-8 py-2 text-sm text-red-600 bg-red-50 border-b border-red-100">
@@ -400,7 +444,46 @@ export function DraftEditor() {
                           )}
                           <div className="text-sm">
                             <p className="font-medium">Verdict: {item.verdict}</p>
+                            <p className="text-xs text-ink-600 mt-1">
+                              Risk: {item.riskLevel ?? 'n/a'}
+                            </p>
+                            <p className="text-xs text-ink-700 mt-1">
+                              {item.text ?? 'Claim text unavailable'}
+                            </p>
                             <p className="text-xs text-ink-600 mt-1">{item.notes ?? 'No notes'}</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                className="text-xs underline"
+                                onClick={() => jumpToClaim(item.text)}
+                              >
+                                Highlight in text
+                              </button>
+                            </div>
+                            {Array.isArray(item.evidence) && item.evidence.length > 0 ? (
+                              <div className="mt-2 space-y-1">
+                                {item.evidence.map((evidence, idx) => (
+                                  <div
+                                    key={`${item.claimId}-evidence-${idx}`}
+                                    className="text-xs text-ink-600"
+                                  >
+                                    <span>{evidence.source ?? 'Source'}: </span>
+                                    {evidence.url ? (
+                                      <a
+                                        href={evidence.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="underline"
+                                      >
+                                        {evidence.url}
+                                      </a>
+                                    ) : (
+                                      <span>{evidence.snippet ?? 'manual-review'}</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
                             {!isConfirmed ? (
                               <button
                                 type="button"

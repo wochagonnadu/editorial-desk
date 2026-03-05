@@ -43,7 +43,14 @@ export type DraftDetail = {
   currentVersionNumber: number;
   comments: DraftComment[];
   hasCompletedFactcheck: boolean;
-  factcheckResults: Array<{ claimId: string; verdict: string; notes?: string }>;
+  factcheckResults: Array<{
+    claimId: string;
+    verdict: string;
+    notes?: string;
+    text?: string;
+    riskLevel?: string;
+    evidence?: Array<{ source?: string; snippet?: string; url?: string }>;
+  }>;
 };
 
 type DraftListResponse = {
@@ -71,7 +78,14 @@ type DraftDetailResponse = {
   } | null;
   factcheckReport?: {
     status?: string;
-    results?: Array<{ claimId?: string; verdict?: string; notes?: string }>;
+    results?: Array<{
+      claimId?: string;
+      verdict?: string;
+      notes?: string;
+      text?: string;
+      riskLevel?: string;
+      evidence?: Array<{ source?: string; snippet?: string; url?: string }>;
+    }>;
   } | null;
   comments: Array<{ id: string; text: string; createdAt: string; authorType: string }>;
 };
@@ -135,6 +149,9 @@ export const fetchDraftDetail = async (token: string, id: string): Promise<Draft
       claimId: item.claimId ?? 'unknown',
       verdict: item.verdict ?? 'pending',
       notes: item.notes,
+      text: item.text,
+      riskLevel: item.riskLevel,
+      evidence: item.evidence ?? [],
     })),
   };
 };
