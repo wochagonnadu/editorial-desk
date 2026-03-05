@@ -300,3 +300,25 @@ export const runDraftFactcheck = async (token: string, id: string): Promise<void
 
   await readSseUntilDone(response);
 };
+
+export const reviseDraft = async (
+  token: string,
+  id: string,
+  instructions: string,
+): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/drafts/${id}/revise`, {
+    method: 'POST',
+    headers: {
+      Accept: 'text/event-stream',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ instructions }),
+  });
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Draft revision failed');
+  }
+
+  await readSseUntilDone(response);
+};

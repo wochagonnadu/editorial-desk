@@ -13,6 +13,7 @@ import {
   fetchDraftDetail,
   runDraftFactcheck,
   generateDraftContent,
+  reviseDraft,
   fetchDraftVersions,
   saveDraftVersion,
   sendDraftForReview,
@@ -40,6 +41,7 @@ export function DraftEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingReview, setIsSendingReview] = useState(false);
   const [isRunningFactcheck, setIsRunningFactcheck] = useState(false);
+  const [isUpdatingDraft, setIsUpdatingDraft] = useState(false);
   const [diffSourceVersionId, setDiffSourceVersionId] = useState('');
   const [diffTargetVersionId, setDiffTargetVersionId] = useState('');
   const [editorVersionId, setEditorVersionId] = useState('');
@@ -102,6 +104,10 @@ export function DraftEditor() {
   };
 
   const pendingComments = useMemo(() => detail?.comments ?? [], [detail]);
+  const hasUnsavedChanges = useMemo(
+    () => (detail ? content.trim() !== detail.content.trim() : false),
+    [content, detail],
+  );
 
   useEffect(() => {
     if (versions.length === 0) {
@@ -240,6 +246,43 @@ export function DraftEditor() {
     }
   };
 
+  const handleUpdateDraft = async () => {
+    if (!session || !detail) return;
+    if (hasUnsavedChanges) {
+      setError('Save draft before Update Draft so comments stay on the same version');
+      return;
+    }
+    const instructionLines = pendingComments
+      .map((comment, index) => `${index + 1}. ${comment.text.trim()}`)
+      .filter((line) => line.length > 3);
+    if (instructionLines.length === 0) {
+      setError('Add at least one comment before Update Draft');
+      return;
+    }
+
+    const instructions = [
+      'Apply reviewer comments exactly while preserving expert voice and factual meaning.',
+      'Comments:',
+      ...instructionLines,
+    ].join('\n');
+
+    try {
+      setError(null);
+      setIsUpdatingDraft(true);
+      await reviseDraft(session.token, detail.id, instructions);
+      await load();
+      setActiveTab('changes');
+    } catch (requestError) {
+      if (requestError instanceof ApiError) {
+        setError(requestError.message);
+      } else {
+        setError('Could not update draft from comments');
+      }
+    } finally {
+      setIsUpdatingDraft(false);
+    }
+  };
+
   const jumpToClaim = (claimText?: string) => {
     if (!claimText || claimText.trim().length < 6) return;
     const index = content.toLowerCase().indexOf(claimText.toLowerCase());
@@ -320,6 +363,13 @@ export function DraftEditor() {
         <div className="flex items-center space-x-3">
           <button className="btn-secondary" onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save draft'}
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={handleUpdateDraft}
+            disabled={isUpdatingDraft || pendingComments.length === 0}
+          >
+            {isUpdatingDraft ? 'Updating...' : 'Update draft'}
           </button>
           <button
             className="btn-secondary"
