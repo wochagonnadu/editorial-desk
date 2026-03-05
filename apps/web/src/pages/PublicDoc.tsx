@@ -10,6 +10,13 @@ import { fetchPublicDoc, type PublicDoc as PublicDocData } from '../services/doc
 
 const toStatusLabel = (value: string) => value.replaceAll('_', ' ');
 
+const toDateTime = (value?: string): string => {
+  if (!value) return 'Unknown';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Unknown';
+  return parsed.toLocaleString();
+};
+
 type ViewState = 'loading' | 'error' | 'empty' | 'success';
 
 const mapPublicDocError = (error: ApiError | null): { title: string; nextStep: string } => {
@@ -23,14 +30,16 @@ const mapPublicDocError = (error: ApiError | null): { title: string; nextStep: s
   if (error.code === 'TOKEN_EXPIRED') {
     return {
       title: 'This link has expired',
-      nextStep: 'Ask editorial team to send a new review link for the latest version.',
+      nextStep:
+        'Reason: security TTL for this link ended. Ask editorial team to send a new review link for the latest version.',
     };
   }
 
   if (error.code === 'STALE_VERSION') {
     return {
       title: 'This link points to an old version',
-      nextStep: 'Ask editorial team for a fresh link to review the current draft version.',
+      nextStep:
+        'Reason: a newer draft version already exists. Ask editorial team for a fresh link to review the current version.',
     };
   }
 
@@ -134,6 +143,37 @@ export function PublicDoc() {
             {doc.readOnly ? <span>Read only</span> : null}
           </div>
         </header>
+        <section className="mt-5 rounded-xl border border-ink-100 bg-beige-50 p-4 space-y-2">
+          <p className="text-xs uppercase tracking-wide text-ink-500">Version context</p>
+          <div className="grid gap-2 text-sm text-ink-700 md:grid-cols-2">
+            <p>
+              Current version:{' '}
+              <strong>
+                v{doc.versionContext?.current.versionNumber ?? doc.currentVersion.versionNumber}
+              </strong>
+            </p>
+            <p>
+              Base version:{' '}
+              <strong>
+                {doc.versionContext?.base
+                  ? `v${doc.versionContext.base.versionNumber}`
+                  : 'Initial version'}
+              </strong>
+            </p>
+            <p>
+              Updated at:{' '}
+              <strong>
+                {toDateTime(doc.versionContext?.current.createdAt ?? doc.currentVersion.createdAt)}
+              </strong>
+            </p>
+            <p>
+              Status: <strong>{toStatusLabel(doc.status)}</strong>
+            </p>
+          </div>
+          <p className="text-xs text-ink-600">
+            You are viewing the latest version available for this link.
+          </p>
+        </section>
         <pre className="mt-6 text-base leading-relaxed text-ink-800 whitespace-pre-wrap font-sans">
           {doc.currentVersion.content}
         </pre>
