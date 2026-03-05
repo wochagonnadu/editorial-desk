@@ -123,7 +123,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 1. [x] Проверка и настройка USER STORIES в `docs/user_stories.md` (сверка с фактическим scope 001–009).
 2. [x] Отдельно проработать и проверить e2e onboarding эксперта до 5 email шагов (включая retries/таймауты/наблюдаемость).
-3. [ ] Дожать `006-editorial-doc-surface-diff-ux` до PRD parity по doc/magic-link/diff.
+3. [x] Дожать `006-editorial-doc-surface-diff-ux` до PRD parity по doc/magic-link/diff (закрыто в `016`).
 4. [x] Вернуться к `Settings + Team Management` контрактам (новые write/read endpoint-ы).
 5. [x] После стабилизации продукта закрыт `worker/runtime` (Spec 013); optional data-моделирование (`landing_request`, `evidence`) остается на `014`.
 6. [x] `014-data-model-enhancements-optional` закрыт как проектный контракт: зафиксированы сущности, bridge-режим, индексы, smoke-проверки и doc-sync.
@@ -165,7 +165,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
    - Scope: ввести единый LLM gateway слой (provider adapter, prompt/version registry, timeout/retry/fallback, cost/latency/trace logging, базовые safety guardrails).
    - Результат: интеграция моделей становится управляемой и повторяемой, без размазанной логики вызовов по сервисам.
 
-7. `016-editorial-doc-prd-parity`
+7. `016-editorial-doc-prd-parity` ✅
    - Scope: дожать `006` до полного doc/magic-link сценария: live document surface, явный version context, reviewer-friendly diff summary + diff view.
    - Результат: ревьюер видит «что поменялось и почему» прямо в документе, без ручного сопоставления версий из письма.
 
@@ -245,3 +245,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Добавлен контур синтеза `voice_profile` эксперта и обязательное использование voice-профиля в `draft.*`.
 - Усилен фактчек: поддержка source links в verify и отображение evidence в web; action-логика `Run factcheck` отделена от `Send for approval`.
 - Phase-H runbook закрыт; проверка `topics.suggest` smoke перенесена в отдельную `022` для отдельного UI/flow scope.
+
+### Changelog 016 (коротко)
+
+- Расширен `GET /api/v1/docs/:draft_id?token=...`: добавлены `version_context` и `diff` (`source/target`, summary, content) без нового endpoint.
+- В `PublicDoc` добавлен явный version context (`current/base/updated/status`) и объяснимые `STALE_VERSION`/`TOKEN_EXPIRED` next-step.
+- В magic-link документ встроены `What changed` (3-5 bullets), line-level diff view и fallback-состояния при недоступном сравнении.
+- Approval email синхронизирован с doc surface: общий термин `What changed (base to current)` и явная строка сравниваемых версий.

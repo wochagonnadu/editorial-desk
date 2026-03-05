@@ -103,7 +103,9 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Runtime блок из roadmap по worker/queue для критичных cron задач закрыт в Spec 013.
 - Для P2 data-gap по `landing_request/evidence` в Spec 014 зафиксирован проектный контракт (schema/bridge/indexes/smoke), реализация идет отдельным внедрением без расширения MVP scope.
 - Spec 015 закрыт: LLM gateway/prompt-version/policy/telemetry/voice integration внедрены в core потоки; smoke-пункт по `topics.suggest` вынесен в отдельный Spec 022 по UI/flow объему.
+- Spec 016 закрыт: reviewer видит version context + diff summary/diff view прямо на `/docs/:draftId?token=...`, а формулировки блока изменений синхронизированы с approval email.
 
 ## Зависимости на следующую спеку
 - Активных зависимостей на `011-expert-onboarding-5-step-hardening` не осталось: onboarding Step 1->5 закрыт и подтвержден вручную + тестами.
 - Активных зависимостей на `013-worker-runtime-hardening` не осталось: worker runtime и критичные retry/idempotency сценарии подтверждены тестами.
+- Активных зависимостей на `016-editorial-doc-prd-parity` не осталось: doc/magic-link/diff контекст доведен до reviewer-ready состояния.
