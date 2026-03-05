@@ -337,18 +337,18 @@ export function DraftEditor() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col -m-8">
-      <header className="bg-white border-b border-ink-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center space-x-4">
+    <div className="-mx-4 flex flex-col md:-mx-6 lg:-m-8 lg:h-[calc(100dvh-4rem)]">
+      <header className="flex flex-shrink-0 flex-col gap-4 border-b border-ink-100 bg-white px-4 py-4 md:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="flex min-w-0 items-start space-x-4">
           <Link to="/app/drafts" className="p-2 hover:bg-beige-50 rounded-full text-ink-500">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div>
-            <div className="flex items-center space-x-3">
-              <h1 className="text-xl font-serif font-medium">{detail.topicTitle}</h1>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-serif font-medium break-words">{detail.topicTitle}</h1>
               <span className="status-pill status-review">{toStatus(detail.status)}</span>
             </div>
-            <div className="flex items-center text-sm text-ink-500 mt-1 space-x-4">
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-500">
               <span>v{detail.currentVersionNumber}</span>
               <span>•</span>
               <span>{detail.expertName}</span>
@@ -360,26 +360,30 @@ export function DraftEditor() {
             </div>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <button className="btn-secondary" onClick={handleSave} disabled={isSaving}>
+        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
+          <button
+            className="btn-secondary px-4 py-2 text-sm"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
             {isSaving ? 'Saving...' : 'Save draft'}
           </button>
           <button
-            className="btn-secondary"
+            className="btn-secondary px-4 py-2 text-sm"
             onClick={handleUpdateDraft}
             disabled={isUpdatingDraft || pendingComments.length === 0}
           >
             {isUpdatingDraft ? 'Updating...' : 'Update draft'}
           </button>
           <button
-            className="btn-secondary"
+            className="btn-secondary px-4 py-2 text-sm"
             onClick={handleRunFactcheck}
             disabled={isRunningFactcheck}
           >
             {isRunningFactcheck ? 'Running factcheck...' : 'Run factcheck'}
           </button>
           <button
-            className="btn-primary"
+            className="btn-primary px-4 py-2 text-sm"
             onClick={handleSendForReview}
             disabled={isSendingReview || !detail.hasCompletedFactcheck}
           >
@@ -389,24 +393,24 @@ export function DraftEditor() {
       </header>
 
       {!detail.hasCompletedFactcheck ? (
-        <div className="px-8 py-2 text-xs text-ink-700 bg-beige-50 border-b border-ink-100">
+        <div className="border-b border-ink-100 bg-beige-50 px-4 py-2 text-xs text-ink-700 md:px-6 lg:px-8">
           Approval is available only after successful factcheck.
         </div>
       ) : null}
 
       {error ? (
-        <div className="px-8 py-2 text-sm text-red-600 bg-red-50 border-b border-red-100">
+        <div className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-600 md:px-6 lg:px-8">
           {error}
         </div>
       ) : null}
 
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-8 bg-beige-50">
-          <div className="max-w-3xl mx-auto bg-white border border-ink-100 rounded-slide-sm shadow-sm min-h-full p-8 space-y-4">
+      <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
+        <div className="flex-1 bg-beige-50 p-4 md:p-6 lg:overflow-y-auto lg:p-8">
+          <div className="mx-auto max-w-3xl space-y-4 rounded-slide-sm border border-ink-100 bg-white p-4 shadow-sm md:p-6 lg:min-h-full lg:p-8">
             <textarea
               value={content}
               onChange={(event) => setContent(event.target.value)}
-              className="w-full min-h-[60vh] text-base leading-relaxed text-ink-800 focus:outline-none"
+              className="min-h-[50vh] w-full text-base leading-relaxed text-ink-800 focus:outline-none lg:min-h-[60vh]"
             />
             <div className="border-t border-ink-100 pt-4 space-y-3">
               <div className="flex flex-col md:flex-row md:items-center gap-2">
@@ -459,7 +463,7 @@ export function DraftEditor() {
           </div>
         </div>
 
-        <div className="w-80 bg-white border-l border-ink-100 flex flex-col flex-shrink-0">
+        <div className="w-full flex-shrink-0 border-t border-ink-100 bg-white lg:w-80 lg:border-l lg:border-t-0 lg:flex lg:flex-col">
           <div className="flex border-b border-ink-100 relative">
             {(['factcheck', 'changes', 'audit'] as const).map((tab) => (
               <button
@@ -472,7 +476,7 @@ export function DraftEditor() {
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="p-4 lg:flex-1 lg:overflow-y-auto">
             {activeTab === 'factcheck' ? (
               <div className="space-y-3">
                 {detail.factcheckResults.length === 0 ? (

@@ -32,9 +32,9 @@ export function AppShell() {
   const location = useLocation();
 
   return (
-    <div className="flex h-screen bg-beige-50 overflow-hidden">
+    <div className="min-h-[100dvh] bg-beige-50 lg:flex lg:h-[100dvh] lg:overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-r border-ink-100 bg-white flex flex-col">
+      <aside className="hidden w-64 flex-shrink-0 border-r border-ink-100 bg-white lg:flex lg:flex-col">
         <div className="h-16 flex items-center px-6 border-b border-ink-100">
           <span className="font-serif text-xl font-medium tracking-masthead uppercase">
             EditorialDESK
@@ -88,10 +88,47 @@ export function AppShell() {
         </div>
       </aside>
 
+      {/* Mobile/Tablet header + nav */}
+      <div className="sticky top-0 z-40 border-b border-ink-100 bg-white/95 backdrop-blur lg:hidden">
+        <div className="flex h-14 items-center justify-between px-4">
+          <span className="font-serif text-lg font-medium tracking-masthead uppercase">
+            EditorialDESK
+          </span>
+          <NavLink
+            to="/logout"
+            className="inline-flex items-center rounded-full border border-ink-200 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-beige-50"
+          >
+            <LogOut className="mr-1.5 h-3.5 w-3.5" />
+            Sign out
+          </NavLink>
+        </div>
+        <nav className="overflow-x-auto px-2 pb-2" aria-label="Mobile navigation">
+          <div className="flex min-w-max gap-1.5">
+            {navItems.map((item) => (
+              <NavLink
+                key={`mobile-${item.name}`}
+                to={item.path}
+                end={item.path === '/app'}
+                className={({ isActive }) =>
+                  cn(
+                    'inline-flex items-center whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                    isActive
+                      ? 'bg-ink-900 text-white'
+                      : 'text-ink-600 hover:bg-beige-50 hover:text-ink-900',
+                  )
+                }
+              >
+                {item.name}
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+      </div>
+
       {/* Main content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-6xl mx-auto h-full">
+      <main className="min-w-0 flex-1 lg:flex lg:flex-col lg:overflow-hidden">
+        <div className="p-4 md:p-6 lg:h-full lg:flex-1 lg:overflow-y-auto lg:p-8">
+          <div className="mx-auto max-w-6xl lg:h-full">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
@@ -99,7 +136,7 @@ export function AppShell() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="h-full"
+                className="lg:h-full"
               >
                 <Outlet />
               </motion.div>
