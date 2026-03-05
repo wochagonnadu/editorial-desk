@@ -177,9 +177,9 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
    - Scope: реализовать structured output для Content Strategy Builder (12-week plan: pillars/clusters/FAQ/interlinking) + базовые действия копирования в работу через LLM gateway.
    - Результат: пользователь получает не «черный ящик», а применимый план, который можно сразу конвертировать в черновики.
 
-10. `019-approvals-calendar-flow-hardening`
-    - Scope: довести approvals queue до рабочего менеджерского цикла (approve/request changes без тупиков) и синхронизировать с календарным планом публикаций.
-    - Результат: выпуск не стопорится на ручных обходах, статусы материалов предсказуемо двигаются до публикации.
+10. `019-approvals-calendar-flow-hardening` ✅
+     - Scope: довести approvals queue до рабочего менеджерского цикла (approve/request changes без тупиков) и синхронизировать с календарным планом публикаций.
+     - Результат: выпуск не стопорится на ручных обходах, статусы материалов предсказуемо двигаются до публикации.
 
 11. `020-settings-generation-controls`
     - Scope: добавить в Settings управляемые параметры generation voice/тональности (guardrails, defaults, preview) как workspace-политику для LLM-пайплайна.
@@ -268,3 +268,11 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - В `CreateDraft` добавлен блок Strategy Builder: генерация 12-week плана (pillars/clusters/FAQ/interlinking) и визуализация interlink hints.
 - Добавлены действия `Copy cluster` и `Copy FAQ` в текущий topics flow, чтобы элементы плана сразу превращались в рабочие темы.
 - Добавлены проверки сценариев generate->copy->topic, copy->approve->create-draft и fallback при пустом/невалидном LLM output.
+
+### Changelog 019 (коротко)
+
+- В `Approvals` добавлены manager actions `Approve` и `Request changes` прямо из queue с version-lock (`expected_current_version_id`) и audit-событиями `approval.granted`/`approval.changes_requested`.
+- Убран тупик в approval flow: при `request_changes` открытые `pending/waiting` шаги закрываются в `changes_requested`, draft предсказуемо переходит в `revisions`.
+- Добавлен publish-plan контракт (`scheduled_publish_at`, `timezone`) в drafts/dashboard, а calendar/week schedule переведен на плановую дату публикации.
+- Удален fallback `scheduledDate = updatedAt`; для материалов без даты добавлено явное состояние `unscheduled`.
+- Проверка закрыта тестами: queue decision сценарии (approve/request changes + stale-version) и week schedule mapping по publish-plan.

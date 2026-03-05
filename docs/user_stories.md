@@ -79,8 +79,8 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 ## Epic J — Approvals и календарь
 
 1. [done] Как пользователь/менеджер, я хочу видеть список материалов на апрув, чтобы контролировать выпуск.
-2. [partial][must] Как пользователь/менеджер, я хочу утверждать или возвращать материал на правки из очереди approvals, чтобы не останавливать выпуск.
-3. [partial][should] Как пользователь/менеджер, я хочу видеть календарный план публикаций, чтобы держать ритм и дедлайны.
+2. [done] Как пользователь/менеджер, я хочу утверждать или возвращать материал на правки из очереди approvals, чтобы не останавливать выпуск.
+3. [done] Как пользователь/менеджер, я хочу видеть календарный план публикаций, чтобы держать ритм и дедлайны.
 
 ## Epic K — Настройки
 
@@ -105,6 +105,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Spec 015 закрыт: LLM gateway/prompt-version/policy/telemetry/voice integration внедрены в core потоки; smoke-пункт по `topics.suggest` вынесен в отдельный Spec 022 по UI/flow объему.
 - Spec 016 закрыт: reviewer видит version context + diff summary/diff view прямо на `/docs/:draftId?token=...`, а формулировки блока изменений синхронизированы с approval email.
 - Spec 018 закрыт: в Create Draft доступен structured 12-week strategy output и copy actions (`Copy cluster`/`Copy FAQ`) в текущий topics flow.
+- Spec 019 закрыт: approvals queue поддерживает manager actions `approve/request changes` без тупиков, а Calendar/Home читают publish-plan дату публикации вместо `updatedAt`.
 
 ## Зависимости на следующую спеку
 - Активных зависимостей на `011-expert-onboarding-5-step-hardening` не осталось: onboarding Step 1->5 закрыт и подтвержден вручную + тестами.
