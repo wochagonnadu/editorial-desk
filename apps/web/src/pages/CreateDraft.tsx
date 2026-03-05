@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createDraftFromTopic } from '../services/drafts';
+import { createDraftFromTopic, generateDraftContent } from '../services/drafts';
 import { fetchExperts } from '../services/experts';
 import { approveTopic, createTopic, fetchTopics, type TopicItem } from '../services/topics';
 import { useSession } from '../services/session';
@@ -61,6 +61,7 @@ export function CreateDraft() {
       });
       await approveTopic(session.token, topicId);
       const draftId = await createDraftFromTopic(session.token, topicId);
+      await generateDraftContent(session.token, draftId);
       navigate(`/app/drafts/${draftId}`);
     } catch {
       setError('Could not create draft from topic');
@@ -78,6 +79,7 @@ export function CreateDraft() {
         await approveTopic(session.token, topicId);
       }
       const draftId = await createDraftFromTopic(session.token, topicId);
+      await generateDraftContent(session.token, draftId);
       navigate(`/app/drafts/${draftId}`);
     } catch {
       setError('Could not start draft from selected topic');

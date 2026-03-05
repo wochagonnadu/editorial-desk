@@ -22,3 +22,4 @@ supabase-ca.pem
 docs/
 .opencode
 .specify
+.vercel

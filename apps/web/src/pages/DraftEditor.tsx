@@ -12,6 +12,7 @@ import {
   createDraftComment,
   fetchDraftDetail,
   runDraftFactcheck,
+  generateDraftContent,
   fetchDraftVersions,
   saveDraftVersion,
   sendDraftForReview,
@@ -40,6 +41,8 @@ export function DraftEditor() {
   const [isSendingReview, setIsSendingReview] = useState(false);
   const [diffSourceVersionId, setDiffSourceVersionId] = useState('');
   const [diffTargetVersionId, setDiffTargetVersionId] = useState('');
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [needsGeneration, setNeedsGeneration] = useState(false);
 
   const load = async () => {
     if (!session || !id) return;
@@ -59,13 +62,42 @@ export function DraftEditor() {
     const run = async () => {
       try {
         setError(null);
+        setNeedsGeneration(false);
+        setIsBootstrapping(true);
         await load();
-      } catch {
-        setError('Could not load draft editor data');
+      } catch (requestError) {
+        const message = requestError instanceof Error ? requestError.message : '';
+        if (message.toLowerCase().includes('no active version')) {
+          setNeedsGeneration(true);
+          setError('Draft has no generated version yet. Generate it to continue.');
+        } else {
+          setError('Could not load draft editor data');
+        }
+      } finally {
+        setIsBootstrapping(false);
       }
     };
     void run();
   }, [id, session]);
+
+  const handleGenerateDraft = async () => {
+    if (!session || !id) return;
+    try {
+      setError(null);
+      setIsBootstrapping(true);
+      await generateDraftContent(session.token, id);
+      await load();
+      setNeedsGeneration(false);
+    } catch (requestError) {
+      if (requestError instanceof ApiError) {
+        setError(requestError.message);
+      } else {
+        setError('Could not generate draft');
+      }
+    } finally {
+      setIsBootstrapping(false);
+    }
+  };
 
   const pendingComments = useMemo(() => detail?.comments ?? [], [detail]);
 
@@ -190,8 +222,23 @@ export function DraftEditor() {
     }
   };
 
-  if (!detail) {
+  if (!detail && isBootstrapping) {
     return <div className="card text-ink-500">Loading draft...</div>;
+  }
+
+  if (!detail && needsGeneration) {
+    return (
+      <div className="card space-y-3">
+        <p className="text-ink-700">{error ?? 'Draft has no generated version yet.'}</p>
+        <button type="button" className="btn-primary" onClick={handleGenerateDraft}>
+          Generate draft now
+        </button>
+      </div>
+    );
+  }
+
+  if (!detail) {
+    return <div className="card text-red-600">{error ?? 'Could not load draft editor data'}</div>;
   }
 
   return (

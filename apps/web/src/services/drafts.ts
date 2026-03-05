@@ -217,27 +217,7 @@ export const createDraftFromTopic = async (token: string, topicId: string): Prom
   return response.id;
 };
 
-export const runDraftFactcheck = async (token: string, id: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/api/v1/drafts/${id}/factcheck`, {
-    method: 'POST',
-    headers: {
-      Accept: 'text/event-stream',
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as {
-      error?: { code?: string; message?: string; details?: Record<string, unknown> };
-    };
-    throw new ApiError(
-      response.status,
-      payload.error?.code ?? 'API_ERROR',
-      payload.error?.message ?? 'Factcheck failed',
-      payload.error?.details,
-    );
-  }
-
+const readSseUntilDone = async (response: Response): Promise<void> => {
   const reader = response.body?.getReader();
   if (!reader) return;
   const decoder = new TextDecoder();
@@ -258,4 +238,48 @@ export const runDraftFactcheck = async (token: string, id: string): Promise<void
       if (payload.type === 'done') return;
     }
   }
+};
+
+const toApiError = async (response: Response, fallbackMessage: string): Promise<ApiError> => {
+  const payload = (await response.json().catch(() => ({}))) as {
+    error?: { code?: string; message?: string; details?: Record<string, unknown> };
+  };
+  return new ApiError(
+    response.status,
+    payload.error?.code ?? 'API_ERROR',
+    payload.error?.message ?? fallbackMessage,
+    payload.error?.details,
+  );
+};
+
+export const generateDraftContent = async (token: string, id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/drafts/${id}/generate`, {
+    method: 'POST',
+    headers: {
+      Accept: 'text/event-stream',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Draft generation failed');
+  }
+
+  await readSseUntilDone(response);
+};
+
+export const runDraftFactcheck = async (token: string, id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/drafts/${id}/factcheck`, {
+    method: 'POST',
+    headers: {
+      Accept: 'text/event-stream',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw await toApiError(response, 'Factcheck failed');
+  }
+
+  await readSseUntilDone(response);
 };
