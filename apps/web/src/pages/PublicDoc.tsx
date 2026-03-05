@@ -56,6 +56,8 @@ export function PublicDoc() {
   const [viewState, setViewState] = useState<ViewState>('loading');
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const run = async () => {
       if (!draftId || !token) {
         setDoc(null);
@@ -67,8 +69,9 @@ export function PublicDoc() {
         setDoc(null);
         setError(null);
         setViewState('loading');
-        const nextDoc = await fetchPublicDoc(draftId, token);
-        if (!nextDoc.currentVersion || !nextDoc.currentVersion.content.trim()) {
+        const nextDoc = await fetchPublicDoc(draftId, token, controller.signal);
+        const nextContent = nextDoc.currentVersion?.content ?? '';
+        if (!nextDoc.currentVersion || !nextContent.trim()) {
           setDoc(nextDoc);
           setViewState('empty');
           return;
@@ -76,6 +79,9 @@ export function PublicDoc() {
         setDoc(nextDoc);
         setViewState('success');
       } catch (requestError) {
+        if (requestError instanceof DOMException && requestError.name === 'AbortError') {
+          return;
+        }
         if (requestError instanceof ApiError) {
           setError(requestError);
         } else {
@@ -85,6 +91,10 @@ export function PublicDoc() {
       }
     };
     void run();
+
+    return () => {
+      controller.abort();
+    };
   }, [draftId, token]);
 
   if (viewState === 'loading') {

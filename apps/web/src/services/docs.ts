@@ -15,13 +15,29 @@ export type PublicDoc = {
     id: string;
     versionNumber: number;
     content: string;
+    summary?: string | null;
+    createdAt: string;
+  } | null;
+  versionContext: {
+    current: { id: string; versionNumber: number; createdAt: string };
+    base: { id: string; versionNumber: number; createdAt: string } | null;
+  } | null;
+  diff: {
+    sourceVersion: { id: string; versionNumber: number } | null;
+    targetVersion: { id: string; versionNumber: number };
+    summary: string[];
   } | null;
   readOnly: boolean;
 };
 
-export const fetchPublicDoc = async (draftId: string, token: string): Promise<PublicDoc> => {
+export const fetchPublicDoc = async (
+  draftId: string,
+  token: string,
+  signal?: AbortSignal,
+): Promise<PublicDoc> => {
   const raw = await apiRequest<unknown>(
     `/api/v1/docs/${draftId}?token=${encodeURIComponent(token)}`,
+    { signal },
   );
   return mapDto<PublicDoc>(raw);
 };
