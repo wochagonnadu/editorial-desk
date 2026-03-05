@@ -11,6 +11,7 @@ import {
   confirmDraftClaim,
   createDraftComment,
   fetchDraftDetail,
+  runDraftFactcheck,
   fetchDraftVersions,
   saveDraftVersion,
   sendDraftForReview,
@@ -149,6 +150,9 @@ export function DraftEditor() {
     try {
       setError(null);
       setIsSendingReview(true);
+      if (!detail.hasCompletedFactcheck) {
+        await runDraftFactcheck(session.token, detail.id);
+      }
       await sendDraftForReview(session.token, detail.id, detail.expertId);
       await load();
     } catch (requestError) {
@@ -218,12 +222,12 @@ export function DraftEditor() {
           <button className="btn-secondary" onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save draft'}
           </button>
-          <button
-            className="btn-primary"
-            onClick={handleSendForReview}
-            disabled={isSendingReview || !detail.hasCompletedFactcheck}
-          >
-            {isSendingReview ? 'Sending...' : 'Send for approval'}
+          <button className="btn-primary" onClick={handleSendForReview} disabled={isSendingReview}>
+            {isSendingReview
+              ? 'Running checks...'
+              : detail.hasCompletedFactcheck
+                ? 'Send for approval'
+                : 'Factcheck + send for approval'}
           </button>
         </div>
       </header>

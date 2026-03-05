@@ -3,7 +3,7 @@
 // WHY:  Keeps draft DTO mapping and payload formats out of page components
 // RELEVANT: apps/web/src/pages/Drafts.tsx,apps/web/src/pages/DraftEditor.tsx
 
-import { apiRequest } from './api/client';
+import { API_BASE_URL, ApiError, apiRequest } from './api/client';
 import { mapDto } from './api/mapper';
 
 export type DraftListItem = {
@@ -215,4 +215,47 @@ export const createDraftFromTopic = async (token: string, topicId: string): Prom
     body: { topic_id: topicId },
   });
   return response.id;
+};
+
+export const runDraftFactcheck = async (token: string, id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/drafts/${id}/factcheck`, {
+    method: 'POST',
+    headers: {
+      Accept: 'text/event-stream',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: { code?: string; message?: string; details?: Record<string, unknown> };
+    };
+    throw new ApiError(
+      response.status,
+      payload.error?.code ?? 'API_ERROR',
+      payload.error?.message ?? 'Factcheck failed',
+      payload.error?.details,
+    );
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) return;
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const chunks = buffer.split('\n\n');
+    buffer = chunks.pop() ?? '';
+    for (const chunk of chunks) {
+      const line = chunk
+        .split('\n')
+        .map((row) => row.trim())
+        .find((row) => row.startsWith('data:'));
+      if (!line) continue;
+      const payload = JSON.parse(line.slice(5).trim()) as { type?: string };
+      if (payload.type === 'done') return;
+    }
+  }
 };

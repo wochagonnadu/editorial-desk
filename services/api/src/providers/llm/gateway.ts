@@ -4,6 +4,7 @@
 // RELEVANT: services/api/src/providers/llm/contracts.ts,services/api/src/providers/llm/policy.ts,services/api/src/providers/logger.ts
 
 import { generateObject as aiGenerateObject, streamText as aiStreamText } from 'ai';
+import { randomUUID } from 'node:crypto';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import type { ContentObjectInput, ContentTextInput } from '@newsroom/shared';
 import type { Logger } from '../logger.js';
@@ -23,6 +24,9 @@ const assertRequiredVars = (required: string[], vars: Record<string, unknown>) =
 
 const estimateCostUsd = (text: string): number =>
   Number(((text.length / 4 / 1000) * 0.0015).toFixed(6));
+
+const resolveTraceId = (traceId?: string): string =>
+  typeof traceId === 'string' && traceId.trim().length > 0 ? traceId : randomUUID();
 
 const resolveModel = (
   primaryEnv: string,
@@ -55,6 +59,7 @@ export const createLLMGateway = (logger: Logger) => {
     const prompt = lookupPrompt(meta);
     if (!prompt) throw new Error('VALIDATION_ERROR: prompt not found');
     const policy = useCasePolicy[meta.useCase];
+    const traceId = resolveTraceId(meta.traceId);
     assertRequiredVars(prompt.requiredVars, promptVars);
     if (policy.requiresVoiceProfile && !input.voiceProfile)
       throw new Error('VOICE_PROFILE_REQUIRED');
@@ -66,6 +71,7 @@ export const createLLMGateway = (logger: Logger) => {
       const startedAt = Date.now();
       try {
         logger.info('llm.request.start', {
+          trace_id: traceId,
           use_case: meta.useCase,
           provider: 'openrouter',
           model: models.primary,
@@ -88,6 +94,7 @@ export const createLLMGateway = (logger: Logger) => {
             yield chunk;
           }
           logger.info('llm.request.success', {
+            trace_id: traceId,
             use_case: meta.useCase,
             provider: 'openrouter',
             model: models.primary,
@@ -102,6 +109,7 @@ export const createLLMGateway = (logger: Logger) => {
         return wrapped();
       } catch (error) {
         logger.warn('llm.request.error', {
+          trace_id: traceId,
           use_case: meta.useCase,
           provider: 'openrouter',
           model: models.primary,
@@ -116,6 +124,7 @@ export const createLLMGateway = (logger: Logger) => {
       attempt += 1;
     }
     logger.warn('llm.request.fallback', {
+      trace_id: traceId,
       use_case: meta.useCase,
       prompt_id: meta.promptId,
       prompt_version: meta.promptVersion,
@@ -123,13 +132,33 @@ export const createLLMGateway = (logger: Logger) => {
       fallback_model: models.fallback,
       attempt: policy.retryMax,
     });
-    const fallback = aiStreamText({
+    const fallbackStartedAt = Date.now();
+    const fallbackResult = aiStreamText({
       model: provider(models.fallback),
       prompt: renderedPrompt,
       system: prompt.system,
       abortSignal: AbortSignal.timeout(input.policyOverride?.timeoutMs ?? policy.timeoutMs),
     });
-    return fallback.textStream;
+    const wrappedFallback = async function* () {
+      let size = 0;
+      for await (const chunk of fallbackResult.textStream) {
+        size += chunk.length;
+        yield chunk;
+      }
+      logger.info('llm.request.success', {
+        trace_id: traceId,
+        use_case: meta.useCase,
+        provider: 'openrouter',
+        model: models.fallback,
+        prompt_id: meta.promptId,
+        prompt_version: meta.promptVersion,
+        latency_ms: Date.now() - fallbackStartedAt,
+        attempt: policy.retryMax,
+        fallback_used: true,
+        estimated_cost_usd: estimateCostUsd('x'.repeat(size)),
+      });
+    };
+    return wrappedFallback();
   };
 
   const generateObject = async <T>(input: ContentObjectInput): Promise<T> => {
@@ -150,6 +179,7 @@ export const createLLMGateway = (logger: Logger) => {
     const prompt = lookupPrompt(meta);
     if (!prompt) throw new Error('VALIDATION_ERROR: prompt not found');
     const policy = useCasePolicy[meta.useCase];
+    const traceId = resolveTraceId(meta.traceId);
     assertRequiredVars(prompt.requiredVars, promptVars);
     if (policy.requiresVoiceProfile && !input.voiceProfile)
       throw new Error('VOICE_PROFILE_REQUIRED');
@@ -158,6 +188,7 @@ export const createLLMGateway = (logger: Logger) => {
     const startedAt = Date.now();
     try {
       logger.info('llm.request.start', {
+        trace_id: traceId,
         use_case: meta.useCase,
         provider: 'openrouter',
         model: models.primary,
@@ -174,6 +205,7 @@ export const createLLMGateway = (logger: Logger) => {
         abortSignal: AbortSignal.timeout(input.policyOverride?.timeoutMs ?? policy.timeoutMs),
       });
       logger.info('llm.request.success', {
+        trace_id: traceId,
         use_case: meta.useCase,
         provider: 'openrouter',
         model: models.primary,
@@ -187,6 +219,7 @@ export const createLLMGateway = (logger: Logger) => {
       return result.object as T;
     } catch {
       logger.warn('llm.request.fallback', {
+        trace_id: traceId,
         use_case: meta.useCase,
         prompt_id: meta.promptId,
         prompt_version: meta.promptVersion,
@@ -202,6 +235,7 @@ export const createLLMGateway = (logger: Logger) => {
         abortSignal: AbortSignal.timeout(input.policyOverride?.timeoutMs ?? policy.timeoutMs),
       });
       logger.info('llm.request.success', {
+        trace_id: traceId,
         use_case: meta.useCase,
         provider: 'openrouter',
         model: models.fallback,

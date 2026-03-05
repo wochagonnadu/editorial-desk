@@ -35,7 +35,7 @@ type ImportMetaWithOptionalEnv = ImportMeta & {
 
 const configuredBaseUrl = (import.meta as ImportMetaWithOptionalEnv).env?.VITE_API_BASE_URL?.trim();
 
-const API_BASE_URL =
+export const API_BASE_URL =
   configuredBaseUrl ||
   (window as Window & { __API_BASE_URL__?: string }).__API_BASE_URL__ ||
   defaultBaseUrl;

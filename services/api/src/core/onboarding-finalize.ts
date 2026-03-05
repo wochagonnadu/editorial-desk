@@ -231,7 +231,7 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
     expert.name,
     draft.id,
     emailToken,
-    process.env.APP_URL ?? 'http://localhost:5173',
+    process.env.API_URL ?? process.env.APP_URL ?? 'http://localhost:3000',
     content,
   );
   await context.email.sendEmail({ to: expert.email, ...template });
