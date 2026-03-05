@@ -8,7 +8,7 @@ import type { CompanySettings } from '../../services/company';
 type Props = {
   value: CompanySettings;
   saving: boolean;
-  onChange: (field: keyof CompanySettings, value: string) => void;
+  onChange: (field: 'name' | 'domain' | 'language', value: string) => void;
 };
 
 export function WorkspaceSettingsCard({ value, saving, onChange }: Props) {

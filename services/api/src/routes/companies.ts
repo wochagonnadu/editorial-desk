@@ -1,7 +1,7 @@
 // PATH: services/api/src/routes/companies.ts
 // WHAT: Company endpoints for authenticated users
 // WHY:  Provides tenant context for the web dashboard shell
-// RELEVANT: services/api/src/routes/auth-middleware.ts,services/api/src/routes/company-patch.ts,services/api/src/routes/company-settings-mapper.ts
+// RELEVANT: services/api/src/routes/auth-middleware.ts,services/api/src/routes/company-patch.ts,services/api/src/routes/company-generation-preview.ts
 
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -10,6 +10,7 @@ import { AppError } from '../core/errors.js';
 import { readJsonBodyStrict } from '../core/http/read-json-body.js';
 import { companyTable } from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
+import { previewCompanyGeneration } from './company-generation-preview.js';
 import { parseCompanyPatch } from './company-patch.js';
 import {
   buildCompanyUpdateFromPatch,
@@ -19,6 +20,8 @@ import type { RouteDeps } from './deps.js';
 
 export const buildCompanyRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
+
+  router.post('/me/generation-preview', previewCompanyGeneration(deps));
 
   router.get('/me', async (context) => {
     const authUser = getAuthUser(context);

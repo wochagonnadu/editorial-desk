@@ -45,6 +45,23 @@ test('updateCompanySettings sends PATCH /companies/me with body', async (t) => {
   assert.match(String(calls[0]?.init?.body), /"name":"Desk"/);
 });
 
+test('previewCompanyGeneration sends POST /companies/me/generation-preview', async (t) => {
+  const { calls, restore } = mockWindowAndFetch();
+  t.after(restore);
+  const { previewCompanyGeneration } = await import('../company');
+
+  await previewCompanyGeneration('token-1', {
+    expert_id: 'e1',
+    topic_title: 'How to validate tone policy',
+    instructions: 'Make it more concise',
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0]?.url, 'http://localhost:3000/api/v1/companies/me/generation-preview');
+  assert.equal(calls[0]?.init?.method, 'POST');
+  assert.match(String(calls[0]?.init?.body), /"expert_id":"e1"/);
+});
+
 test('team actions hit users/role/invites contracts', async (t) => {
   const { calls, restore } = mockWindowAndFetch();
   t.after(restore);

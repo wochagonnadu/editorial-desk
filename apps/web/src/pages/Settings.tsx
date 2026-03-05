@@ -5,6 +5,7 @@
 
 import { Save } from 'lucide-react';
 import type { TeamRole } from '../services/team';
+import { GenerationControlsCard } from './settings/GenerationControlsCard';
 import { TeamManagementCard } from './settings/TeamManagementCard';
 import { useSettingsPageState } from './settings/useSettingsPageState';
 import { WorkspaceSettingsCard } from './settings/WorkspaceSettingsCard';
@@ -17,17 +18,29 @@ export function Settings() {
     inviteName,
     inviteEmail,
     inviteRole,
+    experts,
+    previewExpertId,
+    previewTopicTitle,
+    previewInstructions,
+    previewSample,
+    previewError,
     error,
     notice,
     isSaving,
     isInviting,
+    isPreviewing,
     roleUpdatingId,
     canSave,
     setDraft,
     setInviteName,
     setInviteEmail,
     setInviteRole,
+    setPreviewField,
+    setGenerationTone,
+    setGenerationAudience,
+    setGenerationGuardrailText,
     handleSave,
+    handlePreview,
     handleInvite,
     handleRoleChange,
   } = useSettingsPageState();
@@ -49,13 +62,31 @@ export function Settings() {
 
       {!draft ? <div className="card text-sm text-ink-500">Loading workspace...</div> : null}
       {draft ? (
-        <WorkspaceSettingsCard
-          value={draft}
-          saving={isSaving}
-          onChange={(field, value) =>
-            setDraft((current) => (current ? { ...current, [field]: value } : current))
-          }
-        />
+        <>
+          <WorkspaceSettingsCard
+            value={draft}
+            saving={isSaving}
+            onChange={(field, value) =>
+              setDraft((current) => (current ? { ...current, [field]: value } : current))
+            }
+          />
+          <GenerationControlsCard
+            value={draft.generation_policy}
+            saving={isSaving}
+            previewing={isPreviewing}
+            experts={experts}
+            previewExpertId={previewExpertId}
+            previewTopicTitle={previewTopicTitle}
+            previewInstructions={previewInstructions}
+            previewSample={previewSample}
+            previewError={previewError}
+            onToneChange={setGenerationTone}
+            onAudienceChange={setGenerationAudience}
+            onGuardrailTextChange={setGenerationGuardrailText}
+            onPreviewFieldChange={setPreviewField}
+            onPreview={handlePreview}
+          />
+        </>
       ) : null}
 
       <TeamManagementCard

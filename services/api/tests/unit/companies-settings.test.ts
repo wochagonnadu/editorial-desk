@@ -164,4 +164,39 @@ describe('companies settings endpoint', () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
   });
+
+  it('returns generation preview without draft writes', async () => {
+    const { deps } = createDeps();
+    deps.content.streamText = async () =>
+      (async function* () {
+        yield '# Preview';
+      })();
+    const app = new Hono();
+    app.use('*', async (context, next) => {
+      (context as { set: (key: string, value: unknown) => void }).set('authUser', {
+        userId: 'u1',
+        companyId: 'c1',
+        role: 'owner',
+      });
+      await next();
+    });
+    app.onError((error, context) => toErrorResponse(context, error));
+    app.route('/companies', buildCompanyRoutes(deps));
+
+    const response = await app.request('http://local/companies/me/generation-preview', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        expert_id: 'exp-1',
+        topic_title: 'How to choose first consultation',
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      sample_markdown: '# Preview',
+      meta: { use_case: 'draft.generate', prompt_id: 'drafts.generate.base' },
+      applied_policy: { default_audience: 'general' },
+    });
+  });
 });
