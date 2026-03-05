@@ -127,6 +127,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 4. [x] Вернуться к `Settings + Team Management` контрактам (новые write/read endpoint-ы).
 5. [x] После стабилизации продукта закрыт `worker/runtime` (Spec 013); optional data-моделирование (`landing_request`, `evidence`) остается на `014`.
 6. [x] `014-data-model-enhancements-optional` закрыт как проектный контракт: зафиксированы сущности, bridge-режим, индексы, smoke-проверки и doc-sync.
+7. [x] `015-llm-gateway-foundation` закрыт: единый gateway, prompt/version registry, policy+telemetry+safety, voice synthesis и рабочий smoke runbook (T1.5 перенесен в `022`).
 
 ## 6) Мини-вывод
 
@@ -188,6 +189,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: закрыть must-gap по UX-надежности: мобильный скролл без обрезаний, стабильная навигация back/forward, logout в 1 клик, явные loading/error состояния в ключевых действиях.
     - Результат: базовые сценарии проходят на телефоне и desktop одинаково предсказуемо, без потери контекста.
 
+13. `022-topics-suggest-and-factcheck-ux-separation`
+    - Scope: вернуть в web явный сценарий `topics.suggest` (кнопка/экран предложений тем), а также разделить в Draft Editor действия `Run factcheck` и `Send for approval` с понятным статусом и отображением проверяемых claim/evidence.
+    - Результат: пользователь видит отдельный поток «предложить темы», фактчек запускается и читается как самостоятельный этап, а отправка на approval не смешивается с проверкой фактов.
+
 ## 8) Синхронизация с user stories (итог 010)
 
 Конфликтов формулировок между `docs/prd-gap-roadmap.md` и `docs/user_stories.md` не найдено.
@@ -232,3 +237,11 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Спроектирован optional `evidence` table с bridge-режимом совместимости к `factcheck_report.results` JSON.
 - Определен минимальный набор индексов под отчетные фильтры (`period/source/status` и `claim/time/status`).
 - Добавлен smoke-checklist для проверки аналитики/аудита и fallback-поведения до включения read-preferred.
+
+### Changelog 015 (коротко)
+
+- Введен единый LLM gateway с runtime policy, prompt/version registry и обязательными `llm.request.*` telemetry-событиями.
+- Все core use-case (`draft.generate`, `draft.revise`, `factcheck.extract`, `factcheck.verify`, `topics.suggest`) переведены на gateway-контракт.
+- Добавлен контур синтеза `voice_profile` эксперта и обязательное использование voice-профиля в `draft.*`.
+- Усилен фактчек: поддержка source links в verify и отображение evidence в web; action-логика `Run factcheck` отделена от `Send for approval`.
+- Phase-H runbook закрыт; проверка `topics.suggest` smoke перенесена в отдельную `022` для отдельного UI/flow scope.

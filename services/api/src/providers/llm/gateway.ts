@@ -28,6 +28,23 @@ const estimateCostUsd = (text: string): number =>
 const resolveTraceId = (traceId?: string): string =>
   typeof traceId === 'string' && traceId.trim().length > 0 ? traceId : randomUUID();
 
+const draftTelemetry = (
+  useCase: ContentTextInput['meta'] extends infer M
+    ? M extends { useCase: infer U }
+      ? U
+      : never
+    : never,
+  expertId?: string,
+  voiceProfile?: { confidence: number; version?: string },
+) =>
+  useCase === 'draft.generate' || useCase === 'draft.revise'
+    ? {
+        expert_id: expertId ?? null,
+        voice_profile_version: voiceProfile?.version ?? null,
+        voice_confidence: voiceProfile?.confidence ?? null,
+      }
+    : {};
+
 const resolveModel = (
   primaryEnv: string,
   fallbackEnv: string,
@@ -79,6 +96,7 @@ export const createLLMGateway = (logger: Logger) => {
           prompt_version: meta.promptVersion,
           attempt,
           fallback_used: false,
+          ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
         });
         const result = aiStreamText({
           model: provider(models.primary),
@@ -104,6 +122,7 @@ export const createLLMGateway = (logger: Logger) => {
             attempt,
             fallback_used: false,
             estimated_cost_usd: estimateCostUsd('x'.repeat(size)),
+            ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
           });
         };
         return wrapped();
@@ -119,6 +138,7 @@ export const createLLMGateway = (logger: Logger) => {
           attempt,
           fallback_used: false,
           error_message: error instanceof Error ? error.message : String(error),
+          ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
         });
       }
       attempt += 1;
@@ -131,6 +151,7 @@ export const createLLMGateway = (logger: Logger) => {
       primary_model: models.primary,
       fallback_model: models.fallback,
       attempt: policy.retryMax,
+      ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
     });
     const fallbackStartedAt = Date.now();
     const fallbackResult = aiStreamText({
@@ -156,6 +177,7 @@ export const createLLMGateway = (logger: Logger) => {
         attempt: policy.retryMax,
         fallback_used: true,
         estimated_cost_usd: estimateCostUsd('x'.repeat(size)),
+        ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
       });
     };
     return wrappedFallback();
@@ -196,6 +218,7 @@ export const createLLMGateway = (logger: Logger) => {
         prompt_version: meta.promptVersion,
         attempt: 1,
         fallback_used: false,
+        ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
       });
       const result = await aiGenerateObject({
         model: provider(models.primary),
@@ -215,6 +238,7 @@ export const createLLMGateway = (logger: Logger) => {
         attempt: 1,
         fallback_used: false,
         estimated_cost_usd: estimateCostUsd(renderedPrompt),
+        ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
       });
       return result.object as T;
     } catch {
@@ -226,6 +250,7 @@ export const createLLMGateway = (logger: Logger) => {
         primary_model: models.primary,
         fallback_model: models.fallback,
         attempt: 1,
+        ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
       });
       const fallback = await aiGenerateObject({
         model: provider(models.fallback),
@@ -245,6 +270,7 @@ export const createLLMGateway = (logger: Logger) => {
         attempt: 1,
         fallback_used: true,
         estimated_cost_usd: estimateCostUsd(renderedPrompt),
+        ...draftTelemetry(meta.useCase, meta.expertId, input.voiceProfile),
       });
       return fallback.object as T;
     }
