@@ -1,7 +1,7 @@
 // PATH: services/api/src/routes/companies.ts
 // WHAT: Company endpoints for authenticated users
 // WHY:  Provides tenant context for the web dashboard shell
-// RELEVANT: services/api/src/routes/auth-middleware.ts,services/api/src/routes/company-patch.ts
+// RELEVANT: services/api/src/routes/auth-middleware.ts,services/api/src/routes/company-patch.ts,services/api/src/routes/company-settings-mapper.ts
 
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -11,6 +11,10 @@ import { readJsonBodyStrict } from '../core/http/read-json-body.js';
 import { companyTable } from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
 import { parseCompanyPatch } from './company-patch.js';
+import {
+  buildCompanyUpdateFromPatch,
+  mapCompanySettingsResponse,
+} from './company-settings-mapper.js';
 import type { RouteDeps } from './deps.js';
 
 export const buildCompanyRoutes = (deps: RouteDeps): Hono => {
@@ -28,12 +32,7 @@ export const buildCompanyRoutes = (deps: RouteDeps): Hono => {
       throw new AppError(404, 'NOT_FOUND', 'Company not found');
     }
 
-    return context.json({
-      id: company.id,
-      name: company.name,
-      domain: company.domain,
-      language: company.language,
-    });
+    return context.json(mapCompanySettingsResponse(company));
   });
 
   router.patch('/me', async (context) => {
@@ -53,10 +52,10 @@ export const buildCompanyRoutes = (deps: RouteDeps): Hono => {
       throw new AppError(404, 'NOT_FOUND', 'Company not found');
     }
 
-    const updateValues = {
-      ...patch,
-      updatedAt: new Date(),
-    } as Partial<typeof companyTable.$inferInsert>;
+    const { updateValues, changedFields, policySections } = buildCompanyUpdateFromPatch(
+      company,
+      patch,
+    );
     const [updatedCompany] = await deps.db
       .update(companyTable)
       .set(updateValues)
@@ -71,18 +70,13 @@ export const buildCompanyRoutes = (deps: RouteDeps): Hono => {
       entityType: 'company',
       entityId: authUser.companyId,
       metadata: {
-        changed_fields: Object.keys(patch).filter(
-          (key) => patch[key as keyof typeof patch] !== undefined,
-        ),
+        changed_fields: changedFields,
+        generation_policy_changed: policySections.length > 0,
+        generation_policy_changed_sections: policySections,
       },
     });
 
-    return context.json({
-      id: updatedCompany.id,
-      name: updatedCompany.name,
-      domain: updatedCompany.domain,
-      language: updatedCompany.language,
-    });
+    return context.json(mapCompanySettingsResponse(updatedCompany));
   });
 
   return router;

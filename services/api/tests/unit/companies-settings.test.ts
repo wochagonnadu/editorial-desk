@@ -17,7 +17,21 @@ const queryResult = <T>(rows: T[]) => ({
 });
 
 const createDeps = () => {
-  const company = { id: 'c1', name: 'Old', domain: 'business', language: 'en' };
+  const company = {
+    id: 'c1',
+    name: 'Old',
+    domain: 'business',
+    language: 'en',
+    generationPolicy: {
+      tone: 'clear, calm, practical',
+      default_audience: 'general',
+      guardrails: {
+        must_include: ['actionable advice'],
+        avoid: ['hype wording'],
+        banned_phrases: ['100% guaranteed'],
+      },
+    },
+  };
   const audits: unknown[] = [];
   const db = {
     select: () => ({ from: () => ({ where: () => queryResult([company]) }) }),
@@ -65,7 +79,15 @@ describe('companies settings endpoint', () => {
     const response = await app.request('http://local/companies/me', {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: 'New Name', domain: 'medical', language: 'ru' }),
+      body: JSON.stringify({
+        name: 'New Name',
+        domain: 'medical',
+        language: 'ru',
+        generation_policy: {
+          tone: 'calm, practical, no hype for regulated readers',
+          guardrails: { banned_phrases: ['always works'] },
+        },
+      }),
     });
 
     expect(response.status).toBe(200);
@@ -73,8 +95,24 @@ describe('companies settings endpoint', () => {
       name: 'New Name',
       domain: 'medical',
       language: 'ru',
+      generation_policy: {
+        tone: 'calm, practical, no hype for regulated readers',
+      },
     });
     expect(audits.length).toBe(1);
+    const audit = audits[0] as {
+      metadata?: {
+        changed_fields?: string[];
+        generation_policy_changed?: boolean;
+        generation_policy_changed_sections?: string[];
+      };
+    };
+    expect(audit.metadata?.changed_fields).toContain('generation_policy');
+    expect(audit.metadata?.generation_policy_changed).toBe(true);
+    expect(audit.metadata?.generation_policy_changed_sections).toEqual([
+      'tone',
+      'guardrails.banned_phrases',
+    ]);
   });
 
   it('returns FORBIDDEN for manager role', async () => {
@@ -99,5 +137,31 @@ describe('companies settings endpoint', () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toMatchObject({ error: { code: 'FORBIDDEN' } });
+  });
+
+  it('returns VALIDATION_ERROR for invalid generation policy payload', async () => {
+    const { deps } = createDeps();
+    const app = new Hono();
+    app.use('*', async (context, next) => {
+      (context as { set: (key: string, value: unknown) => void }).set('authUser', {
+        userId: 'u1',
+        companyId: 'c1',
+        role: 'owner',
+      });
+      await next();
+    });
+    app.onError((error, context) => toErrorResponse(context, error));
+    app.route('/companies', buildCompanyRoutes(deps));
+
+    const response = await app.request('http://local/companies/me', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        generation_policy: { default_audience: 'advanced' },
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
   });
 });

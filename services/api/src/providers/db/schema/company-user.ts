@@ -3,13 +3,14 @@
 // WHY:  Establishes tenant and operator persistence primitives
 // RELEVANT: services/api/src/providers/db/schema.ts,packages/shared/src/types/company-user.ts
 
-import { pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { jsonb, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const companyTable = pgTable('company', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   domain: varchar('domain', { length: 100 }).notNull(),
   language: varchar('language', { length: 10 }).notNull().default('ru'),
+  generationPolicy: jsonb('generation_policy').notNull().default({}),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

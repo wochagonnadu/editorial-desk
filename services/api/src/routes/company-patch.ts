@@ -5,6 +5,8 @@
 
 import type { CompanyDomain } from '@newsroom/shared';
 import { AppError } from '../core/errors.js';
+import { parseGenerationPolicyPatch } from './generation-policy-parse.js';
+import type { GenerationPolicyPatch } from './generation-policy.js';
 
 const COMPANY_DOMAINS: CompanyDomain[] = ['medical', 'legal', 'education', 'business'];
 
@@ -20,21 +22,28 @@ export interface CompanyPatchInput {
   name?: string;
   language?: string;
   domain?: CompanyDomain;
+  generationPolicy?: GenerationPolicyPatch;
 }
 
 export const parseCompanyPatch = (body: Record<string, unknown>): CompanyPatchInput => {
   const name = parseOptionalString(body.name, 'name');
   const language = parseOptionalString(body.language, 'language');
   const domainRaw = parseOptionalString(body.domain, 'domain');
+  const generationPolicy = parseGenerationPolicyPatch(body.generation_policy);
   if (domainRaw && !COMPANY_DOMAINS.includes(domainRaw as CompanyDomain)) {
     throw new AppError(400, 'VALIDATION_ERROR', 'domain must be medical|legal|education|business');
   }
-  const patch = { name, language, domain: domainRaw as CompanyDomain | undefined };
-  if (!patch.name && !patch.language && !patch.domain) {
+  const patch = {
+    name,
+    language,
+    domain: domainRaw as CompanyDomain | undefined,
+    generationPolicy,
+  };
+  if (!patch.name && !patch.language && !patch.domain && !patch.generationPolicy) {
     throw new AppError(
       400,
       'VALIDATION_ERROR',
-      'at least one field is required: name, language, domain',
+      'at least one field is required: name, language, domain, generation_policy',
     );
   }
   return patch;
