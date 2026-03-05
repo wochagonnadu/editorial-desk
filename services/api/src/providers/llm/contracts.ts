@@ -1,0 +1,88 @@
+// PATH: services/api/src/providers/llm/contracts.ts
+// WHAT: Prompt registry and runtime policy for LLM gateway
+// WHY:  Keeps model routing and prompt versions centralized
+// RELEVANT: services/api/src/providers/llm/gateway.ts,specs/015-llm-gateway-foundation/artifacts/phase-d-baseline-prompts.md
+
+import type { ContentObjectInput, ContentTextInput } from '@newsroom/shared';
+import {
+  DRAFT_GENERATE_SYSTEM,
+  DRAFT_GENERATE_USER,
+  DRAFT_REVISE_SYSTEM,
+  DRAFT_REVISE_USER,
+} from './prompts/draft.js';
+import {
+  FACTCHECK_EXTRACT_SYSTEM,
+  FACTCHECK_EXTRACT_USER,
+  FACTCHECK_VERIFY_SYSTEM,
+  FACTCHECK_VERIFY_USER,
+} from './prompts/factcheck.js';
+import { TOPICS_SUGGEST_SYSTEM, TOPICS_SUGGEST_USER } from './prompts/topics.js';
+import { VOICE_SYNTH_SYSTEM, VOICE_SYNTH_USER } from './prompts/voice.js';
+
+type PromptMeta = NonNullable<ContentTextInput['meta'] | ContentObjectInput['meta']>;
+type UseCase = PromptMeta['useCase'];
+
+export interface PromptTemplate {
+  promptId: string;
+  promptVersion: `${number}.${number}.${number}`;
+  system?: string;
+  user: string;
+  requiredVars: string[];
+}
+
+export const promptRegistry: Record<string, PromptTemplate> = {
+  'drafts.generate.base@1.0.0': {
+    promptId: 'drafts.generate.base',
+    promptVersion: '1.0.0',
+    system: DRAFT_GENERATE_SYSTEM,
+    user: DRAFT_GENERATE_USER,
+    requiredVars: ['topic_title', 'expert_name', 'voice_profile_json', 'audience'],
+  },
+  'drafts.revise.base@1.0.0': {
+    promptId: 'drafts.revise.base',
+    promptVersion: '1.0.0',
+    system: DRAFT_REVISE_SYSTEM,
+    user: DRAFT_REVISE_USER,
+    requiredVars: ['instructions', 'draft_content', 'voice_profile_json'],
+  },
+  'factcheck.extract.claims@1.0.0': {
+    promptId: 'factcheck.extract.claims',
+    promptVersion: '1.0.0',
+    system: FACTCHECK_EXTRACT_SYSTEM,
+    user: FACTCHECK_EXTRACT_USER,
+    requiredVars: ['draft_content'],
+  },
+  'factcheck.verify.high_risk@1.0.0': {
+    promptId: 'factcheck.verify.high_risk',
+    promptVersion: '1.0.0',
+    system: FACTCHECK_VERIFY_SYSTEM,
+    user: FACTCHECK_VERIFY_USER,
+    requiredVars: ['claims_json'],
+  },
+  'topics.suggest.weekly@1.0.0': {
+    promptId: 'topics.suggest.weekly',
+    promptVersion: '1.0.0',
+    system: TOPICS_SUGGEST_SYSTEM,
+    user: TOPICS_SUGGEST_USER,
+    requiredVars: ['company_name', 'company_domain', 'experts_json'],
+  },
+  'expert.voice.synthesize.base@1.0.0': {
+    promptId: 'expert.voice.synthesize.base',
+    promptVersion: '1.0.0',
+    system: VOICE_SYNTH_SYSTEM,
+    user: VOICE_SYNTH_USER,
+    requiredVars: [
+      'onboarding_replies_json',
+      'public_text_urls_json',
+      'public_text_samples_json',
+      'expert_edit_diffs_json',
+      'domain',
+    ],
+  },
+};
+
+export const lookupPrompt = (meta: PromptMeta) => {
+  return promptRegistry[`${meta.promptId}@${meta.promptVersion}`];
+};
+
+export type LLMUseCase = UseCase;

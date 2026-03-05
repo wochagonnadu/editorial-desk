@@ -5,7 +5,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import type { EmailPort } from '@newsroom/shared';
+import type { ContentPort, EmailPort } from '@newsroom/shared';
 import { buildRatingTemplate } from './email-templates/rating.js';
 import { buildVoiceProfile, calculateVoiceScore, generateVoiceTest } from './voice.js';
 import type { Database } from '../providers/db/index.js';
@@ -21,7 +21,75 @@ import {
 interface FinalizeContext {
   db: Database;
   email: EmailPort;
+  content: ContentPort;
 }
+
+const buildHeuristicVoiceProfile = (
+  responses: string[],
+  publicTextUrls: string[],
+): Record<string, unknown> => {
+  const base = buildVoiceProfile(responses);
+  return {
+    ...base,
+    profile_version: '1.0.0',
+    tone_tags: ['calm', 'practical'],
+    vocabulary_do: [],
+    vocabulary_avoid: ['100% guarantee', 'zero risk'],
+    sentence_style: { length: 'medium', cadence: 'steady', paragraph_density: 'balanced' },
+    boundaries: ['no absolute guarantees', 'no unsupported stats'],
+    confidence: 0.35,
+    source_coverage: {
+      onboarding_steps_replied: responses.length,
+      links_processed: publicTextUrls.length,
+      samples_used: 0,
+      edit_diffs_used: 0,
+    },
+    generated_at: new Date().toISOString(),
+  };
+};
+
+const synthesizeVoiceProfile = async (
+  context: FinalizeContext,
+  input: { responses: string[]; publicTextUrls: string[]; domain: string },
+): Promise<Record<string, unknown>> => {
+  const fallback = buildHeuristicVoiceProfile(input.responses, input.publicTextUrls);
+  try {
+    const result = await context.content.generateObject<{ profile: Record<string, unknown> }>({
+      meta: {
+        useCase: 'expert.voice.synthesize',
+        promptId: 'expert.voice.synthesize.base',
+        promptVersion: '1.0.0',
+      },
+      promptVars: {
+        onboarding_replies_json: JSON.stringify(input.responses),
+        public_text_urls_json: JSON.stringify(input.publicTextUrls),
+        public_text_samples_json: JSON.stringify([]),
+        expert_edit_diffs_json: JSON.stringify([]),
+        domain: input.domain,
+      },
+      schema: {
+        type: 'object',
+        properties: {
+          profile: { type: 'object' },
+        },
+        required: ['profile'],
+      },
+    });
+    const profile = result.profile;
+    if (!profile || typeof profile !== 'object') return fallback;
+    return {
+      ...fallback,
+      ...profile,
+      profile_version: String(
+        (profile as { profile_version?: unknown }).profile_version ?? '1.0.0',
+      ),
+      confidence: Number((profile as { confidence?: unknown }).confidence ?? 0.55),
+      generated_at: new Date().toISOString(),
+    };
+  } catch {
+    return fallback;
+  }
+};
 
 export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expertId: string) => {
   const [expert] = await context.db
@@ -45,7 +113,14 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
     )
     .map((step) => (step.responseData as { text: string }).text);
 
-  const profileData = buildVoiceProfile(responses);
+  const publicTextUrls = Array.isArray(expert.publicTextUrls)
+    ? expert.publicTextUrls.filter((item): item is string => typeof item === 'string')
+    : [];
+  const profileData = await synthesizeVoiceProfile(context, {
+    responses,
+    publicTextUrls,
+    domain: expert.domain,
+  });
   const [existingProfile] = await context.db
     .select()
     .from(voiceProfileTable)

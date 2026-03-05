@@ -13,7 +13,7 @@ import { DEFAULT_RETRY_POLICY } from '../src/worker/retry-policy.js';
 const logger = createLogger({ runtime: 'worker' });
 const { db } = createDbClient();
 const email = createEmailPort(logger);
-const content = createContentPort();
+const content = createContentPort(logger);
 
 export const workerRuntime = createWorkerRuntime({ db, email, content, logger });
 

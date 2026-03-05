@@ -39,8 +39,16 @@ export const suggestTopics = async (
 
   try {
     const result = await content.generateObject<{ topics: TopicSuggestion[] }>({
-      model: process.env.OPENROUTER_EXTRACT_MODEL ?? 'openai/gpt-4o-mini',
-      prompt: `Generate 4 practical weekly editorial topics for company ${input.company.name} (${input.company.domain}). Experts: ${JSON.stringify(input.experts)}.`,
+      meta: {
+        useCase: 'topics.suggest',
+        promptId: 'topics.suggest.weekly',
+        promptVersion: '1.0.0',
+      },
+      promptVars: {
+        company_name: input.company.name,
+        company_domain: input.company.domain,
+        experts_json: JSON.stringify(input.experts),
+      },
       schema: { type: 'object', properties: { topics: { type: 'array' } }, required: ['topics'] },
     });
     return (Array.isArray(result.topics) && result.topics.length > 0 ? result.topics : fallback)

@@ -4,14 +4,60 @@
 // RELEVANT: services/api/src/providers/llm.ts,specs/001-virtual-newsroom-mvp/research.md
 
 export interface ContentTextInput {
-  model: string;
-  prompt: string;
+  meta?: {
+    useCase:
+      | 'draft.generate'
+      | 'draft.revise'
+      | 'factcheck.extract'
+      | 'factcheck.verify'
+      | 'topics.suggest'
+      | 'expert.voice.synthesize';
+    promptId: string;
+    promptVersion: `${number}.${number}.${number}`;
+    traceId?: string;
+    companyId?: string;
+    expertId?: string;
+  };
+  promptVars?: Record<string, unknown>;
+  voiceProfile?: {
+    status: 'draft' | 'confirmed';
+    confidence: number;
+    version?: string;
+  };
+  policyOverride?: Partial<{ timeoutMs: number; retryMax: number }>;
+
+  // Legacy fields kept for phased migration compatibility.
+  model?: string;
+  prompt?: string;
   system?: string;
 }
 
 export interface ContentObjectInput {
-  model: string;
-  prompt: string;
+  meta?: {
+    useCase:
+      | 'draft.generate'
+      | 'draft.revise'
+      | 'factcheck.extract'
+      | 'factcheck.verify'
+      | 'topics.suggest'
+      | 'expert.voice.synthesize';
+    promptId: string;
+    promptVersion: `${number}.${number}.${number}`;
+    traceId?: string;
+    companyId?: string;
+    expertId?: string;
+  };
+  promptVars?: Record<string, unknown>;
+  voiceProfile?: {
+    status: 'draft' | 'confirmed';
+    confidence: number;
+    version?: string;
+  };
+  policyOverride?: Partial<{ timeoutMs: number; retryMax: number }>;
+
+  // Legacy fields kept for phased migration compatibility.
+  model?: string;
+  prompt?: string;
   schema: unknown;
   system?: string;
 }

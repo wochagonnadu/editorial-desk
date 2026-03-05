@@ -99,7 +99,10 @@ export const buildWebhookRoutes = (deps: RouteDeps): Hono => {
       text,
     );
     if (result.completed) {
-      await finalizeOnboardingVoiceTest({ db: deps.db, email: deps.email }, token.expertId);
+      await finalizeOnboardingVoiceTest(
+        { db: deps.db, email: deps.email, content: deps.content },
+        token.expertId,
+      );
     }
 
     if (result.status === 'ignored') {

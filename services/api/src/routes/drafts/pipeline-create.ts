@@ -15,6 +15,7 @@ import {
   draftVersionTable,
   expertTable,
   topicTable,
+  voiceProfileTable,
 } from '../../providers/db/index.js';
 import { getAuthUser } from '../auth-middleware.js';
 import type { RouteDeps } from '../deps.js';
@@ -103,14 +104,38 @@ export const generateDraft = (deps: RouteDeps) => async (context: Context) => {
     .from(expertTable)
     .where(eq(expertTable.id, draft.expertId))
     .limit(1);
+  const [voiceProfile] = await deps.db
+    .select()
+    .from(voiceProfileTable)
+    .where(eq(voiceProfileTable.expertId, draft.expertId))
+    .limit(1);
   if (!topic || !expert) throw new AppError(404, 'NOT_FOUND', 'Topic or expert not found');
+  if (!voiceProfile) {
+    throw new AppError(422, 'VOICE_PROFILE_REQUIRED', 'Voice profile is required for generation');
+  }
 
   const stream = async function* () {
-    const prompt = `Write draft in ${expert.name}'s style on topic: ${topic.title}.`;
+    const profileData = (voiceProfile.profileData as Record<string, unknown>) ?? {};
     const chunks: string[] = [];
     for await (const chunk of await deps.content.streamText({
-      model: process.env.OPENROUTER_GENERATE_MODEL ?? 'openai/gpt-4o-mini',
-      prompt,
+      meta: {
+        useCase: 'draft.generate',
+        promptId: 'drafts.generate.base',
+        promptVersion: '1.0.0',
+        companyId: authUser.companyId,
+        expertId: expert.id,
+      },
+      promptVars: {
+        topic_title: topic.title,
+        expert_name: expert.name,
+        voice_profile_json: JSON.stringify(profileData),
+        audience: 'general',
+      },
+      voiceProfile: {
+        status: voiceProfile.status === 'confirmed' ? 'confirmed' : 'draft',
+        confidence: Number(profileData.confidence ?? 0),
+        version: String(profileData.profile_version ?? '1.0.0'),
+      },
     })) {
       chunks.push(chunk);
       yield { type: 'chunk', text: chunk };

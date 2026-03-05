@@ -22,6 +22,7 @@ import {
   draftVersionTable,
   expertTable,
   factcheckReportTable,
+  voiceProfileTable,
 } from '../../providers/db/index.js';
 import { getAuthUser } from '../auth-middleware.js';
 import type { RouteDeps } from '../deps.js';
@@ -137,14 +138,43 @@ export const reviseDraft = (deps: RouteDeps) => async (context: Context) => {
     .from(draftVersionTable)
     .where(eq(draftVersionTable.id, draft.currentVersionId))
     .limit(1);
+  const [expert] = await deps.db
+    .select()
+    .from(expertTable)
+    .where(eq(expertTable.id, draft.expertId))
+    .limit(1);
+  const [voiceProfile] = await deps.db
+    .select()
+    .from(voiceProfileTable)
+    .where(eq(voiceProfileTable.expertId, draft.expertId))
+    .limit(1);
   if (!current) throw new AppError(404, 'NOT_FOUND', 'Current version not found');
+  if (!expert) throw new AppError(404, 'NOT_FOUND', 'Expert not found');
+  if (!voiceProfile) {
+    throw new AppError(422, 'VOICE_PROFILE_REQUIRED', 'Voice profile is required for revision');
+  }
 
   const stream = async function* () {
-    const prompt = `Revise draft based on instructions.\nInstructions: ${instructions}\n\nDraft:\n${current.content}`;
+    const profileData = (voiceProfile.profileData as Record<string, unknown>) ?? {};
     const chunks: string[] = [];
     for await (const chunk of await deps.content.streamText({
-      model: process.env.OPENROUTER_REVISE_MODEL ?? 'openai/gpt-4o-mini',
-      prompt,
+      meta: {
+        useCase: 'draft.revise',
+        promptId: 'drafts.revise.base',
+        promptVersion: '1.0.0',
+        companyId: authUser.companyId,
+        expertId: expert.id,
+      },
+      promptVars: {
+        instructions,
+        draft_content: current.content,
+        voice_profile_json: JSON.stringify(profileData),
+      },
+      voiceProfile: {
+        status: voiceProfile.status === 'confirmed' ? 'confirmed' : 'draft',
+        confidence: Number(profileData.confidence ?? 0),
+        version: String(profileData.profile_version ?? '1.0.0'),
+      },
     })) {
       chunks.push(chunk);
       yield { type: 'chunk', text: chunk };

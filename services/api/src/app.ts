@@ -48,7 +48,7 @@ export const createApp = (): Hono => {
   const baseDeps = {
     db,
     email: createEmailPort(logger),
-    content: createContentPort(),
+    content: createContentPort(logger),
     logger,
   };
   const deps = { ...baseDeps, worker: createWorkerRuntime(baseDeps) };
