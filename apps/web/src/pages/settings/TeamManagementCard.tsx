@@ -11,6 +11,8 @@ type Props = {
   inviting: boolean;
   roleUpdatingId: string | null;
   canManageRoles: boolean;
+  inviteError: string | null;
+  roleError: string | null;
   inviteEmail: string;
   inviteName: string;
   inviteRole: TeamRole;
@@ -25,6 +27,8 @@ export function TeamManagementCard(props: Props) {
     inviting,
     roleUpdatingId,
     canManageRoles,
+    inviteError,
+    roleError,
     inviteEmail,
     inviteName,
     inviteRole,
@@ -73,6 +77,8 @@ export function TeamManagementCard(props: Props) {
       {!canManageRoles ? (
         <p className="text-xs text-ink-500">Only owner can invite and change roles.</p>
       ) : null}
+      {inviteError ? <p className="text-sm text-red-600">{inviteError}</p> : null}
+      {roleError ? <p className="text-sm text-red-600">{roleError}</p> : null}
       {team.length === 0 ? <p className="text-sm text-ink-500">No team members found.</p> : null}
       <div className="space-y-3">
         {team.map((member) => (

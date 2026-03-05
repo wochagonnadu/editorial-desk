@@ -42,6 +42,10 @@ export function DraftEditor() {
   const [isSendingReview, setIsSendingReview] = useState(false);
   const [isRunningFactcheck, setIsRunningFactcheck] = useState(false);
   const [isUpdatingDraft, setIsUpdatingDraft] = useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [confirmingClaimId, setConfirmingClaimId] = useState<string | null>(null);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const [diffSourceVersionId, setDiffSourceVersionId] = useState('');
   const [diffTargetVersionId, setDiffTargetVersionId] = useState('');
   const [editorVersionId, setEditorVersionId] = useState('');
@@ -297,12 +301,17 @@ export function DraftEditor() {
     if (!session || !detail || commentText.trim().length < 2) return;
     try {
       setError(null);
+      setCommentError(null);
+      setIsCommenting(true);
       await createDraftComment(session.token, detail.id, commentText.trim());
       setCommentText('');
       await load();
       setActiveTab('changes');
     } catch {
+      setCommentError('Could not add comment');
       setError('Could not add comment');
+    } finally {
+      setIsCommenting(false);
     }
   };
 
@@ -310,10 +319,15 @@ export function DraftEditor() {
     if (!session || !detail || claimId === 'unknown') return;
     try {
       setError(null);
+      setClaimError(null);
+      setConfirmingClaimId(claimId);
       await confirmDraftClaim(session.token, detail.id, claimId);
       await load();
     } catch {
+      setClaimError('Could not confirm claim');
       setError('Could not confirm claim');
+    } finally {
+      setConfirmingClaimId(null);
     }
   };
 
@@ -455,10 +469,16 @@ export function DraftEditor() {
                   placeholder="Write reviewer note"
                   className="flex-1 px-3 py-2 rounded-xl border border-ink-200"
                 />
-                <button type="button" onClick={handleCreateComment} className="btn-secondary">
-                  Comment
+                <button
+                  type="button"
+                  onClick={handleCreateComment}
+                  className="btn-secondary"
+                  disabled={isCommenting || commentText.trim().length < 2}
+                >
+                  {isCommenting ? 'Adding...' : 'Comment'}
                 </button>
               </div>
+              {commentError ? <p className="mt-2 text-sm text-red-600">{commentError}</p> : null}
             </div>
           </div>
         </div>
@@ -541,10 +561,13 @@ export function DraftEditor() {
                             {!isConfirmed ? (
                               <button
                                 type="button"
-                                className="text-xs mt-2 underline"
+                                className="text-xs mt-2 underline disabled:no-underline disabled:opacity-50"
                                 onClick={() => confirmClaim(item.claimId)}
+                                disabled={confirmingClaimId === item.claimId}
                               >
-                                Mark expert confirmed
+                                {confirmingClaimId === item.claimId
+                                  ? 'Confirming...'
+                                  : 'Mark expert confirmed'}
                               </button>
                             ) : null}
                           </div>
@@ -553,6 +576,7 @@ export function DraftEditor() {
                     );
                   })
                 )}
+                {claimError ? <p className="text-sm text-red-600">{claimError}</p> : null}
               </div>
             ) : null}
 

@@ -27,7 +27,8 @@ export function Approvals() {
   const { session } = useSession();
   const [mode, setMode] = useState<'stuck' | 'reviewer'>('stuck');
   const [items, setItems] = useState<ApprovalItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<Record<string, string>>({});
   const [busyStepId, setBusyStepId] = useState<string | null>(null);
   const [forwardTo, setForwardTo] = useState<Record<string, string>>({});
   const [requestChangesOpenFor, setRequestChangesOpenFor] = useState<string | null>(null);
@@ -48,10 +49,10 @@ export function Approvals() {
     if (!session) return;
     const run = async () => {
       try {
-        setError(null);
+        setLoadError(null);
         await load(mode);
       } catch {
-        setError('Could not load approvals');
+        setLoadError('Could not load approvals');
       }
     };
     void run();
@@ -65,11 +66,11 @@ export function Approvals() {
   const remind = async (stepId: string) => {
     if (!session) return;
     try {
-      setError(null);
+      setStepError((current) => ({ ...current, [stepId]: '' }));
       setBusyStepId(stepId);
       await sendApprovalReminder(session.token, stepId);
     } catch {
-      setError('Could not send reminder');
+      setStepError((current) => ({ ...current, [stepId]: 'Could not send reminder' }));
     } finally {
       setBusyStepId(null);
     }
@@ -80,12 +81,12 @@ export function Approvals() {
     const reviewerId = forwardTo[stepId];
     if (!reviewerId) return;
     try {
-      setError(null);
+      setStepError((current) => ({ ...current, [stepId]: '' }));
       setBusyStepId(stepId);
       await forwardApprovalStep(session.token, stepId, reviewerId);
       await load(mode);
     } catch {
-      setError('Could not forward reviewer');
+      setStepError((current) => ({ ...current, [stepId]: 'Could not forward reviewer' }));
     } finally {
       setBusyStepId(null);
     }
@@ -93,11 +94,14 @@ export function Approvals() {
 
   const approve = async (item: ApprovalItem) => {
     if (!session || !item.currentVersionId) {
-      setError('Draft has no current version for approval decision');
+      setStepError((current) => ({
+        ...current,
+        [item.stepId]: 'Draft has no current version for approval decision',
+      }));
       return;
     }
     try {
-      setError(null);
+      setStepError((current) => ({ ...current, [item.stepId]: '' }));
       setBusyStepId(item.stepId);
       await decideApprovalStep(session.token, item.stepId, {
         action: 'approve',
@@ -106,9 +110,9 @@ export function Approvals() {
       await load(mode);
     } catch (requestError) {
       if (requestError instanceof ApiError) {
-        setError(requestError.message);
+        setStepError((current) => ({ ...current, [item.stepId]: requestError.message }));
       } else {
-        setError('Could not approve step');
+        setStepError((current) => ({ ...current, [item.stepId]: 'Could not approve step' }));
       }
     } finally {
       setBusyStepId(null);
@@ -117,16 +121,22 @@ export function Approvals() {
 
   const requestChanges = async (item: ApprovalItem) => {
     if (!session || !item.currentVersionId) {
-      setError('Draft has no current version for approval decision');
+      setStepError((current) => ({
+        ...current,
+        [item.stepId]: 'Draft has no current version for approval decision',
+      }));
       return;
     }
     const comment = (requestChangesComment[item.stepId] ?? '').trim();
     if (comment.length < 5) {
-      setError('Please add at least 5 characters for request changes');
+      setStepError((current) => ({
+        ...current,
+        [item.stepId]: 'Please add at least 5 characters for request changes',
+      }));
       return;
     }
     try {
-      setError(null);
+      setStepError((current) => ({ ...current, [item.stepId]: '' }));
       setBusyStepId(item.stepId);
       await decideApprovalStep(session.token, item.stepId, {
         action: 'request_changes',
@@ -138,9 +148,9 @@ export function Approvals() {
       await load(mode);
     } catch (requestError) {
       if (requestError instanceof ApiError) {
-        setError(requestError.message);
+        setStepError((current) => ({ ...current, [item.stepId]: requestError.message }));
       } else {
-        setError('Could not request changes');
+        setStepError((current) => ({ ...current, [item.stepId]: 'Could not request changes' }));
       }
     } finally {
       setBusyStepId(null);
@@ -156,7 +166,7 @@ export function Approvals() {
         </div>
       </header>
 
-      {error ? <div className="card text-red-600">{error}</div> : null}
+      {loadError ? <div className="card text-red-600">{loadError}</div> : null}
 
       <div className="flex items-center space-x-4 border-b border-ink-100 pb-4">
         <button
@@ -286,6 +296,10 @@ export function Approvals() {
                       </button>
                     </div>
                   </div>
+                ) : null}
+
+                {stepError[item.stepId] ? (
+                  <p className="text-sm text-red-600">{stepError[item.stepId]}</p>
                 ) : null}
               </div>
             );

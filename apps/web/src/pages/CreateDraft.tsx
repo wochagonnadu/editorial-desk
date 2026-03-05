@@ -30,7 +30,10 @@ export function CreateDraft() {
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [copyingItemId, setCopyingItemId] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [newTopicError, setNewTopicError] = useState<string | null>(null);
+  const [planError, setPlanError] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
 
   const loadTopics = async () => {
     if (!session) return;
@@ -45,13 +48,13 @@ export function CreateDraft() {
     if (!session) return;
     const load = async () => {
       try {
-        setError(null);
+        setPageError(null);
         const [experts] = await Promise.all([fetchExperts(session.token), loadTopics()]);
         setExpertOptions(
           experts.map((item) => ({ id: item.id, name: item.name, status: item.status })),
         );
       } catch {
-        setError('Could not load create-draft context');
+        setPageError('Could not load create-draft context');
       }
     };
     void load();
@@ -65,7 +68,8 @@ export function CreateDraft() {
   const startFromNewTopic = async () => {
     if (!session || !selectedExpertId || topicTitle.trim().length < 3) return;
     try {
-      setError(null);
+      setNewTopicError(null);
+      setPageError(null);
       setIsBusy(true);
       const topicId = await createTopic(session.token, {
         title: topicTitle.trim(),
@@ -75,7 +79,7 @@ export function CreateDraft() {
       const draftId = await createDraftFromTopic(session.token, topicId);
       navigate(`/app/drafts/${draftId}`);
     } catch {
-      setError('Could not create draft from topic');
+      setNewTopicError('Could not create draft from topic');
     } finally {
       setIsBusy(false);
     }
@@ -84,7 +88,8 @@ export function CreateDraft() {
   const startFromExistingTopic = async (topicId: string, status: string) => {
     if (!session) return;
     try {
-      setError(null);
+      setNewTopicError(null);
+      setPageError(null);
       setIsBusy(true);
       if (status !== 'approved') {
         await approveTopic(session.token, topicId);
@@ -92,7 +97,7 @@ export function CreateDraft() {
       const draftId = await createDraftFromTopic(session.token, topicId);
       navigate(`/app/drafts/${draftId}`);
     } catch {
-      setError('Could not start draft from selected topic');
+      setNewTopicError('Could not start draft from selected topic');
     } finally {
       setIsBusy(false);
     }
@@ -102,7 +107,8 @@ export function CreateDraft() {
     if (!session || !selectedExpertId || topicTitle.trim().length < 3) return;
     const expert = expertOptions.find((item) => item.id === selectedExpertId);
     try {
-      setError(null);
+      setPlanError(null);
+      setPageError(null);
       setIsGeneratingPlan(true);
       const plan = await generateStrategyPlan(session.token, {
         expertId: selectedExpertId,
@@ -112,9 +118,9 @@ export function CreateDraft() {
         constraints: { tone: 'practical and calm', maxItemsPerWeek: 2 },
       });
       setStrategyPlan(plan);
-      if (!expert) setError('Plan generated, but selected expert context is incomplete');
+      if (!expert) setPlanError('Plan generated, but selected expert context is incomplete');
     } catch {
-      setError('Could not generate structured content plan');
+      setPlanError('Could not generate structured content plan');
       setStrategyPlan(null);
     } finally {
       setIsGeneratingPlan(false);
@@ -124,7 +130,8 @@ export function CreateDraft() {
   const copyPlanItem = async (itemId: string, payload: StrategyCopyPayload) => {
     if (!session) return;
     try {
-      setError(null);
+      setCopyError(null);
+      setPageError(null);
       setCopyingItemId(itemId);
       await createTopic(session.token, {
         title: payload.title,
@@ -134,7 +141,7 @@ export function CreateDraft() {
       });
       await loadTopics();
     } catch {
-      setError('Could not copy strategy item to topics');
+      setCopyError('Could not copy strategy item to topics');
     } finally {
       setCopyingItemId(null);
     }
@@ -159,7 +166,7 @@ export function CreateDraft() {
         </p>
       </header>
 
-      {error ? <div className="card text-red-600">{error}</div> : null}
+      {pageError ? <div className="card text-red-600">{pageError}</div> : null}
 
       <section className="card space-y-4">
         <h2 className="text-xl font-serif font-medium">New topic flow</h2>
@@ -192,6 +199,7 @@ export function CreateDraft() {
           <Sparkles className="w-4 h-4 mr-2" />
           {isBusy ? 'Working...' : 'Create and open draft'}
         </button>
+        {newTopicError ? <p className="text-sm text-red-600">{newTopicError}</p> : null}
       </section>
 
       <section className="card space-y-4">
@@ -209,6 +217,7 @@ export function CreateDraft() {
         <p className="text-sm text-ink-500">
           Generate a structured 12-week plan with pillars, clusters, FAQ, and interlink hints.
         </p>
+        {planError ? <p className="text-sm text-red-600">{planError}</p> : null}
         {strategyPlan ? (
           <StrategyPlanView
             plan={strategyPlan}
@@ -222,6 +231,7 @@ export function CreateDraft() {
             Select expert + topic seed, then click Generate Content Plan.
           </p>
         )}
+        {copyError ? <p className="text-sm text-red-600">{copyError}</p> : null}
       </section>
 
       <section className="card space-y-4">
@@ -253,6 +263,7 @@ export function CreateDraft() {
             ))}
           </div>
         )}
+        {newTopicError ? <p className="text-sm text-red-600">{newTopicError}</p> : null}
       </section>
     </div>
   );

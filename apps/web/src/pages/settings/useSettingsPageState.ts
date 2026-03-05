@@ -35,7 +35,10 @@ export const useSettingsPageState = () => {
   const [previewInstructions, setPreviewInstructions] = useState('');
   const [previewSample, setPreviewSample] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
@@ -81,7 +84,7 @@ export const useSettingsPageState = () => {
   const load = async () => {
     if (!session) return;
     try {
-      setError(null);
+      setLoadError(null);
       const [companyData, teamData, expertsData] = await Promise.all([
         fetchCompanySettings(session.token),
         fetchTeamUsers(session.token),
@@ -93,7 +96,7 @@ export const useSettingsPageState = () => {
       setExperts(expertsData);
       setPreviewExpertId((current) => current || expertsData[0]?.id || '');
     } catch {
-      setError('Could not load settings');
+      setLoadError('Could not load settings');
     }
   };
 
@@ -111,7 +114,7 @@ export const useSettingsPageState = () => {
   const handleSave = async () => {
     if (!session || !draft) return;
     try {
-      setError(null);
+      setSaveError(null);
       setNotice(null);
       setIsSaving(true);
       const updated = await updateCompanySettings(session.token, {
@@ -124,7 +127,7 @@ export const useSettingsPageState = () => {
       setDraft(updated);
       setNotice('Workspace settings saved');
     } catch {
-      setError('Could not save workspace settings');
+      setSaveError('Could not save workspace settings');
     } finally {
       setIsSaving(false);
     }
@@ -139,7 +142,6 @@ export const useSettingsPageState = () => {
   const handlePreview = async () => {
     if (!session || !previewExpertId || !previewTopicTitle.trim()) return;
     try {
-      setError(null);
       setPreviewError(null);
       setPreviewSample(null);
       setIsPreviewing(true);
@@ -159,14 +161,14 @@ export const useSettingsPageState = () => {
   const handleRoleChange = async (userId: string, role: TeamRole) => {
     if (!session) return;
     try {
-      setError(null);
+      setRoleError(null);
       setNotice(null);
       setRoleUpdatingId(userId);
       await updateTeamUserRole(session.token, userId, role);
       setTeam((current) => current.map((item) => (item.id === userId ? { ...item, role } : item)));
       setNotice('Role updated');
     } catch {
-      setError('Could not update role');
+      setRoleError('Could not update role');
     } finally {
       setRoleUpdatingId(null);
     }
@@ -176,7 +178,7 @@ export const useSettingsPageState = () => {
     event.preventDefault();
     if (!session) return;
     try {
-      setError(null);
+      setInviteError(null);
       setNotice(null);
       setIsInviting(true);
       const result = await inviteTeamUser(session.token, {
@@ -190,7 +192,7 @@ export const useSettingsPageState = () => {
       setNotice(result.reused ? 'Invite already pending for this email' : 'Invite sent');
       await load();
     } catch {
-      setError('Could not invite team member');
+      setInviteError('Could not invite team member');
     } finally {
       setIsInviting(false);
     }
@@ -209,7 +211,10 @@ export const useSettingsPageState = () => {
     previewInstructions,
     previewSample,
     previewError,
-    error,
+    loadError,
+    saveError,
+    inviteError,
+    roleError,
     notice,
     isSaving,
     isInviting,

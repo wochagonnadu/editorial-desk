@@ -24,7 +24,10 @@ export function Settings() {
     previewInstructions,
     previewSample,
     previewError,
-    error,
+    loadError,
+    saveError,
+    inviteError,
+    roleError,
     notice,
     isSaving,
     isInviting,
@@ -57,7 +60,8 @@ export function Settings() {
         </button>
       </header>
 
-      {error ? <div className="card text-red-600">{error}</div> : null}
+      {loadError ? <div className="card text-red-600">{loadError}</div> : null}
+      {saveError ? <div className="card text-red-600">{saveError}</div> : null}
       {notice ? <div className="card text-green-700">{notice}</div> : null}
 
       {!draft ? <div className="card text-sm text-ink-500">Loading workspace...</div> : null}
@@ -94,6 +98,8 @@ export function Settings() {
         inviting={isInviting}
         roleUpdatingId={roleUpdatingId}
         canManageRoles={session?.user.role === 'owner'}
+        inviteError={inviteError}
+        roleError={roleError}
         inviteName={inviteName}
         inviteEmail={inviteEmail}
         inviteRole={inviteRole}
