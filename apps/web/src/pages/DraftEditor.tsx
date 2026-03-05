@@ -41,6 +41,7 @@ export function DraftEditor() {
   const [isSendingReview, setIsSendingReview] = useState(false);
   const [diffSourceVersionId, setDiffSourceVersionId] = useState('');
   const [diffTargetVersionId, setDiffTargetVersionId] = useState('');
+  const [editorVersionId, setEditorVersionId] = useState('');
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [needsGeneration, setNeedsGeneration] = useState(false);
 
@@ -133,6 +134,11 @@ export function DraftEditor() {
     [versions, diffTargetVersionId],
   );
 
+  const editorVersion = useMemo(
+    () => versions.find((version) => version.id === editorVersionId) ?? null,
+    [versions, editorVersionId],
+  );
+
   const diffFallback = useMemo(() => {
     if (versions.length < 2) return 'Need at least two versions to compare.';
     if (!diffSourceVersionId || !diffTargetVersionId) {
@@ -158,6 +164,21 @@ export function DraftEditor() {
     if (diffFallback || !diffSourceVersion || !diffTargetVersion) return null;
     return buildDraftDiffSummary(diffSourceVersion.content, diffTargetVersion.content);
   }, [diffFallback, diffSourceVersion, diffTargetVersion]);
+
+  useEffect(() => {
+    if (!detail) return;
+    const versionIds = new Set(versions.map((version) => version.id));
+    if (detail.currentVersionId && versionIds.has(detail.currentVersionId)) {
+      setEditorVersionId((current) =>
+        current && versionIds.has(current) ? current : detail.currentVersionId,
+      );
+    }
+  }, [detail?.currentVersionId, versions, detail]);
+
+  const handleLoadVersionToEditor = () => {
+    if (!editorVersion) return;
+    setContent(editorVersion.content);
+  };
 
   const handleSave = async () => {
     if (!session || !detail) return;
@@ -293,6 +314,40 @@ export function DraftEditor() {
               onChange={(event) => setContent(event.target.value)}
               className="w-full min-h-[60vh] text-base leading-relaxed text-ink-800 focus:outline-none"
             />
+            <div className="border-t border-ink-100 pt-4 space-y-3">
+              <div className="flex flex-col md:flex-row md:items-center gap-2">
+                <label className="text-xs text-ink-500">Load version into editor</label>
+                <div className="flex gap-2">
+                  <select
+                    value={editorVersionId}
+                    onChange={(event) => setEditorVersionId(event.target.value)}
+                    className="px-3 py-2 text-sm rounded-xl border border-ink-200"
+                  >
+                    <option value="">Select version</option>
+                    {versions.map((version) => (
+                      <option key={`editor-${version.id}`} value={version.id}>
+                        v{version.versionNumber} -{' '}
+                        {new Date(version.createdAt).toLocaleDateString()}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={handleLoadVersionToEditor}
+                    disabled={!editorVersion}
+                  >
+                    Load version
+                  </button>
+                </div>
+              </div>
+              {editorVersion && editorVersion.id !== detail.currentVersionId ? (
+                <p className="text-xs text-ink-500">
+                  You are editing from historical version v{editorVersion.versionNumber}. Saving
+                  will create a new latest version.
+                </p>
+              ) : null}
+            </div>
             <div className="border-t border-ink-100 pt-4">
               <p className="text-xs text-ink-500 mb-2">Add comment for this version</p>
               <div className="flex gap-2">
