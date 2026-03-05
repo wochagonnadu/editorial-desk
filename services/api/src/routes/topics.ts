@@ -12,6 +12,7 @@ import { logStage } from '../core/observability/log-stage.js';
 import { expertTable, topicTable } from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
 import type { RouteDeps } from './deps.js';
+import { createStrategyPlanHandler } from './topics-strategy-plan.js';
 
 export const buildTopicRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
@@ -95,6 +96,8 @@ export const buildTopicRoutes = (deps: RouteDeps): Hono => {
 
     return context.json({ id: topic.id, status: topic.status }, 201);
   });
+
+  router.post('/strategy-plan', createStrategyPlanHandler(deps));
 
   router.post('/:id/approve', async (context) => {
     const authUser = getAuthUser(context);
