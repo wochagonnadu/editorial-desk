@@ -7,19 +7,18 @@ import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { ExpertStatus } from '@newsroom/shared';
 import { readJsonBodyStrict } from '../core/http/read-json-body.js';
+import { logAudit } from '../core/audit.js';
 import { logStage } from '../core/observability/log-stage.js';
 import { AppError } from '../core/errors.js';
 import { startOnboarding } from '../core/onboarding.js';
 import {
   DrizzleExpertStore,
+  expertTable,
   onboardingSequenceTable,
   voiceProfileTable,
 } from '../providers/db/index.js';
-import {
-  mergeExpertRichProfile,
-  normalizeExpertRichProfile,
-  readExpertRichProfile,
-} from './expert-profile-contract.js';
+import { mergeExpertRichProfile, readExpertRichProfile } from './expert-profile-contract.js';
+import { parseExpertRichProfilePayload } from './expert-profile-validation.js';
 import { getAuthUser } from './auth-middleware.js';
 import type { RouteDeps } from './deps.js';
 import { requestTwoMinutes } from './experts-ping.js';
@@ -33,6 +32,27 @@ const parseString = (value: unknown, field: string): string => {
 export const buildExpertRoutes = (deps: RouteDeps): Hono => {
   const router = new Hono();
   const expertStore = new DrizzleExpertStore(deps.db);
+  const getAccessibleExpert = async (expertId: string, companyId: string) => {
+    const expert = await expertStore.findById(expertId, companyId);
+    if (expert) return expert;
+    const [anyExpert] = await deps.db
+      .select({ id: expertTable.id })
+      .from(expertTable)
+      .where(eq(expertTable.id, expertId))
+      .limit(1);
+    if (anyExpert) throw new AppError(403, 'FORBIDDEN', 'No access to this expert');
+    throw new AppError(404, 'NOT_FOUND', 'Expert not found');
+  };
+  const diffChangedSections = (
+    previousProfile: ReturnType<typeof readExpertRichProfile>,
+    nextProfile: ReturnType<typeof readExpertRichProfile>,
+  ): string[] => {
+    const sections = ['role', 'tone', 'contacts', 'tags', 'sources', 'background'] as const;
+    return sections.filter(
+      (section) =>
+        JSON.stringify(previousProfile[section]) !== JSON.stringify(nextProfile[section]),
+    );
+  };
 
   router.post('/', async (context) => {
     const authUser = getAuthUser(context);
@@ -133,8 +153,7 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
   });
   router.get('/:id', async (context) => {
     const authUser = getAuthUser(context);
-    const expert = await expertStore.findById(context.req.param('id'), authUser.companyId);
-    if (!expert) throw new AppError(404, 'NOT_FOUND', 'Expert not found');
+    const expert = await getAccessibleExpert(context.req.param('id'), authUser.companyId);
     const [profile] = await deps.db
       .select()
       .from(voiceProfileTable)
@@ -151,16 +170,19 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
   router.patch('/:id/profile', async (context) => {
     const authUser = getAuthUser(context);
     const expertId = context.req.param('id');
-    const expert = await expertStore.findById(expertId, authUser.companyId);
-    if (!expert) throw new AppError(404, 'NOT_FOUND', 'Expert not found');
+    await getAccessibleExpert(expertId, authUser.companyId);
 
     const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
-    const normalizedProfile = normalizeExpertRichProfile(body.profile);
+    const normalizedProfile = parseExpertRichProfilePayload(body);
     const [existing] = await deps.db
       .select()
       .from(voiceProfileTable)
       .where(eq(voiceProfileTable.expertId, expertId))
       .limit(1);
+
+    const previousProfile = readExpertRichProfile(
+      (existing?.profileData ?? {}) as Record<string, unknown>,
+    );
 
     const nextProfileData = mergeExpertRichProfile(
       ((existing?.profileData ?? {}) as Record<string, unknown>) ?? {},
@@ -183,6 +205,19 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
         profileData: nextProfileData,
       } as typeof voiceProfileTable.$inferInsert);
     }
+
+    await logAudit(deps.db, {
+      companyId: authUser.companyId,
+      actorType: 'user',
+      actorId: authUser.userId,
+      action: 'expert.profile_saved',
+      entityType: 'expert',
+      entityId: expertId,
+      metadata: {
+        changed_sections: diffChangedSections(previousProfile, normalizedProfile),
+        source: 'expert_setup',
+      },
+    });
 
     return context.json({
       id: expertId,
