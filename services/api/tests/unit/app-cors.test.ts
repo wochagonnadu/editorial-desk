@@ -6,18 +6,13 @@
 import { createApp } from '../../src/app';
 
 describe('app CORS', () => {
-  const originalDatabaseUrl = process.env.DATABASE_URL;
   const originalAppUrl = process.env.APP_URL;
 
   beforeAll(() => {
-    process.env.DATABASE_URL = 'postgresql://user:pass@127.0.0.1:5432/editorialdesk';
     process.env.APP_URL = 'https://editorial-desk-web.vercel.app';
   });
 
   afterAll(() => {
-    if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;
-    else process.env.DATABASE_URL = originalDatabaseUrl;
-
     if (originalAppUrl === undefined) delete process.env.APP_URL;
     else process.env.APP_URL = originalAppUrl;
   });
