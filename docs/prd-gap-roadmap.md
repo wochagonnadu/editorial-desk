@@ -173,7 +173,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
    - Scope: закрыть gap по Expert Setup save: единый write/read контракт для role/tone/contacts/tags/sources/background с валидацией и audit trail.
    - Результат: профиль эксперта сохраняется полноценно и стабильно, генерация получает предсказуемый входной контекст.
 
-9. `018-content-strategy-12w-output`
+9. `018-content-strategy-12w-output` ✅
    - Scope: реализовать structured output для Content Strategy Builder (12-week plan: pillars/clusters/FAQ/interlinking) + базовые действия копирования в работу через LLM gateway.
    - Результат: пользователь получает не «черный ящик», а применимый план, который можно сразу конвертировать в черновики.
 
@@ -260,3 +260,11 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Усилен company guard: для чужого эксперта возвращается `FORBIDDEN`, для отсутствующего — `NOT_FOUND`.
 - На каждый save пишется audit-событие `expert.profile_saved` с `changed_sections` и `source=expert_setup`.
 - Web Expert Setup подключен к create+save в один action, добавлены состояния `saving/success/error` и service-тесты save/reload маппинга.
+
+### Changelog 018 (коротко)
+
+- Добавлен backend endpoint `POST /api/v1/topics/strategy-plan` с валидацией входа, нормализацией structured output и стабильными ошибками `VALIDATION_ERROR`/`LLM_UPSTREAM_ERROR`.
+- В LLM gateway добавлен use-case `content.strategy.plan` с prompt registry `content.strategy.12w@1.0.0` и отдельной runtime policy timeout/retry/fallback.
+- В `CreateDraft` добавлен блок Strategy Builder: генерация 12-week плана (pillars/clusters/FAQ/interlinking) и визуализация interlink hints.
+- Добавлены действия `Copy cluster` и `Copy FAQ` в текущий topics flow, чтобы элементы плана сразу превращались в рабочие темы.
+- Добавлены проверки сценариев generate->copy->topic, copy->approve->create-draft и fallback при пустом/невалидном LLM output.

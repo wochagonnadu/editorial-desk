@@ -59,8 +59,8 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 1. [done] Как пользователь, я хочу нажать Create draft с Home или Drafts, чтобы начать планирование.
 2. [partial][must] Как пользователь, я хочу выбрать эксперта и тему с явной фиксацией входных параметров, чтобы генерация была воспроизводимой.
 3. [done] Как пользователь, я хочу нажать Generate Content Plan и увидеть «генерацию», чтобы понимать, что процесс идёт.
-4. [gap][should] Как пользователь, я хочу получать структурированный 12-недельный план (pillars, clusters, FAQ, interlinking), чтобы быстрее запускать контент-ритм.
-5. [gap][should] Как пользователь, я хочу копировать элементы плана в работу, чтобы ускорять запуск драфтов.
+4. [done] Как пользователь, я хочу получать структурированный 12-недельный план (pillars, clusters, FAQ, interlinking), чтобы быстрее запускать контент-ритм.
+5. [done] Как пользователь, я хочу копировать элементы плана в работу, чтобы ускорять запуск драфтов.
 
 ## Epic H — Черновики и редактура
 
@@ -104,9 +104,11 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Для P2 data-gap по `landing_request/evidence` в Spec 014 зафиксирован проектный контракт (schema/bridge/indexes/smoke), реализация идет отдельным внедрением без расширения MVP scope.
 - Spec 015 закрыт: LLM gateway/prompt-version/policy/telemetry/voice integration внедрены в core потоки; smoke-пункт по `topics.suggest` вынесен в отдельный Spec 022 по UI/flow объему.
 - Spec 016 закрыт: reviewer видит version context + diff summary/diff view прямо на `/docs/:draftId?token=...`, а формулировки блока изменений синхронизированы с approval email.
+- Spec 018 закрыт: в Create Draft доступен structured 12-week strategy output и copy actions (`Copy cluster`/`Copy FAQ`) в текущий topics flow.
 
 ## Зависимости на следующую спеку
 - Активных зависимостей на `011-expert-onboarding-5-step-hardening` не осталось: onboarding Step 1->5 закрыт и подтвержден вручную + тестами.
 - Активных зависимостей на `013-worker-runtime-hardening` не осталось: worker runtime и критичные retry/idempotency сценарии подтверждены тестами.
 - Активных зависимостей на `016-editorial-doc-prd-parity` не осталось: doc/magic-link/diff контекст доведен до reviewer-ready состояния.
 - Активных зависимостей на `017-expert-setup-rich-profile-save` не осталось: Expert Setup сохраняет и читает единый rich profile контракт с валидацией и audit trail.
+- Активных зависимостей на `018-content-strategy-12w-output` не осталось: strategy output и copy-to-topics сценарии подтверждены тестами и route/UI интеграцией.
