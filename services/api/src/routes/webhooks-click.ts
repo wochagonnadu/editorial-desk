@@ -5,7 +5,13 @@
 
 import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
-import { activateNextStep, consolidateFeedback, recordDecision } from '../core/approval.js';
+import {
+  activateNextStep,
+  closeOpenStepsAsChangesRequested,
+  completeFlowAndDraft,
+  consolidateFeedback,
+  recordDecision,
+} from '../core/approval.js';
 import { logAudit } from '../core/audit.js';
 import { buildDiffSummaryBullets } from '../core/diff-summary.js';
 import { consolidatedFeedbackTemplate } from '../core/email-templates/approval.js';
@@ -101,14 +107,9 @@ export const processApprovalClick =
       comment,
     );
 
-    const steps = await deps.db
-      .select()
-      .from(approvalStepTable)
-      .where(eq(approvalStepTable.approvalFlowId, flow.id));
-    const hasChanges = steps.some((item) => item.status === 'changes_requested');
-    const allDone = steps.every(
-      (item) => item.status === 'approved' || item.status === 'changes_requested',
-    );
+    if (action === 'request_changes') {
+      await closeOpenStepsAsChangesRequested(deps.db, flow.id);
+    }
 
     if (flow.flowType === 'sequential' && action === 'approve') {
       const nextStep = await activateNextStep(deps.db, flow.id, flow.deadlineHours);
@@ -158,18 +159,17 @@ export const processApprovalClick =
       }
     }
 
+    const steps = await deps.db
+      .select()
+      .from(approvalStepTable)
+      .where(eq(approvalStepTable.approvalFlowId, flow.id));
+    const hasChanges = steps.some((item) => item.status === 'changes_requested');
+    const allDone = steps.every(
+      (item) => item.status === 'approved' || item.status === 'changes_requested',
+    );
+
     if (allDone) {
-      await deps.db
-        .update(approvalFlowTable)
-        .set({ status: 'completed' } as Partial<typeof approvalFlowTable.$inferInsert>)
-        .where(eq(approvalFlowTable.id, flow.id));
-      await deps.db
-        .update(draftTable)
-        .set({
-          status: hasChanges ? 'revisions' : 'approved',
-          updatedAt: new Date(),
-        } as Partial<typeof draftTable.$inferInsert>)
-        .where(eq(draftTable.id, draftId));
+      await completeFlowAndDraft(deps.db, flow.id, draftId, hasChanges ? 'revisions' : 'approved');
 
       if (hasChanges) {
         const feedback = await consolidateFeedback(deps.db, flow.id);

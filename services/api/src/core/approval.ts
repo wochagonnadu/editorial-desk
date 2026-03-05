@@ -170,6 +170,34 @@ export const recordDecision = async (
   return { flow, step, saved };
 };
 
+export const closeOpenStepsAsChangesRequested = async (db: Database, approvalFlowId: string) => {
+  await db
+    .update(approvalStepTable)
+    .set({ status: 'changes_requested' } as Partial<typeof approvalStepTable.$inferInsert>)
+    .where(
+      and(
+        eq(approvalStepTable.approvalFlowId, approvalFlowId),
+        inArray(approvalStepTable.status, ['pending', 'waiting']),
+      ),
+    );
+};
+
+export const completeFlowAndDraft = async (
+  db: Database,
+  approvalFlowId: string,
+  draftId: string,
+  draftStatus: 'approved' | 'revisions',
+) => {
+  await db
+    .update(approvalFlowTable)
+    .set({ status: 'completed' } as Partial<typeof approvalFlowTable.$inferInsert>)
+    .where(eq(approvalFlowTable.id, approvalFlowId));
+  await db
+    .update(draftTable)
+    .set({ status: draftStatus, updatedAt: new Date() } as Partial<typeof draftTable.$inferInsert>)
+    .where(eq(draftTable.id, draftId));
+};
+
 export const consolidateFeedback = async (db: Database, approvalFlowId: string) => {
   const steps = await db
     .select()
