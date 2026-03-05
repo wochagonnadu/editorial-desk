@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import type { ContentPort } from '@newsroom/shared';
 import { toErrorResponse } from '../../src/core/errors';
 import { createLogger } from '../../src/providers/logger';
+import { companyTable, expertTable, voiceProfileTable } from '../../src/providers/db';
 import { buildCompanyRoutes } from '../../src/routes/companies';
 import type { RouteDeps } from '../../src/routes/deps';
 
@@ -17,7 +18,7 @@ const queryResult = <T>(rows: T[]) => ({
 });
 
 const createDeps = () => {
-  const company = {
+  let company = {
     id: 'c1',
     name: 'Old',
     domain: 'business',
@@ -32,18 +33,42 @@ const createDeps = () => {
       },
     },
   };
+  const expert = { id: 'exp-1', companyId: 'c1', name: 'Expert One' };
+  const voiceProfile = {
+    expertId: 'exp-1',
+    status: 'confirmed',
+    profileData: { confidence: 0.8, profile_version: '1.0.0' },
+  };
   const audits: unknown[] = [];
+  const streamCalls: unknown[] = [];
   const db = {
-    select: () => ({ from: () => ({ where: () => queryResult([company]) }) }),
+    select: () => ({
+      from: (table: unknown) => ({
+        where: () => {
+          if (table === companyTable) return queryResult([company]);
+          if (table === expertTable) return queryResult([expert]);
+          if (table === voiceProfileTable) return queryResult([voiceProfile]);
+          return queryResult([]);
+        },
+      }),
+    }),
     update: () => ({
       set: (values: Partial<typeof company>) => ({
-        where: () => queryResult([{ ...company, ...values }]),
+        where: () => {
+          company = { ...company, ...values };
+          return queryResult([company]);
+        },
       }),
     }),
     insert: () => ({ values: (value: unknown) => (audits.push(value), queryResult([])) }),
   } as unknown as RouteDeps['db'];
   const content: ContentPort = {
-    streamText: async () => (async function* () {})(),
+    streamText: async (input) => {
+      streamCalls.push(input);
+      return (async function* () {
+        yield '# Preview';
+      })();
+    },
     generateObject: async <T>() => ({}) as T,
   };
   return {
@@ -58,6 +83,7 @@ const createDeps = () => {
       },
     } as RouteDeps,
     audits,
+    streamCalls,
   };
 };
 
@@ -166,11 +192,7 @@ describe('companies settings endpoint', () => {
   });
 
   it('returns generation preview without draft writes', async () => {
-    const { deps } = createDeps();
-    deps.content.streamText = async () =>
-      (async function* () {
-        yield '# Preview';
-      })();
+    const { deps, streamCalls } = createDeps();
     const app = new Hono();
     app.use('*', async (context, next) => {
       (context as { set: (key: string, value: unknown) => void }).set('authUser', {
@@ -197,6 +219,47 @@ describe('companies settings endpoint', () => {
       sample_markdown: '# Preview',
       meta: { use_case: 'draft.generate', prompt_id: 'drafts.generate.base' },
       applied_policy: { default_audience: 'general' },
+    });
+    expect(streamCalls.length).toBe(1);
+    const previewCall = streamCalls[0] as { promptVars?: Record<string, unknown> };
+    expect(String(previewCall.promptVars?.workspace_generation_policy_json)).toContain(
+      'hype wording',
+    );
+  });
+
+  it('persists generation policy across patch and subsequent get', async () => {
+    const { deps } = createDeps();
+    const app = new Hono();
+    app.use('*', async (context, next) => {
+      (context as { set: (key: string, value: unknown) => void }).set('authUser', {
+        userId: 'u1',
+        companyId: 'c1',
+        role: 'owner',
+      });
+      await next();
+    });
+    app.onError((error, context) => toErrorResponse(context, error));
+    app.route('/companies', buildCompanyRoutes(deps));
+
+    const patchResponse = await app.request('http://local/companies/me', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        generation_policy: {
+          tone: 'calm, direct, no hype for compliance-oriented audience',
+          guardrails: { avoid: ['fear framing'] },
+        },
+      }),
+    });
+    expect(patchResponse.status).toBe(200);
+
+    const getResponse = await app.request('http://local/companies/me');
+    expect(getResponse.status).toBe(200);
+    await expect(getResponse.json()).resolves.toMatchObject({
+      generation_policy: {
+        tone: 'calm, direct, no hype for compliance-oriented audience',
+        guardrails: { avoid: ['fear framing'] },
+      },
     });
   });
 });
