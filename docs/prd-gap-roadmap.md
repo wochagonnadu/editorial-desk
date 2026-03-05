@@ -169,7 +169,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
    - Scope: дожать `006` до полного doc/magic-link сценария: live document surface, явный version context, reviewer-friendly diff summary + diff view.
    - Результат: ревьюер видит «что поменялось и почему» прямо в документе, без ручного сопоставления версий из письма.
 
-8. `017-expert-setup-rich-profile-save`
+8. `017-expert-setup-rich-profile-save` ✅
    - Scope: закрыть gap по Expert Setup save: единый write/read контракт для role/tone/contacts/tags/sources/background с валидацией и audit trail.
    - Результат: профиль эксперта сохраняется полноценно и стабильно, генерация получает предсказуемый входной контекст.
 
@@ -252,3 +252,11 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - В `PublicDoc` добавлен явный version context (`current/base/updated/status`) и объяснимые `STALE_VERSION`/`TOKEN_EXPIRED` next-step.
 - В magic-link документ встроены `What changed` (3-5 bullets), line-level diff view и fallback-состояния при недоступном сравнении.
 - Approval email синхронизирован с doc surface: общий термин `What changed (base to current)` и явная строка сравниваемых версий.
+
+### Changelog 017 (коротко)
+
+- Добавлен `PATCH /api/v1/experts/:id/profile` и расширен `GET /api/v1/experts/:id` единым объектом `profile` для стабильного write/read цикла.
+- Введена валидация rich profile по обязательным и форматным полям (`role`, `tone`, `contacts`, `sources`) с кодом `VALIDATION_ERROR`.
+- Усилен company guard: для чужого эксперта возвращается `FORBIDDEN`, для отсутствующего — `NOT_FOUND`.
+- На каждый save пишется audit-событие `expert.profile_saved` с `changed_sections` и `source=expert_setup`.
+- Web Expert Setup подключен к create+save в один action, добавлены состояния `saving/success/error` и service-тесты save/reload маппинга.

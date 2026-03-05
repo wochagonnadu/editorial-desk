@@ -49,7 +49,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 ## Epic F — Эксперты и voice acquisition
 
 1. [done] Как пользователь, я хочу выбрать эксперта из списка, чтобы генерировать контент под конкретного автора.
-2. [gap][must] Как пользователь, я хочу сохранять расширенный профиль эксперта (роль, тон, контакты, теги, sources), чтобы генерация учитывала контекст автора.
+2. [done] Как пользователь, я хочу сохранять расширенный профиль эксперта (роль, тон, контакты, теги, sources), чтобы генерация учитывала контекст автора.
 3. [done] Как пользователь, я хочу открыть страницу эксперта и видеть его профиль, чтобы использовать как базу.
 4. [done] Как пользователь, я хочу чтобы email-onboarding эксперта проходил шаги 1->5 без обрыва, чтобы voice acquisition был рабочим.
 5. [done] Как пользователь, я хочу видеть статус готовности voice profile после прохождения шагов 1->5, чтобы понимать, когда можно генерировать в голосе эксперта.
@@ -99,7 +99,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 ## Факты сверки (roadmap + gap-map)
 - `done`: auth/login/verify, dashboard/drafts/versions/comments/factcheck/approvals покрыты endpoint-ами и отмечены как закрытый P0-контур в roadmap.
 - `partial`: где есть рабочая база, но нет подтвержденной e2e-надежности или есть расхождение сигналов (например, календарь, UX-детали лендинга).
-- `gap`: где roadmap/gap-map явно фиксируют отсутствующий контракт или write-функциональность (расширенный save Expert Setup, 12-week strategy output, generation/tonality settings).
+- `gap`: где roadmap/gap-map явно фиксируют отсутствующий контракт или write-функциональность (12-week strategy output, generation/tonality settings).
 - Runtime блок из roadmap по worker/queue для критичных cron задач закрыт в Spec 013.
 - Для P2 data-gap по `landing_request/evidence` в Spec 014 зафиксирован проектный контракт (schema/bridge/indexes/smoke), реализация идет отдельным внедрением без расширения MVP scope.
 - Spec 015 закрыт: LLM gateway/prompt-version/policy/telemetry/voice integration внедрены в core потоки; smoke-пункт по `topics.suggest` вынесен в отдельный Spec 022 по UI/flow объему.
@@ -109,3 +109,4 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Активных зависимостей на `011-expert-onboarding-5-step-hardening` не осталось: onboarding Step 1->5 закрыт и подтвержден вручную + тестами.
 - Активных зависимостей на `013-worker-runtime-hardening` не осталось: worker runtime и критичные retry/idempotency сценарии подтверждены тестами.
 - Активных зависимостей на `016-editorial-doc-prd-parity` не осталось: doc/magic-link/diff контекст доведен до reviewer-ready состояния.
+- Активных зависимостей на `017-expert-setup-rich-profile-save` не осталось: Expert Setup сохраняет и читает единый rich profile контракт с валидацией и audit trail.
