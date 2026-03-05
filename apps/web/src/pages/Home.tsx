@@ -162,7 +162,9 @@ export function Home() {
                         <p className="text-sm font-medium text-ink-900">{item.title}</p>
                         <p className="text-xs text-ink-500">{item.expertName}</p>
                       </div>
-                      <span className="text-xs text-ink-500">{item.scheduledDate}</span>
+                      <span className="text-xs text-ink-500">
+                        {new Date(item.publishPlan.scheduledPublishAt).toISOString().slice(0, 10)}
+                      </span>
                     </div>
                   ))
                 )}

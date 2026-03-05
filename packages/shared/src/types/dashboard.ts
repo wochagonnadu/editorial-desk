@@ -60,6 +60,11 @@ export interface WeekScheduleItem {
   expertName: string;
   status: DraftStatus;
   scheduledDate: string; // YYYY-MM-DD
+  publishPlan: {
+    scheduledPublishAt: ISODateTime;
+    timezone: string | null;
+    isScheduled: true;
+  };
 }
 
 /** Элемент списка approval для Approvals page */

@@ -21,6 +21,13 @@ const startOfWeek = (date: Date): Date => {
 
 const dayKey = (date: Date): string => date.toISOString().slice(0, 10);
 
+const dateToDayKey = (value: string | null): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return dayKey(date);
+};
+
 const statusClass = (status: string): string => {
   if (status === 'needs_review') return 'status-review';
   if (status === 'drafting') return 'status-drafting';
@@ -71,12 +78,18 @@ export function Calendar() {
     const map = new Map<string, DraftListItem[]>();
     for (const day of weekDays) map.set(dayKey(day), []);
     for (const item of items) {
-      const key = dayKey(new Date(item.updatedAt));
+      const key = dateToDayKey(item.publishPlan.scheduledPublishAt);
+      if (!key) continue;
       if (!map.has(key)) continue;
       map.get(key)?.push(item);
     }
     return map;
   }, [items, weekDays]);
+
+  const unscheduledItems = useMemo(
+    () => items.filter((item) => !item.publishPlan.isScheduled),
+    [items],
+  );
 
   return (
     <div className="space-y-8 h-full flex flex-col">
@@ -189,6 +202,29 @@ export function Calendar() {
           );
         })}
       </div>
+
+      <section className="card p-4 space-y-3">
+        <h2 className="text-sm font-medium text-ink-900">Unscheduled</h2>
+        {unscheduledItems.length === 0 ? (
+          <p className="text-xs text-ink-500">All visible drafts have planned publish date.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {unscheduledItems.map((item) => (
+              <Link
+                key={`unscheduled-${item.id}`}
+                to={`/app/drafts/${item.id}`}
+                className="block p-3 bg-beige-50 rounded-xl border border-ink-100 hover:border-ink-300"
+              >
+                <span className={`status-pill mb-2 ${statusClass(item.status)}`}>
+                  {item.status}
+                </span>
+                <h3 className="font-medium text-sm text-ink-900 leading-tight">{item.title}</h3>
+                <p className="text-xs text-ink-500 mt-2">{item.expertName}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

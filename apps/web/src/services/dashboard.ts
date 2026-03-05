@@ -34,6 +34,11 @@ export type DashboardWeekItem = {
   expertName: string;
   status: string;
   scheduledDate: string;
+  publishPlan: {
+    scheduledPublishAt: string;
+    timezone: string | null;
+    isScheduled: true;
+  };
 };
 
 type DashboardResponse = {
@@ -58,6 +63,11 @@ type DashboardResponse = {
     expertName: string;
     status: string;
     scheduledDate: string;
+    publishPlan: {
+      scheduledPublishAt: string;
+      timezone: string | null;
+      isScheduled: true;
+    };
   }>;
 };
 

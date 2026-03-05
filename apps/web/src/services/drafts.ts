@@ -13,6 +13,11 @@ export type DraftListItem = {
   status: string;
   factcheckStatus: string;
   currentVersion: number | null;
+  publishPlan: {
+    scheduledPublishAt: string | null;
+    timezone: string | null;
+    isScheduled: boolean;
+  };
   updatedAt: string;
 };
 
@@ -43,6 +48,11 @@ export type DraftDetail = {
   currentVersionNumber: number;
   comments: DraftComment[];
   hasCompletedFactcheck: boolean;
+  publishPlan: {
+    scheduledPublishAt: string | null;
+    timezone: string | null;
+    isScheduled: boolean;
+  };
   factcheckResults: Array<{
     claimId: string;
     verdict: string;
@@ -61,6 +71,11 @@ type DraftListResponse = {
     status: string;
     currentVersion: number | null;
     factcheckStatus: string;
+    publishPlan: {
+      scheduledPublishAt: string | null;
+      timezone: string | null;
+      isScheduled: boolean;
+    };
     updatedAt: string;
   }>;
 };
@@ -87,6 +102,11 @@ type DraftDetailResponse = {
       evidence?: Array<{ source?: string; snippet?: string; url?: string }>;
     }>;
   } | null;
+  publishPlan?: {
+    scheduledPublishAt: string | null;
+    timezone: string | null;
+    isScheduled: boolean;
+  };
   comments: Array<{ id: string; text: string; createdAt: string; authorType: string }>;
 };
 
@@ -117,6 +137,7 @@ export const fetchDrafts = async (
     status: item.status,
     factcheckStatus: item.factcheckStatus,
     currentVersion: item.currentVersion,
+    publishPlan: item.publishPlan,
     updatedAt: item.updatedAt,
   }));
 };
@@ -145,6 +166,11 @@ export const fetchDraftDetail = async (token: string, id: string): Promise<Draft
       authorType: comment.authorType,
     })),
     hasCompletedFactcheck: data.factcheckReport?.status === 'completed',
+    publishPlan: data.publishPlan ?? {
+      scheduledPublishAt: null,
+      timezone: null,
+      isScheduled: false,
+    },
     factcheckResults: (data.factcheckReport?.results ?? []).map((item) => ({
       claimId: item.claimId ?? 'unknown',
       verdict: item.verdict ?? 'pending',
@@ -154,6 +180,21 @@ export const fetchDraftDetail = async (token: string, id: string): Promise<Draft
       evidence: item.evidence ?? [],
     })),
   };
+};
+
+export const updateDraftPublishPlan = async (
+  token: string,
+  id: string,
+  input: { scheduledPublishAt: string | null; timezone?: string | null },
+): Promise<void> => {
+  await apiRequest(`/api/v1/drafts/${id}/publish-plan`, {
+    method: 'PATCH',
+    token,
+    body: {
+      scheduled_publish_at: input.scheduledPublishAt,
+      timezone: input.timezone ?? null,
+    },
+  });
 };
 
 export const fetchDraftVersions = async (token: string, id: string): Promise<DraftVersion[]> => {

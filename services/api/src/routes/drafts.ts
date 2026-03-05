@@ -14,6 +14,7 @@ import {
   generateDraft,
   reviseDraft,
 } from './drafts/pipeline.js';
+import { updateDraftPublishPlan } from './drafts/publish-plan.js';
 import { getDraftDetail, getDraftsList, getDraftVersions } from './drafts/query.js';
 import { saveDraftVersion } from './drafts/versioning.js';
 import { handleVoiceRating } from './drafts/voice-rating.js';
@@ -34,6 +35,7 @@ export const buildDraftRoutes = (deps: RouteDeps): Hono => {
   router.post('/:id/factcheck', factcheckDraft(deps));
   router.post('/:id/revise', reviseDraft(deps));
   router.post('/:id/send-for-review', sendForReview(deps));
+  router.patch('/:id/publish-plan', updateDraftPublishPlan(deps));
   router.post('/:id/comments', createDraftComment(deps));
   router.post('/:id/claims/:claim_id/expert-confirm', confirmClaim(deps));
 

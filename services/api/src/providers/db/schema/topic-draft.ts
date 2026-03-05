@@ -33,6 +33,8 @@ export const draftTable = pgTable('draft', {
   companyId: uuid('company_id').notNull(),
   currentVersionId: uuid('current_version_id'),
   status: varchar('status', { length: 20 }).notNull().default('drafting'),
+  scheduledPublishAt: timestamp('scheduled_publish_at', { withTimezone: true }),
+  publishTimezone: varchar('publish_timezone', { length: 100 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

@@ -27,6 +27,8 @@ export interface Draft {
   companyId: EntityId;
   currentVersionId?: EntityId;
   status: DraftStatus;
+  scheduledPublishAt?: ISODateTime;
+  publishTimezone?: string;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

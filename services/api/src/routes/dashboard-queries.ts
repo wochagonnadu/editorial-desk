@@ -3,7 +3,7 @@
 // WHY:  Разгружает dashboard.ts, каждая query — отдельная функция
 // RELEVANT: services/api/src/routes/dashboard.ts, services/api/src/providers/db/schema.ts
 
-import { and, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 import type { InReviewItem, TodayAction, WeekScheduleItem } from '@newsroom/shared';
 import { draftTable, expertTable, topicTable } from '../providers/db/index.js';
 import type { RouteDeps } from './deps.js';
@@ -75,9 +75,10 @@ export async function fetchWeekSchedule(
   deps: RouteDeps,
   companyId: string,
 ): Promise<WeekScheduleItem[]> {
-  // TODO: draft не имеет scheduledDate — updatedAt текущей недели как workaround
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekStart = new Date();
+  weekStart.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
 
   const rows = await deps.db
     .select({
@@ -85,10 +86,17 @@ export async function fetchWeekSchedule(
       topicId: draftTable.topicId,
       expertId: draftTable.expertId,
       status: draftTable.status,
-      updatedAt: draftTable.updatedAt,
+      scheduledPublishAt: draftTable.scheduledPublishAt,
+      publishTimezone: draftTable.publishTimezone,
     })
     .from(draftTable)
-    .where(and(eq(draftTable.companyId, companyId), gte(draftTable.updatedAt, weekAgo)));
+    .where(
+      and(
+        eq(draftTable.companyId, companyId),
+        gte(draftTable.scheduledPublishAt, weekStart),
+        lt(draftTable.scheduledPublishAt, weekEnd),
+      ),
+    );
 
   const topicIds = [
     ...new Set(rows.map((r) => r.topicId).filter((id): id is string => Boolean(id))),
@@ -116,13 +124,20 @@ export async function fetchWeekSchedule(
   const nameMap = new Map<string, string>();
   for (const expert of experts) nameMap.set(String(expert.id), String(expert.name));
 
-  return rows.map(
-    (r): WeekScheduleItem => ({
-      draftId: r.draftId,
-      title: titleMap.get(String(r.topicId)) ?? 'Untitled',
-      expertName: nameMap.get(String(r.expertId)) ?? 'Unknown',
-      status: r.status as WeekScheduleItem['status'],
-      scheduledDate: r.updatedAt.toISOString().slice(0, 10),
-    }),
-  );
+  return rows
+    .filter((row) => Boolean(row.scheduledPublishAt))
+    .map(
+      (r): WeekScheduleItem => ({
+        draftId: r.draftId,
+        title: titleMap.get(String(r.topicId)) ?? 'Untitled',
+        expertName: nameMap.get(String(r.expertId)) ?? 'Unknown',
+        status: r.status as WeekScheduleItem['status'],
+        scheduledDate: r.scheduledPublishAt!.toISOString().slice(0, 10),
+        publishPlan: {
+          scheduledPublishAt: r.scheduledPublishAt!.toISOString(),
+          timezone: r.publishTimezone,
+          isScheduled: true,
+        },
+      }),
+    );
 }
