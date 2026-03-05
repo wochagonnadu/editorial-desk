@@ -18,6 +18,7 @@ import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
 import {
   DrizzleDraftStore,
   claimTable,
+  companyTable,
   draftTable,
   draftVersionTable,
   expertTable,
@@ -26,6 +27,7 @@ import {
 } from '../../providers/db/index.js';
 import { getAuthUser } from '../auth-middleware.js';
 import type { RouteDeps } from '../deps.js';
+import { normalizeGenerationPolicy } from '../generation-policy.js';
 import { sseResponse } from './sse.js';
 
 export const factcheckDraft = (deps: RouteDeps) => async (context: Context) => {
@@ -148,14 +150,21 @@ export const reviseDraft = (deps: RouteDeps) => async (context: Context) => {
     .from(voiceProfileTable)
     .where(eq(voiceProfileTable.expertId, draft.expertId))
     .limit(1);
+  const [company] = await deps.db
+    .select()
+    .from(companyTable)
+    .where(eq(companyTable.id, authUser.companyId))
+    .limit(1);
   if (!current) throw new AppError(404, 'NOT_FOUND', 'Current version not found');
   if (!expert) throw new AppError(404, 'NOT_FOUND', 'Expert not found');
+  if (!company) throw new AppError(404, 'NOT_FOUND', 'Company not found');
   if (!voiceProfile) {
     throw new AppError(422, 'VOICE_PROFILE_REQUIRED', 'Voice profile is required for revision');
   }
 
   const stream = async function* () {
     const profileData = (voiceProfile.profileData as Record<string, unknown>) ?? {};
+    const workspacePolicy = normalizeGenerationPolicy(company.generationPolicy);
     const chunks: string[] = [];
     for await (const chunk of await deps.content.streamText({
       meta: {
@@ -169,6 +178,7 @@ export const reviseDraft = (deps: RouteDeps) => async (context: Context) => {
         instructions,
         draft_content: current.content,
         voice_profile_json: JSON.stringify(profileData),
+        workspace_generation_policy_json: JSON.stringify(workspacePolicy),
       },
       voiceProfile: {
         status: voiceProfile.status === 'confirmed' ? 'confirmed' : 'draft',

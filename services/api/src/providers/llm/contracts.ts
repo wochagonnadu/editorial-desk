@@ -46,14 +46,25 @@ export const promptRegistry: Record<string, PromptTemplate> = {
     promptVersion: '1.0.0',
     system: DRAFT_GENERATE_SYSTEM,
     user: DRAFT_GENERATE_USER,
-    requiredVars: ['topic_title', 'expert_name', 'voice_profile_json', 'audience'],
+    requiredVars: [
+      'topic_title',
+      'expert_name',
+      'voice_profile_json',
+      'audience',
+      'workspace_generation_policy_json',
+    ],
   },
   'drafts.revise.base@1.0.0': {
     promptId: 'drafts.revise.base',
     promptVersion: '1.0.0',
     system: DRAFT_REVISE_SYSTEM,
     user: DRAFT_REVISE_USER,
-    requiredVars: ['instructions', 'draft_content', 'voice_profile_json'],
+    requiredVars: [
+      'instructions',
+      'draft_content',
+      'voice_profile_json',
+      'workspace_generation_policy_json',
+    ],
   },
   'factcheck.extract.claims@1.0.0': {
     promptId: 'factcheck.extract.claims',
