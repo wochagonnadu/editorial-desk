@@ -85,7 +85,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 ## Epic K — Настройки
 
 1. [done] Как пользователь, я хочу сохранять workspace-настройки через Settings, чтобы команда работала с едиными параметрами.
-2. [gap][should] Как пользователь, я хочу управлять параметрами генерации/тональностью в Settings, чтобы поддерживать консистентный стиль.
+2. [done] Как пользователь, я хочу управлять параметрами генерации/тональностью в Settings, чтобы поддерживать консистентный стиль.
 3. [done] Как владелец, я хочу приглашать участников и менять роли в Settings, чтобы управлять командой без обходных сценариев.
 
 ## Epic L — Качество и нефункциональные истории
@@ -106,6 +106,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Spec 016 закрыт: reviewer видит version context + diff summary/diff view прямо на `/docs/:draftId?token=...`, а формулировки блока изменений синхронизированы с approval email.
 - Spec 018 закрыт: в Create Draft доступен structured 12-week strategy output и copy actions (`Copy cluster`/`Copy FAQ`) в текущий topics flow.
 - Spec 019 закрыт: approvals queue поддерживает manager actions `approve/request changes` без тупиков, а Calendar/Home читают publish-plan дату публикации вместо `updatedAt`.
+- Spec 020 закрыт: в Settings добавлены generation controls (tone/defaults/guardrails) и preview; policy применяется в `draft.generate` и `draft.revise` системно.
 
 ## Зависимости на следующую спеку
 - Активных зависимостей на `011-expert-onboarding-5-step-hardening` не осталось: onboarding Step 1->5 закрыт и подтвержден вручную + тестами.

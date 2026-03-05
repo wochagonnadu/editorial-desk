@@ -181,7 +181,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
      - Scope: довести approvals queue до рабочего менеджерского цикла (approve/request changes без тупиков) и синхронизировать с календарным планом публикаций.
      - Результат: выпуск не стопорится на ручных обходах, статусы материалов предсказуемо двигаются до публикации.
 
-11. `020-settings-generation-controls`
+11. `020-settings-generation-controls` ✅
     - Scope: добавить в Settings управляемые параметры generation voice/тональности (guardrails, defaults, preview) как workspace-политику для LLM-пайплайна.
     - Результат: editorial tone задается один раз и применяется системно, а не «на глаз» в каждом драфте.
 
@@ -276,3 +276,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Добавлен publish-plan контракт (`scheduled_publish_at`, `timezone`) в drafts/dashboard, а calendar/week schedule переведен на плановую дату публикации.
 - Удален fallback `scheduledDate = updatedAt`; для материалов без даты добавлено явное состояние `unscheduled`.
 - Проверка закрыта тестами: queue decision сценарии (approve/request changes + stale-version) и week schedule mapping по publish-plan.
+
+### Changelog 020 (коротко)
+
+- В `Settings` добавлен блок `Generation Controls`: workspace-level `tone`, `default_audience`, `guardrails` с сохранением через `PATCH /api/v1/companies/me`.
+- Добавлен preview-контур `POST /api/v1/companies/me/generation-preview` без создания `draft/draft_version`, но с тем же prompt stack.
+- В `draft.generate` и `draft.revise` прокинут `workspace_generation_policy_json`; приоритет policy зафиксирован в prompt templates.
+- Добавлен fallback/валидация policy и тесты на сценарии `save->reload`, `preview`, `generate+revise` для стабильного editorial tone.
