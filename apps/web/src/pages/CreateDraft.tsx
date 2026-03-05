@@ -8,8 +8,17 @@ import { ArrowLeft, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createDraftFromTopic } from '../services/drafts';
 import { fetchExperts } from '../services/experts';
-import { approveTopic, createTopic, fetchTopics, type TopicItem } from '../services/topics';
+import {
+  approveTopic,
+  createTopic,
+  fetchTopics,
+  generateStrategyPlan,
+  type StrategyCopyPayload,
+  type StrategyPlan,
+  type TopicItem,
+} from '../services/topics';
 import { useSession } from '../services/session';
+import { StrategyPlanView } from './create-draft/StrategyPlanView';
 
 export function CreateDraft() {
   const navigate = useNavigate();
@@ -17,6 +26,9 @@ export function CreateDraft() {
   const [selectedExpertId, setSelectedExpertId] = useState('');
   const [topicTitle, setTopicTitle] = useState('');
   const [topics, setTopics] = useState<TopicItem[]>([]);
+  const [strategyPlan, setStrategyPlan] = useState<StrategyPlan | null>(null);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [copyingItemId, setCopyingItemId] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,6 +98,48 @@ export function CreateDraft() {
     }
   };
 
+  const generateContentPlan = async () => {
+    if (!session || !selectedExpertId || topicTitle.trim().length < 3) return;
+    const expert = expertOptions.find((item) => item.id === selectedExpertId);
+    try {
+      setError(null);
+      setIsGeneratingPlan(true);
+      const plan = await generateStrategyPlan(session.token, {
+        expertId: selectedExpertId,
+        topicSeed: topicTitle.trim(),
+        audience: 'general',
+        market: 'en-US',
+        constraints: { tone: 'practical and calm', maxItemsPerWeek: 2 },
+      });
+      setStrategyPlan(plan);
+      if (!expert) setError('Plan generated, but selected expert context is incomplete');
+    } catch {
+      setError('Could not generate structured content plan');
+      setStrategyPlan(null);
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  };
+
+  const copyPlanItem = async (itemId: string, payload: StrategyCopyPayload) => {
+    if (!session) return;
+    try {
+      setError(null);
+      setCopyingItemId(itemId);
+      await createTopic(session.token, {
+        title: payload.title,
+        expertId: payload.expert_id ?? selectedExpertId,
+        description: payload.description,
+        sourceType: payload.source_type,
+      });
+      await loadTopics();
+    } catch {
+      setError('Could not copy strategy item to topics');
+    } finally {
+      setCopyingItemId(null);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <Link
@@ -138,6 +192,36 @@ export function CreateDraft() {
           <Sparkles className="w-4 h-4 mr-2" />
           {isBusy ? 'Working...' : 'Create and open draft'}
         </button>
+      </section>
+
+      <section className="card space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-serif font-medium">Strategy Builder</h2>
+          <button
+            type="button"
+            onClick={generateContentPlan}
+            disabled={isGeneratingPlan || !selectedExpertId || topicTitle.trim().length < 3}
+            className="btn-secondary"
+          >
+            {isGeneratingPlan ? 'Generating...' : 'Generate Content Plan'}
+          </button>
+        </div>
+        <p className="text-sm text-ink-500">
+          Generate a structured 12-week plan with pillars, clusters, FAQ, and interlink hints.
+        </p>
+        {strategyPlan ? (
+          <StrategyPlanView
+            plan={strategyPlan}
+            isCopying={copyingItemId !== null}
+            copyingItemId={copyingItemId}
+            onCopyCluster={copyPlanItem}
+            onCopyFaq={copyPlanItem}
+          />
+        ) : (
+          <p className="text-sm text-ink-400">
+            Select expert + topic seed, then click Generate Content Plan.
+          </p>
+        )}
       </section>
 
       <section className="card space-y-4">
