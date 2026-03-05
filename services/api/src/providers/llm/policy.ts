@@ -56,4 +56,11 @@ export const useCasePolicy: Record<LLMUseCase, UseCasePolicy> = {
     primaryModelEnv: 'OPENROUTER_VOICE_SYNTH_MODEL',
     fallbackModelEnv: 'LLM_FALLBACK_VOICE_SYNTH_MODEL',
   },
+  'expert.voice.test.generate': {
+    timeoutMs: 25_000,
+    retryMax: 2,
+    requiresVoiceProfile: false,
+    primaryModelEnv: 'OPENROUTER_VOICE_TEST_MODEL',
+    fallbackModelEnv: 'LLM_FALLBACK_VOICE_TEST_MODEL',
+  },
 };

@@ -11,7 +11,8 @@ export interface ContentTextInput {
       | 'factcheck.extract'
       | 'factcheck.verify'
       | 'topics.suggest'
-      | 'expert.voice.synthesize';
+      | 'expert.voice.synthesize'
+      | 'expert.voice.test.generate';
     promptId: string;
     promptVersion: `${number}.${number}.${number}`;
     traceId?: string;
@@ -40,7 +41,8 @@ export interface ContentObjectInput {
       | 'factcheck.extract'
       | 'factcheck.verify'
       | 'topics.suggest'
-      | 'expert.voice.synthesize';
+      | 'expert.voice.synthesize'
+      | 'expert.voice.test.generate';
     promptId: string;
     promptVersion: `${number}.${number}.${number}`;
     traceId?: string;

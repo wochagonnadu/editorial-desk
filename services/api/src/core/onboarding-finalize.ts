@@ -91,6 +91,45 @@ const synthesizeVoiceProfile = async (
   }
 };
 
+const collectStreamText = async (stream: AsyncIterable<string>): Promise<string> => {
+  const chunks: string[] = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  return chunks.join('').trim();
+};
+
+const generateVoiceTestDraft = async (
+  context: FinalizeContext,
+  input: {
+    expertName: string;
+    domain: string;
+    profileData: Record<string, unknown>;
+    responses: string[];
+    publicTextUrls: string[];
+  },
+): Promise<string> => {
+  const fallback = generateVoiceTest(input.profileData);
+  try {
+    const stream = await context.content.streamText({
+      meta: {
+        useCase: 'expert.voice.test.generate',
+        promptId: 'expert.voice.test.generate.base',
+        promptVersion: '1.0.0',
+      },
+      promptVars: {
+        expert_name: input.expertName,
+        domain: input.domain,
+        voice_profile_json: JSON.stringify(input.profileData),
+        onboarding_replies_json: JSON.stringify(input.responses),
+        public_text_urls_json: JSON.stringify(input.publicTextUrls),
+      },
+    });
+    const generated = await collectStreamText(stream);
+    return generated.length > 0 ? generated : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expertId: string) => {
   const [expert] = await context.db
     .select()
@@ -160,7 +199,13 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
     status: 'drafting',
   });
 
-  const content = generateVoiceTest(profileData);
+  const content = await generateVoiceTestDraft(context, {
+    expertName: expert.name,
+    domain: expert.domain,
+    profileData,
+    responses,
+    publicTextUrls,
+  });
   const version = await draftStore.createVersion({
     draftId: draft.id,
     content,

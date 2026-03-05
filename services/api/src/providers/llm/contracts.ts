@@ -17,7 +17,12 @@ import {
   FACTCHECK_VERIFY_USER,
 } from './prompts/factcheck.js';
 import { TOPICS_SUGGEST_SYSTEM, TOPICS_SUGGEST_USER } from './prompts/topics.js';
-import { VOICE_SYNTH_SYSTEM, VOICE_SYNTH_USER } from './prompts/voice.js';
+import {
+  VOICE_SYNTH_SYSTEM,
+  VOICE_SYNTH_USER,
+  VOICE_TEST_GENERATE_SYSTEM,
+  VOICE_TEST_GENERATE_USER,
+} from './prompts/voice.js';
 
 type PromptMeta = NonNullable<ContentTextInput['meta'] | ContentObjectInput['meta']>;
 type UseCase = PromptMeta['useCase'];
@@ -77,6 +82,19 @@ export const promptRegistry: Record<string, PromptTemplate> = {
       'public_text_samples_json',
       'expert_edit_diffs_json',
       'domain',
+    ],
+  },
+  'expert.voice.test.generate.base@1.0.0': {
+    promptId: 'expert.voice.test.generate.base',
+    promptVersion: '1.0.0',
+    system: VOICE_TEST_GENERATE_SYSTEM,
+    user: VOICE_TEST_GENERATE_USER,
+    requiredVars: [
+      'expert_name',
+      'domain',
+      'voice_profile_json',
+      'onboarding_replies_json',
+      'public_text_urls_json',
     ],
   },
 };

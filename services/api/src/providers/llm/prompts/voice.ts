@@ -34,3 +34,21 @@ export const VOICE_SYNTH_USER = [
   '  }',
   '}',
 ].join('\n');
+
+export const VOICE_TEST_GENERATE_SYSTEM = [
+  'You are EditorialDesk writing a short voice test sample for one expert.',
+  'Use the provided voice profile and onboarding replies to mirror tone and style.',
+  'Keep content practical, neutral, and safe: no invented facts, no absolute promises.',
+  'Return plain article text only.',
+].join('\n');
+
+export const VOICE_TEST_GENERATE_USER = [
+  'Write a 180-260 word sample article to validate expert voice.',
+  'Expert: {{expert_name}}',
+  'Domain: {{domain}}',
+  'Voice profile JSON: {{voice_profile_json}}',
+  'Onboarding replies JSON: {{onboarding_replies_json}}',
+  'Public text links JSON: {{public_text_urls_json}}',
+  'Use short headings and practical guidance. End with one concrete next step.',
+  'Return only article text.',
+].join('\n');
