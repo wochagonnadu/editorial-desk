@@ -141,27 +141,27 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 Идем строго по порядку нумерации, без пропусков:
 
-1. `010-user-stories-alignment`
+1. `010-user-stories-alignment` ✅
    - Scope: ревизия `docs/user_stories.md` под фактический контур 001–009, фиксация must/should/could.
    - Результат: актуальный и проверяемый story-бэклог без устаревших ожиданий.
 
-2. `011-expert-onboarding-5-step-hardening`
+2. `011-expert-onboarding-5-step-hardening` ✅
    - Scope: довести onboarding эксперта до стабильной цепочки Step 1→5 (триггеры, retries, таймауты, наблюдаемость, e2e-checklist).
    - Результат: в ручных тестах и smoke-проверках проходят все 5 шагов, а не только Step 1.
 
-3. `012-settings-team-management-contracts`
+3. `012-settings-team-management-contracts` ✅
    - Scope: write/read контракты для Settings и команды (company update, users/roles/invite).
    - Результат: Settings перестает быть read-only, команда управляется из UI.
 
-4. `013-worker-runtime-hardening`
+4. `013-worker-runtime-hardening` ✅
    - Scope: поэтапное выделение worker/runtime и усиление очередей (идемпотентность, retries, visibility).
    - Результат: меньше хрупкости оркестрации под реальной нагрузкой.
 
-5. `014-data-model-enhancements-optional`
+5. `014-data-model-enhancements-optional` ✅
    - Scope: `landing_request` как отдельная сущность, optional `evidence` table и минимальные индексы под отчеты.
    - Результат: улучшенная аналитика/аудит без преждевременного усложнения MVP.
 
-6. `015-llm-gateway-foundation`
+6. `015-llm-gateway-foundation` ✅
    - Scope: ввести единый LLM gateway слой (provider adapter, prompt/version registry, timeout/retry/fallback, cost/latency/trace logging, базовые safety guardrails).
    - Результат: интеграция моделей становится управляемой и повторяемой, без размазанной логики вызовов по сервисам.
 
