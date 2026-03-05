@@ -11,6 +11,7 @@ export interface ContentTextInput {
       | 'factcheck.extract'
       | 'factcheck.verify'
       | 'topics.suggest'
+      | 'content.strategy.plan'
       | 'expert.voice.synthesize'
       | 'expert.voice.test.generate';
     promptId: string;
@@ -41,6 +42,7 @@ export interface ContentObjectInput {
       | 'factcheck.extract'
       | 'factcheck.verify'
       | 'topics.suggest'
+      | 'content.strategy.plan'
       | 'expert.voice.synthesize'
       | 'expert.voice.test.generate';
     promptId: string;

@@ -16,7 +16,12 @@ import {
   FACTCHECK_VERIFY_SYSTEM,
   FACTCHECK_VERIFY_USER,
 } from './prompts/factcheck.js';
-import { TOPICS_SUGGEST_SYSTEM, TOPICS_SUGGEST_USER } from './prompts/topics.js';
+import {
+  CONTENT_STRATEGY_12W_SYSTEM,
+  CONTENT_STRATEGY_12W_USER,
+  TOPICS_SUGGEST_SYSTEM,
+  TOPICS_SUGGEST_USER,
+} from './prompts/topics.js';
 import {
   VOICE_SYNTH_SYSTEM,
   VOICE_SYNTH_USER,
@@ -70,6 +75,13 @@ export const promptRegistry: Record<string, PromptTemplate> = {
     system: TOPICS_SUGGEST_SYSTEM,
     user: TOPICS_SUGGEST_USER,
     requiredVars: ['company_name', 'company_domain', 'experts_json'],
+  },
+  'content.strategy.12w@1.0.0': {
+    promptId: 'content.strategy.12w',
+    promptVersion: '1.0.0',
+    system: CONTENT_STRATEGY_12W_SYSTEM,
+    user: CONTENT_STRATEGY_12W_USER,
+    requiredVars: ['topic_seed', 'expert_name', 'audience', 'market', 'constraints_json'],
   },
   'expert.voice.synthesize.base@1.0.0': {
     promptId: 'expert.voice.synthesize.base',

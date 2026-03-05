@@ -49,6 +49,13 @@ export const useCasePolicy: Record<LLMUseCase, UseCasePolicy> = {
     primaryModelEnv: 'OPENROUTER_EXTRACT_MODEL',
     fallbackModelEnv: 'LLM_FALLBACK_TOPICS_SUGGEST_MODEL',
   },
+  'content.strategy.plan': {
+    timeoutMs: 30_000,
+    retryMax: 2,
+    requiresVoiceProfile: false,
+    primaryModelEnv: 'OPENROUTER_STRATEGY_MODEL',
+    fallbackModelEnv: 'LLM_FALLBACK_CONTENT_STRATEGY_MODEL',
+  },
   'expert.voice.synthesize': {
     timeoutMs: 25_000,
     retryMax: 2,
