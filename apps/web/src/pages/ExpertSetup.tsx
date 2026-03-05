@@ -1,12 +1,13 @@
 // PATH: apps/web/src/pages/ExpertSetup.tsx
-// WHAT: Expert setup form wired to POST /api/v1/experts
-// WHY:  Converts invite flow from UI-only step into real expert creation
+// WHAT: Expert setup form wired to create + rich profile save contracts
+// WHY:  Persists full expert context for predictable generation input
 // RELEVANT: apps/web/src/pages/Experts.tsx,apps/web/src/services/experts.ts
 
 import { useState } from 'react';
 import { ArrowLeft, Plus, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { createExpert } from '../services/experts';
+import { ApiError } from '../services/api/client';
+import { createExpert, saveExpertProfile } from '../services/experts';
 import { useSession } from '../services/session';
 
 export function ExpertSetup() {
@@ -20,7 +21,14 @@ export function ExpertSetup() {
   const [domain, setDomain] = useState<'medical' | 'legal' | 'education' | 'business'>('business');
   const [urlInput, setUrlInput] = useState('');
   const [urls, setUrls] = useState<string[]>([]);
+  const [tonePrimary, setTonePrimary] = useState('direct');
+  const [telegram, setTelegram] = useState('');
+  const [website, setWebsite] = useState('');
+  const [background, setBackground] = useState('');
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const addUrl = () => {
@@ -29,10 +37,18 @@ export function ExpertSetup() {
     setUrlInput('');
   };
 
+  const addTag = () => {
+    const next = tagInput.trim();
+    if (!next) return;
+    setTags((current) => (current.includes(next) ? current : [...current, next]));
+    setTagInput('');
+  };
+
   const save = async () => {
     if (!session) return;
     try {
       setError(null);
+      setNotice(null);
       setIsSaving(true);
       const id = await createExpert(session.token, {
         name,
@@ -41,9 +57,29 @@ export function ExpertSetup() {
         domain,
         publicTextUrls: urls,
       });
+      await saveExpertProfile(session.token, id, {
+        role: roleTitle.trim(),
+        tone: {
+          primary: tonePrimary.trim(),
+          secondary: [],
+        },
+        contacts: {
+          email: email.trim(),
+          ...(telegram.trim() ? { telegram: telegram.trim() } : {}),
+          ...(website.trim() ? { website: website.trim() } : {}),
+        },
+        tags,
+        sources: urls,
+        background,
+      });
+      setNotice('Expert profile saved');
       navigate(`/app/experts/${id}`, { replace: true });
-    } catch {
-      setError('Could not create expert');
+    } catch (saveError) {
+      if (saveError instanceof ApiError) {
+        setError(saveError.message);
+      } else {
+        setError('Could not save expert profile');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -80,6 +116,7 @@ export function ExpertSetup() {
         </div>
       </div>
 
+      {notice ? <div className="card text-green-700">{notice}</div> : null}
       {error ? <div className="card text-red-600">{error}</div> : null}
 
       <section className="card space-y-4">
@@ -105,15 +142,76 @@ export function ExpertSetup() {
           placeholder="Email Address"
         />
         <select
-          value={domain}
-          onChange={(e) => setDomain(e.target.value as typeof domain)}
+          id="tone-primary"
+          value={tonePrimary}
+          onChange={(e) => setTonePrimary(e.target.value)}
           className="w-full px-4 py-3 rounded-xl border border-ink-200 bg-white"
         >
-          <option value="business">Business</option>
-          <option value="medical">Medical</option>
-          <option value="legal">Legal</option>
-          <option value="education">Education</option>
+          <option value="direct">Direct</option>
+          <option value="calm">Calm</option>
+          <option value="warm">Warm</option>
+          <option value="clinical">Clinical</option>
         </select>
+      </section>
+
+      <section className="card space-y-4">
+        <h2 className="text-xl font-serif font-medium border-b border-ink-100 pb-3">
+          Voice context
+        </h2>
+        <textarea
+          value={background}
+          onChange={(event) => setBackground(event.target.value)}
+          className="w-full px-4 py-3 rounded-xl border border-ink-200 min-h-[100px]"
+          placeholder="Short background for generation context"
+        />
+        <div className="flex items-center gap-3">
+          <input
+            value={tagInput}
+            onChange={(event) => setTagInput(event.target.value)}
+            className="flex-1 px-4 py-3 rounded-xl border border-ink-200"
+            placeholder="Add tag"
+          />
+          <button type="button" className="btn-secondary" onClick={addTag}>
+            <Plus className="w-4 h-4 mr-1" /> Add
+          </button>
+        </div>
+        {tags.length === 0 ? (
+          <p className="text-sm text-ink-500">No tags added yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {tags.map((tag) => (
+              <div
+                key={tag}
+                className="p-3 bg-beige-50 rounded-xl text-sm flex items-center justify-between"
+              >
+                <span className="truncate pr-4">{tag}</span>
+                <button
+                  type="button"
+                  onClick={() => setTags((current) => current.filter((item) => item !== tag))}
+                >
+                  <X className="w-4 h-4 text-ink-500" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="card space-y-4">
+        <h2 className="text-xl font-serif font-medium border-b border-ink-100 pb-3">Contacts</h2>
+        <input
+          value={telegram}
+          onChange={(event) => setTelegram(event.target.value)}
+          className="w-full px-4 py-3 rounded-xl border border-ink-200"
+          placeholder="Telegram handle (optional)"
+        />
+        <input
+          type="url"
+          value={website}
+          onChange={(event) => setWebsite(event.target.value)}
+          className="w-full px-4 py-3 rounded-xl border border-ink-200"
+          placeholder="Website URL (optional)"
+        />
       </section>
 
       <section className="card space-y-4">
@@ -152,6 +250,20 @@ export function ExpertSetup() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="card space-y-4">
+        <h2 className="text-xl font-serif font-medium border-b border-ink-100 pb-3">Domain</h2>
+        <select
+          value={domain}
+          onChange={(e) => setDomain(e.target.value as typeof domain)}
+          className="w-full px-4 py-3 rounded-xl border border-ink-200 bg-white"
+        >
+          <option value="business">Business</option>
+          <option value="medical">Medical</option>
+          <option value="legal">Legal</option>
+          <option value="education">Education</option>
+        </select>
       </section>
     </div>
   );

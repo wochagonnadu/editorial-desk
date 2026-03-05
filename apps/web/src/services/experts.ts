@@ -1,6 +1,6 @@
 // PATH: apps/web/src/services/experts.ts
-// WHAT: Experts API adapter for list/detail/create/ping flows
-// WHY:  Centralizes DTO mapping and request payload contracts for experts UI
+// WHAT: Experts API adapter for list/detail/create/profile-save/ping flows
+// WHY:  Centralizes DTO mapping and save/read contracts for experts UI
 // RELEVANT: apps/web/src/pages/Experts.tsx,apps/web/src/pages/ExpertProfile.tsx
 
 import { apiRequest } from './api/client';
@@ -20,10 +20,20 @@ export type ExpertDetail = ExpertItem & {
   domain: string;
   publicTextUrls: string[];
   profileData: Record<string, unknown>;
+  profile: ExpertRichProfile;
   onboardingStatus: 'active' | 'stalled' | 'completed';
   currentStep: number | null;
   lastEventAt: string | null;
   stalledReason: string | null;
+};
+
+export type ExpertRichProfile = {
+  role: string;
+  tone: { primary: string; secondary: string[] };
+  contacts: { email?: string; telegram?: string; website?: string };
+  tags: string[];
+  sources: string[];
+  background: string;
 };
 
 type ExpertListResponse = {
@@ -48,6 +58,13 @@ type ExpertDetailResponse = {
   publicTextUrls: string[];
   voiceProfileStatus: string;
   voiceProfileData: Record<string, unknown>;
+  profile?: ExpertRichProfile;
+};
+
+type SaveExpertProfileResponse = {
+  id: string;
+  profile: ExpertRichProfile;
+  updatedAt: string;
 };
 
 type OnboardingStatusResponse = {
@@ -64,6 +81,17 @@ export type CreateExpertInput = {
   email: string;
   domain: 'medical' | 'legal' | 'education' | 'business';
   publicTextUrls: string[];
+};
+
+export type SaveExpertProfileInput = ExpertRichProfile;
+
+const emptyExpertProfile: ExpertRichProfile = {
+  role: '',
+  tone: { primary: '', secondary: [] },
+  contacts: {},
+  tags: [],
+  sources: [],
+  background: '',
 };
 
 export const fetchExperts = async (token: string): Promise<ExpertItem[]> => {
@@ -98,6 +126,7 @@ export const fetchExpertDetail = async (token: string, id: string): Promise<Expe
     onboardingProgress: onboarding.steps.filter((step) => step.status === 'replied').length,
     voiceProfileStatus: data.voiceProfileStatus,
     profileData: data.voiceProfileData,
+    profile: data.profile ?? emptyExpertProfile,
     onboardingStatus: onboarding.onboardingStatus,
     currentStep: onboarding.currentStep,
     lastEventAt: onboarding.lastEventAt,
@@ -125,4 +154,17 @@ export const requestExpertPing = async (token: string, id: string): Promise<void
     method: 'POST',
     token,
   });
+};
+
+export const saveExpertProfile = async (
+  token: string,
+  id: string,
+  profile: SaveExpertProfileInput,
+): Promise<SaveExpertProfileResponse> => {
+  const raw = await apiRequest<unknown>(`/api/v1/experts/${id}/profile`, {
+    method: 'PATCH',
+    token,
+    body: { profile },
+  });
+  return mapDto<SaveExpertProfileResponse>(raw);
 };
