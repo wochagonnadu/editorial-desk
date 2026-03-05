@@ -15,6 +15,11 @@ import {
   onboardingSequenceTable,
   voiceProfileTable,
 } from '../providers/db/index.js';
+import {
+  mergeExpertRichProfile,
+  normalizeExpertRichProfile,
+  readExpertRichProfile,
+} from './expert-profile-contract.js';
 import { getAuthUser } from './auth-middleware.js';
 import type { RouteDeps } from './deps.js';
 import { requestTwoMinutes } from './experts-ping.js';
@@ -139,6 +144,50 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       ...expert,
       voice_profile_status: profile?.status ?? 'draft',
       voice_profile_data: profile?.profileData ?? {},
+      profile: readExpertRichProfile((profile?.profileData ?? {}) as Record<string, unknown>),
+    });
+  });
+
+  router.patch('/:id/profile', async (context) => {
+    const authUser = getAuthUser(context);
+    const expertId = context.req.param('id');
+    const expert = await expertStore.findById(expertId, authUser.companyId);
+    if (!expert) throw new AppError(404, 'NOT_FOUND', 'Expert not found');
+
+    const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
+    const normalizedProfile = normalizeExpertRichProfile(body.profile);
+    const [existing] = await deps.db
+      .select()
+      .from(voiceProfileTable)
+      .where(eq(voiceProfileTable.expertId, expertId))
+      .limit(1);
+
+    const nextProfileData = mergeExpertRichProfile(
+      ((existing?.profileData ?? {}) as Record<string, unknown>) ?? {},
+      normalizedProfile,
+    );
+
+    const updatedAt = new Date();
+    if (existing) {
+      await deps.db
+        .update(voiceProfileTable)
+        .set({
+          profileData: nextProfileData,
+          updatedAt,
+        } as Partial<typeof voiceProfileTable.$inferInsert>)
+        .where(eq(voiceProfileTable.expertId, expertId));
+    } else {
+      await deps.db.insert(voiceProfileTable).values({
+        expertId,
+        status: 'draft',
+        profileData: nextProfileData,
+      } as typeof voiceProfileTable.$inferInsert);
+    }
+
+    return context.json({
+      id: expertId,
+      profile: normalizedProfile,
+      updated_at: updatedAt.toISOString(),
     });
   });
 
