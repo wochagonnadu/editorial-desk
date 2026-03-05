@@ -53,6 +53,71 @@ export const createDraftFromTopic = (deps: RouteDeps) => async (context: Context
     entityId: draft.id,
     durationMs: Date.now() - startedAt,
   });
+
+  const [persistedDraft] = await deps.db
+    .select()
+    .from(draftTable)
+    .where(eq(draftTable.id, draft.id))
+    .limit(1);
+
+  if (persistedDraft && !persistedDraft.currentVersionId) {
+    const [topic] = await deps.db
+      .select()
+      .from(topicTable)
+      .where(eq(topicTable.id, draft.topicId))
+      .limit(1);
+    const [expert] = await deps.db
+      .select()
+      .from(expertTable)
+      .where(eq(expertTable.id, draft.expertId))
+      .limit(1);
+    const [voiceProfile] = await deps.db
+      .select()
+      .from(voiceProfileTable)
+      .where(eq(voiceProfileTable.expertId, draft.expertId))
+      .limit(1);
+
+    if (!topic || !expert) throw new AppError(404, 'NOT_FOUND', 'Topic or expert not found');
+    if (!voiceProfile)
+      throw new AppError(422, 'VOICE_PROFILE_REQUIRED', 'Voice profile is required for generation');
+
+    const profileData = (voiceProfile.profileData as Record<string, unknown>) ?? {};
+    const chunks: string[] = [];
+    for await (const chunk of await deps.content.streamText({
+      meta: {
+        useCase: 'draft.generate',
+        promptId: 'drafts.generate.base',
+        promptVersion: '1.0.0',
+        companyId: authUser.companyId,
+        expertId: expert.id,
+      },
+      promptVars: {
+        topic_title: topic.title,
+        expert_name: expert.name,
+        voice_profile_json: JSON.stringify(profileData),
+        audience: 'general',
+      },
+      voiceProfile: {
+        status: voiceProfile.status === 'confirmed' ? 'confirmed' : 'draft',
+        confidence: Number(profileData.confidence ?? 0),
+        version: String(profileData.profile_version ?? '1.0.0'),
+      },
+    })) {
+      chunks.push(chunk);
+    }
+
+    const content = chunks.join('').trim() || `Draft on topic: ${topic.title}`;
+    await createVersion(
+      new DrizzleDraftStore(deps.db),
+      draft.id,
+      content,
+      content.slice(0, 180),
+      0.8,
+      'system',
+    );
+    await transitionDraftStatus(deps.db, draft.id, 'factcheck');
+  }
+
   return context.json(
     {
       id: draft.id,
