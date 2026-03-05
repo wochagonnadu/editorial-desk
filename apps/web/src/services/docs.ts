@@ -25,6 +25,8 @@ export type PublicDoc = {
   diff: {
     sourceVersion: { id: string; versionNumber: number } | null;
     targetVersion: { id: string; versionNumber: number };
+    sourceContent: string | null;
+    targetContent: string;
     summary: string[];
   } | null;
   readOnly: boolean;

@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { buildPublicDocDiffView } from '../lib/public-doc-diff';
 import { ApiError } from '../services/api/client';
 import { fetchPublicDoc, type PublicDoc as PublicDocData } from '../services/docs';
 
@@ -106,6 +107,40 @@ export function PublicDoc() {
     };
   }, [draftId, token]);
 
+  const diffFallback = useMemo(() => {
+    if (!doc || !doc.diff) return 'Diff is unavailable for this document.';
+    if (!doc.diff.sourceVersion) {
+      return 'No base version is available yet. This is the first version.';
+    }
+    if (!doc.diff.sourceContent?.trim() || !doc.diff.targetContent?.trim()) {
+      return 'Diff is unavailable because one compared version has empty content.';
+    }
+    return null;
+  }, [doc]);
+
+  const diffView = useMemo(() => {
+    if (!doc || !doc.diff || diffFallback) return null;
+    return buildPublicDocDiffView(doc.diff.sourceContent ?? '', doc.diff.targetContent, 40);
+  }, [doc, diffFallback]);
+
+  const diffSummaryBullets = useMemo(() => {
+    if (!doc?.diff) return [];
+    const baseBullets = doc.diff.summary
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 5);
+
+    if (baseBullets.length >= 3 || !diffView || diffFallback) return baseBullets;
+
+    const augmented = [
+      ...baseBullets,
+      `Compared v${doc.diff.sourceVersion?.versionNumber ?? 'n/a'} to v${doc.diff.targetVersion.versionNumber}`,
+      `Added lines: ${diffView.addedCount}`,
+      `Removed lines: ${diffView.removedCount}`,
+    ];
+    return Array.from(new Set(augmented)).slice(0, 5);
+  }, [doc, diffView, diffFallback]);
+
   if (viewState === 'loading') {
     return <div className="card max-w-3xl mx-auto mt-8">Loading document...</div>;
   }
@@ -173,6 +208,51 @@ export function PublicDoc() {
           <p className="text-xs text-ink-600">
             You are viewing the latest version available for this link.
           </p>
+        </section>
+        <section className="mt-5 rounded-xl border border-ink-100 bg-white p-4 space-y-3">
+          <p className="text-xs uppercase tracking-wide text-ink-500">What changed</p>
+
+          {diffSummaryBullets.length > 0 ? (
+            <ul className="space-y-1">
+              {diffSummaryBullets.map((item, index) => (
+                <li key={`${item}-${index}`} className="text-sm text-ink-700">
+                  - {item}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-ink-600">Summary is unavailable for this comparison.</p>
+          )}
+
+          <div className="pt-2 border-t border-ink-100 space-y-2">
+            <p className="text-xs uppercase tracking-wide text-ink-500">
+              Diff view (base to current)
+            </p>
+
+            {diffFallback ? (
+              <p className="text-sm text-ink-600">{diffFallback}</p>
+            ) : diffView && diffView.rows.length > 0 ? (
+              <>
+                <p className="text-xs text-ink-500">
+                  Lines: +{diffView.addedCount} / -{diffView.removedCount}
+                </p>
+                <div className="max-h-64 overflow-y-auto space-y-1 rounded-lg border border-ink-100 p-2">
+                  {diffView.rows.map((row, index) => (
+                    <div
+                      key={`${row.type}-${index}-${row.text}`}
+                      className={`text-xs px-2 py-1 rounded ${row.type === 'added' ? 'bg-approved-50 text-approved-800' : 'bg-red-50 text-red-700'}`}
+                    >
+                      {row.type === 'added' ? '+' : '-'} {row.text}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-ink-600">
+                No line-level differences between base and current versions.
+              </p>
+            )}
+          </div>
         </section>
         <pre className="mt-6 text-base leading-relaxed text-ink-800 whitespace-pre-wrap font-sans">
           {doc.currentVersion.content}

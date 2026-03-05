@@ -112,6 +112,8 @@ export const buildDocsRoutes = (deps: RouteDeps): Hono => {
           ? { id: baseVersion.id, version_number: baseVersion.versionNumber }
           : null,
         target_version: { id: version.id, version_number: version.versionNumber },
+        source_content: baseVersion?.content ?? null,
+        target_content: version.content,
         summary: diffSummary,
       },
       read_only: true,
