@@ -59,6 +59,7 @@ export const getApprovals = (deps: RouteDeps) => async (context: Context) => {
       return {
         stepId: step.id,
         draftId: draft.id,
+        currentVersionId: draft.currentVersionId,
         draftTitle: topic?.title ?? 'Untitled',
         reviewer,
         status: step.status,

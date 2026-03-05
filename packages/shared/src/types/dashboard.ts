@@ -71,6 +71,7 @@ export interface WeekScheduleItem {
 export interface ApprovalListItem {
   stepId: EntityId;
   draftId: EntityId;
+  currentVersionId?: EntityId;
   draftTitle: string;
   reviewer: string;
   status: string;

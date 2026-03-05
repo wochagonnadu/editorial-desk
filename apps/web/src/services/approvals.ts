@@ -1,5 +1,5 @@
 // PATH: apps/web/src/services/approvals.ts
-// WHAT: Approvals API adapter for queue, remind, and forward actions
+// WHAT: Approvals API adapter for queue, decision, remind, and forward actions
 // WHY:  Keeps approvals pages aligned with backend contract and payloads
 // RELEVANT: apps/web/src/pages/Approvals.tsx,services/api/src/routes/approvals.ts
 
@@ -9,6 +9,7 @@ import { mapDto } from './api/mapper';
 export type ApprovalItem = {
   stepId: string;
   draftId: string;
+  currentVersionId: string | null;
   draftTitle: string;
   reviewer: string;
   status: string;
@@ -19,11 +20,18 @@ type ApprovalsResponse = {
   data: Array<{
     stepId: string;
     draftId: string;
+    currentVersionId: string | null;
     draftTitle: string;
     reviewer: string;
     status: string;
     timeWaitingSec: number;
   }>;
+};
+
+type ApprovalDecisionInput = {
+  action: 'approve' | 'request_changes';
+  expectedCurrentVersionId: string;
+  comment?: string;
 };
 
 export const fetchApprovals = async (
@@ -37,6 +45,22 @@ export const fetchApprovals = async (
 
 export const sendApprovalReminder = async (token: string, stepId: string): Promise<void> => {
   await apiRequest(`/api/v1/approvals/${stepId}/remind`, { method: 'POST', token });
+};
+
+export const decideApprovalStep = async (
+  token: string,
+  stepId: string,
+  input: ApprovalDecisionInput,
+): Promise<void> => {
+  await apiRequest(`/api/v1/approvals/${stepId}/decision`, {
+    method: 'POST',
+    token,
+    body: {
+      action: input.action,
+      expected_current_version_id: input.expectedCurrentVersionId,
+      comment: input.comment ?? null,
+    },
+  });
 };
 
 export const forwardApprovalStep = async (

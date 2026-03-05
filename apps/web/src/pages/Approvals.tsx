@@ -1,5 +1,5 @@
 // PATH: apps/web/src/pages/Approvals.tsx
-// WHAT: Approvals queue page wired to list/remind/forward API endpoints
+// WHAT: Approvals queue page wired to decision/remind/forward API endpoints
 // WHY:  Replaces static bottleneck list with real pending approval steps
 // RELEVANT: apps/web/src/services/approvals.ts,apps/web/src/services/experts.ts
 
@@ -7,11 +7,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Clock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
+  decideApprovalStep,
   fetchApprovals,
   forwardApprovalStep,
   sendApprovalReminder,
   type ApprovalItem,
 } from '../services/approvals';
+import { ApiError } from '../services/api/client';
 import { fetchExperts } from '../services/experts';
 import { useSession } from '../services/session';
 
@@ -28,6 +30,8 @@ export function Approvals() {
   const [error, setError] = useState<string | null>(null);
   const [busyStepId, setBusyStepId] = useState<string | null>(null);
   const [forwardTo, setForwardTo] = useState<Record<string, string>>({});
+  const [requestChangesOpenFor, setRequestChangesOpenFor] = useState<string | null>(null);
+  const [requestChangesComment, setRequestChangesComment] = useState<Record<string, string>>({});
   const [experts, setExperts] = useState<Array<{ id: string; name: string }>>([]);
 
   const load = async (currentMode: 'stuck' | 'reviewer') => {
@@ -82,6 +86,62 @@ export function Approvals() {
       await load(mode);
     } catch {
       setError('Could not forward reviewer');
+    } finally {
+      setBusyStepId(null);
+    }
+  };
+
+  const approve = async (item: ApprovalItem) => {
+    if (!session || !item.currentVersionId) {
+      setError('Draft has no current version for approval decision');
+      return;
+    }
+    try {
+      setError(null);
+      setBusyStepId(item.stepId);
+      await decideApprovalStep(session.token, item.stepId, {
+        action: 'approve',
+        expectedCurrentVersionId: item.currentVersionId,
+      });
+      await load(mode);
+    } catch (requestError) {
+      if (requestError instanceof ApiError) {
+        setError(requestError.message);
+      } else {
+        setError('Could not approve step');
+      }
+    } finally {
+      setBusyStepId(null);
+    }
+  };
+
+  const requestChanges = async (item: ApprovalItem) => {
+    if (!session || !item.currentVersionId) {
+      setError('Draft has no current version for approval decision');
+      return;
+    }
+    const comment = (requestChangesComment[item.stepId] ?? '').trim();
+    if (comment.length < 5) {
+      setError('Please add at least 5 characters for request changes');
+      return;
+    }
+    try {
+      setError(null);
+      setBusyStepId(item.stepId);
+      await decideApprovalStep(session.token, item.stepId, {
+        action: 'request_changes',
+        expectedCurrentVersionId: item.currentVersionId,
+        comment,
+      });
+      setRequestChangesOpenFor((current) => (current === item.stepId ? null : current));
+      setRequestChangesComment((prev) => ({ ...prev, [item.stepId]: '' }));
+      await load(mode);
+    } catch (requestError) {
+      if (requestError instanceof ApiError) {
+        setError(requestError.message);
+      } else {
+        setError('Could not request changes');
+      }
     } finally {
       setBusyStepId(null);
     }
@@ -150,6 +210,26 @@ export function Approvals() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <button
+                    className="btn-primary py-2 px-4 text-sm"
+                    onClick={() => approve(item)}
+                    disabled={busyStepId === item.stepId}
+                  >
+                    {busyStepId === item.stepId ? 'Saving...' : 'Approve'}
+                  </button>
+
+                  <button
+                    className="btn-secondary py-2 px-4 text-sm"
+                    onClick={() =>
+                      setRequestChangesOpenFor((current) =>
+                        current === item.stepId ? null : item.stepId,
+                      )
+                    }
+                    disabled={busyStepId === item.stepId}
+                  >
+                    Request changes
+                  </button>
+
+                  <button
                     className="btn-secondary py-2 px-4 text-sm"
                     onClick={() => remind(item.stepId)}
                     disabled={busyStepId === item.stepId}
@@ -182,6 +262,31 @@ export function Approvals() {
                     Forward
                   </button>
                 </div>
+
+                {requestChangesOpenFor === item.stepId ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={requestChangesComment[item.stepId] ?? ''}
+                      onChange={(event) =>
+                        setRequestChangesComment((prev) => ({
+                          ...prev,
+                          [item.stepId]: event.target.value,
+                        }))
+                      }
+                      className="w-full min-h-24 rounded-xl border border-ink-200 p-3 text-sm"
+                      placeholder="What should be changed before approval?"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        className="btn-secondary py-2 px-4 text-sm"
+                        onClick={() => requestChanges(item)}
+                        disabled={busyStepId === item.stepId}
+                      >
+                        {busyStepId === item.stepId ? 'Saving...' : 'Submit request changes'}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             );
           })
