@@ -145,6 +145,7 @@ export const processApprovalClick =
           title: topic?.title ?? 'Draft',
           summary: currentVersion.summary ?? currentVersion.content.slice(0, 200),
           version: currentVersion.versionNumber,
+          baseVersion: previousVersion?.versionNumber ?? null,
           changes,
         });
         await deps.db

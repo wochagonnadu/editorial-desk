@@ -14,6 +14,7 @@ interface RequestInput {
   draftId: string;
   token: string;
   version: number;
+  baseVersion?: number | null;
   title: string;
   summary: string;
   changes?: string[];
@@ -45,14 +46,14 @@ export const approvalRequestTemplate = (input: RequestInput): ApprovalTemplate =
     'request_changes',
   );
   const highlights = (input.changes ?? []).filter(Boolean).slice(0, 5);
+  const comparedVersions = input.baseVersion
+    ? `Compared versions: v${input.baseVersion} -> v${input.version}`
+    : `Compared versions: initial -> v${input.version}`;
   const changesTextBlock =
     highlights.length > 0
-      ? `\n\nWhat changed:\n${highlights.map((item) => `- ${item}`).join('\n')}`
-      : '';
-  const changesHtmlBlock =
-    highlights.length > 0
-      ? `<p><strong>What changed</strong></p><ul>${highlights.map((item) => `<li>${item}</li>`).join('')}</ul>`
-      : '';
+      ? `\n\nWhat changed (base to current):\n- ${comparedVersions}\n${highlights.map((item) => `- ${item}`).join('\n')}`
+      : `\n\nWhat changed (base to current):\n- ${comparedVersions}`;
+  const changesHtmlBlock = `<p><strong>What changed (base to current)</strong></p><ul><li>${comparedVersions}</li>${highlights.map((item) => `<li>${item}</li>`).join('')}</ul>`;
   return {
     subject: `Approval requested: ${input.title}`,
     textBody: `Draft: ${input.title}\n\n${input.summary}${changesTextBlock}\n\nApprove: ${approveLink}\nRequest changes: ${changesLink}`,

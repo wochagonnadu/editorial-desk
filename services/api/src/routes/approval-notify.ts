@@ -31,6 +31,7 @@ export const sendApprovalRequest = async (
     title: string;
     summary: string;
     version: number;
+    baseVersion?: number | null;
     changes?: string[];
   },
 ) => {
@@ -54,6 +55,7 @@ export const sendApprovalRequest = async (
     title: input.title,
     summary: input.summary,
     changes: input.changes,
+    baseVersion: input.baseVersion ?? null,
   });
   await deps.email.sendEmail({
     to: input.to,

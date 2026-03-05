@@ -124,6 +124,7 @@ export const forwardReviewer = (deps: RouteDeps) => async (context: Context) => 
     title: topic.title,
     summary: version.summary ?? version.content.slice(0, 200),
     version: version.versionNumber,
+    baseVersion: previousVersion?.versionNumber ?? null,
     changes,
   });
   await logAudit(deps.db, {
