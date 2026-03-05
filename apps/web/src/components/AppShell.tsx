@@ -1,10 +1,10 @@
 // PATH: apps/web/src/components/AppShell.tsx
-// WHAT: Main authenticated shell with sidebar navigation and page outlet
-// WHY:  Keeps app-level layout and transitions consistent across routes
-// RELEVANT: apps/web/src/App.tsx,apps/web/src/pages/Logout.tsx
+// WHAT: Main authenticated shell with desktop sidebar and mobile/tablet nav
+// WHY:  Keeps navigation predictable across viewports and supports one-click logout
+// RELEVANT: apps/web/src/App.tsx,apps/web/src/services/session.tsx
 
 import React from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   LayoutDashboard,
@@ -17,6 +17,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useSession } from '../services/session';
 
 const navItems = [
   { name: 'Home', path: '/app', icon: LayoutDashboard },
@@ -30,6 +31,13 @@ const navItems = [
 
 export function AppShell() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { clearSession } = useSession();
+
+  const handleLogout = React.useCallback(() => {
+    clearSession();
+    navigate('/login', { replace: true });
+  }, [clearSession, navigate]);
 
   return (
     <div className="min-h-[100dvh] bg-beige-50 lg:flex lg:h-[100dvh] lg:overflow-hidden">
@@ -78,13 +86,14 @@ export function AppShell() {
               <p className="text-xs text-ink-500">Managing Editor</p>
             </div>
           </div>
-          <NavLink
-            to="/logout"
-            className="mt-2 flex items-center px-4 py-3 rounded-full text-sm font-medium text-ink-500 hover:bg-beige-50 hover:text-ink-900 transition-colors"
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-2 flex w-full items-center rounded-full px-4 py-3 text-sm font-medium text-ink-500 transition-colors hover:bg-beige-50 hover:text-ink-900"
           >
             <LogOut className="mr-3 h-4 w-4" />
             Sign out
-          </NavLink>
+          </button>
         </div>
       </aside>
 
@@ -94,13 +103,14 @@ export function AppShell() {
           <span className="font-serif text-lg font-medium tracking-masthead uppercase">
             EditorialDESK
           </span>
-          <NavLink
-            to="/logout"
+          <button
+            type="button"
+            onClick={handleLogout}
             className="inline-flex items-center rounded-full border border-ink-200 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-beige-50"
           >
             <LogOut className="mr-1.5 h-3.5 w-3.5" />
             Sign out
-          </NavLink>
+          </button>
         </div>
         <nav className="overflow-x-auto px-2 pb-2" aria-label="Mobile navigation">
           <div className="flex min-w-max gap-1.5">
