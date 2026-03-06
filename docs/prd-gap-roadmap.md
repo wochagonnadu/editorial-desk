@@ -195,9 +195,9 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: вернуть в web явный сценарий `topics.suggest` (кнопка/экран предложений тем), а также разделить в Draft Editor действия `Run factcheck` и `Send for approval` с понятным статусом и отображением проверяемых claim/evidence.
     - Результат: пользователь видит отдельный поток «предложить темы», фактчек запускается и читается как самостоятельный этап, а отправка на approval не смешивается с проверкой фактов.
 
-14. `023-create-draft-input-lock` 🟡
-    - Scope: зафиксировать в `Create Draft` явный `input_snapshot` для `expert + topic seed + strategy plan`, вернуть его echo из `topics/strategy-plan` и привязать copy/start-draft flow к locked context вместо скрытого состояния формы.
-    - Результат: закрывается оставшаяся `must`-история Epic G про явную фиксацию входных параметров генерации.
+14. `023-create-draft-input-lock` ✅
+    - Scope: в `Create Draft` зафиксирован явный `input_snapshot` для `expert + topic seed + strategy plan`; `topics/strategy-plan` возвращает echo snapshot, а copy flow читает locked context вместо скрытого состояния формы.
+    - Результат: закрыта оставшаяся `must`-история Epic G про явную фиксацию входных параметров генерации и воспроизводимый `generate -> copy -> topic -> draft` контур.
 
 15. `024-landing-demo-editorial-polish` 🟡
     - Scope: дожать `Landing` по кластерам Hero / Team / Workflow, добавить demo-controls, mobile simplification и единый motion/visual contract.
@@ -230,6 +230,13 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Зафиксирован минимальный путь для `023`: `topics/strategy-plan` должен возвращать plan вместе с `input_snapshot`, а не только plan-данные.
 - В scope `023` явно разведены `locked snapshot` и mutable form values, чтобы `Copy cluster/FAQ` не зависели от текущего поля `selectedExpertId`.
 - Подтверждено ограничение без новой planning-session сущности: traceability решается через существующий topics/drafts flow и явный UI lock/reset контракт.
+
+### Changelog 023 (closed)
+
+- `topics/strategy-plan` теперь возвращает `plan + input_snapshot`, а web adapter держит их как одну связку без новой таблицы.
+- В `Create Draft` добавлен locked context summary, а состояния `dirty/reset/regenerate` теперь явно видны пользователю.
+- `Copy cluster` / `Copy FAQ` больше не читают текущее mutable поле формы и используют только locked snapshot.
+- Phase D подтвержден реальной проверкой: typecheck web прошел, targeted tests на strategy lock и create-draft flow прошли успешно.
 
 ### Changelog 010 (коротко)
 
