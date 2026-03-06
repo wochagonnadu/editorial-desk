@@ -20,7 +20,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 3. [done] Как пользователь, я хочу залогиниться и попасть в приложение, чтобы начать работу.
 4. [done] Как пользователь, я хочу разлогиниться в 1 клик из приложения, чтобы безопасно завершить сессию на общем устройстве.
 5. [done] Как пользователь, я хочу видеть понятное состояние “я вошёл/не вошёл”, чтобы не теряться.
-6. [partial][should][dep:025] Как эксперт, я хочу при первом входе после magic link увидеть onboarding с моим именем, компанией и голосом компании, чтобы сразу понять контекст редакции и ожидания к review.
+6. [partial][should][dep:025] Как менеджер, я хочу при первом входе в систему увидеть понятный onboarding с ближайшими шагами, чтобы не попадать в пустой рабочий контур.
 
 ## Epic B — Лендинг как «продающий продукт»
 
@@ -110,7 +110,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Spec 020 закрыт: в Settings добавлены generation controls (tone/defaults/guardrails) и preview; policy применяется в `draft.generate` и `draft.revise` системно.
 - Spec 021 закрыт: shell/navigation/logout/action states усилены для UX-надежности на desktop/tablet/mobile baseline.
 - Spec 022 закрыт: в web появился явный `Suggest topics` flow, а `DraftEditor` теперь разводит фактчек и approval как два последовательных этапа с читаемыми claims/evidence.
-- Оставшиеся `partial` истории после 022 привязаны к `023` (Create Draft input lock), `024` (landing demo + editorial polish) и `025` (expert first-login onboarding), чтобы следующий цикл работ не смешивал product must-gap, marketing/UI polish и новый expert-entry flow.
+- Оставшиеся `partial` истории после 022 привязаны к `023` (Create Draft input lock), `024` (landing demo + editorial polish), `025` (manager first-time onboarding) и отдельному `TD-014` по expert email/public-doc flow.
 - Остаточный desktop/tablet smoke с полным `DraftEditor` key-сценарием вынесен в `docs/tech_debt.md` как carry-over проверка.
 
 ## Зависимости на следующую спеку
@@ -121,4 +121,5 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Активных зависимостей на `018-content-strategy-12w-output` не осталось: strategy output и copy-to-topics сценарии подтверждены тестами и route/UI интеграцией.
 - Активная зависимость на `023-create-draft-input-lock`: Epic G / story 2 (`partial`, `must`) остается главным продуктовым хвостом по воспроизводимости Create Draft.
 - Активная зависимость на `024-landing-demo-editorial-polish`: Epic B/C/D и часть Epic L остаются открыты как marketing/UI parity блок.
-- Активная зависимость на `025-expert-first-login-onboarding`: Epic A / story 6 (`partial`, `should`) остается отдельным expert-entry flow, не покрытым текущим magic-link логином и onboarding Step 1->5.
+- Активная зависимость на `025-manager-first-time-onboarding`: Epic A / story 6 (`partial`, `should`) остается отдельным first-run сценарием для manager/team-management роли.
+- Активный `TD-014`: expert flow остается email/doc-first и не должен попадать в основной app shell.
