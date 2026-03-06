@@ -1,17 +1,20 @@
 // PATH: scripts/optimize-team-images.mjs
-// WHAT: Normalizes landing team portraits to lightweight JPG assets
-// WHY:  Keeps marketing portraits web-ready without manual image editing work
+// WHAT: Builds JPG, WebP and AVIF variants for landing team portraits
+// WHY:  Keeps marketing portraits web-ready with modern formats and safe fallback
 // RELEVANT: apps/web/src/public/images/team,apps/web/src/components/TeamCarousel.tsx,apps/web/src/components/HeroInteractive.tsx
 
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, renameSync, rmSync, statSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, extname, join } from 'node:path';
-import { execFileSync } from 'node:child_process';
 
 const teamDir = join(process.cwd(), 'apps/web/src/public/images/team');
 const tempDir = mkdtempSync(join(tmpdir(), 'editorialdesk-team-images-'));
 const maxLongestEdge = 1200;
-const jpegQuality = 70;
+const jpgQuality = 70;
+const webpQuality = 65;
+const avifMin = 20;
+const avifMax = 32;
 
 const sourceFiles = readdirSync(teamDir)
   .filter((file) => ['.png', '.jpg', '.jpeg'].includes(extname(file).toLowerCase()))
@@ -24,13 +27,21 @@ if (sourceFiles.length === 0) {
 }
 
 let totalBefore = 0;
-let totalAfter = 0;
+let totalAfterJpg = 0;
 
 for (const fileName of sourceFiles) {
   const sourcePath = join(teamDir, fileName);
-  const targetName = `${basename(fileName, extname(fileName))}.jpg`;
-  const targetPath = join(teamDir, targetName);
-  const tempPath = join(tempDir, targetName);
+  const baseName = basename(fileName, extname(fileName));
+  const outputPaths = {
+    jpg: join(teamDir, `${baseName}.jpg`),
+    webp: join(teamDir, `${baseName}.webp`),
+    avif: join(teamDir, `${baseName}.avif`),
+  };
+  const tempPaths = {
+    jpg: join(tempDir, `${baseName}.jpg`),
+    webp: join(tempDir, `${baseName}.webp`),
+    avif: join(tempDir, `${baseName}.avif`),
+  };
   const beforeSize = statSync(sourcePath).size;
 
   execFileSync(
@@ -41,32 +52,61 @@ for (const fileName of sourceFiles) {
       'jpeg',
       '-s',
       'formatOptions',
-      String(jpegQuality),
+      String(jpgQuality),
       '-Z',
       String(maxLongestEdge),
       sourcePath,
       '--out',
-      tempPath,
+      tempPaths.jpg,
     ],
     { stdio: 'ignore' },
   );
 
-  if (sourcePath !== targetPath) unlinkSync(sourcePath);
-  renameSync(tempPath, targetPath);
+  execFileSync(
+    'cwebp',
+    ['-quiet', '-q', String(webpQuality), tempPaths.jpg, '-o', tempPaths.webp],
+    {
+      stdio: 'ignore',
+    },
+  );
 
-  const afterSize = statSync(targetPath).size;
+  execFileSync(
+    'avifenc',
+    [
+      '--min',
+      String(avifMin),
+      '--max',
+      String(avifMax),
+      '--speed',
+      '6',
+      tempPaths.jpg,
+      tempPaths.avif,
+    ],
+    { stdio: 'ignore' },
+  );
+
+  renameSync(tempPaths.jpg, outputPaths.jpg);
+  renameSync(tempPaths.webp, outputPaths.webp);
+  renameSync(tempPaths.avif, outputPaths.avif);
+
+  if (![outputPaths.jpg, outputPaths.webp, outputPaths.avif].includes(sourcePath)) {
+    unlinkSync(sourcePath);
+  }
+
+  const jpgSize = statSync(outputPaths.jpg).size;
+  const webpSize = statSync(outputPaths.webp).size;
+  const avifSize = statSync(outputPaths.avif).size;
+
   totalBefore += beforeSize;
-  totalAfter += afterSize;
+  totalAfterJpg += jpgSize;
 
-  const savedKb = ((beforeSize - afterSize) / 1024).toFixed(1);
   console.log(
-    `${fileName}: ${Math.round(beforeSize / 1024)}KB -> ${Math.round(afterSize / 1024)}KB (${savedKb}KB saved)`,
+    `${fileName}: jpg ${Math.round(jpgSize / 1024)}KB, webp ${Math.round(webpSize / 1024)}KB, avif ${Math.round(avifSize / 1024)}KB`,
   );
 }
 
 rmSync(tempDir, { recursive: true, force: true });
 
-const totalSavedKb = ((totalBefore - totalAfter) / 1024).toFixed(1);
 console.log(
-  `Total: ${Math.round(totalBefore / 1024)}KB -> ${Math.round(totalAfter / 1024)}KB (${totalSavedKb}KB saved)`,
+  `Total JPG fallback: ${Math.round(totalBefore / 1024)}KB -> ${Math.round(totalAfterJpg / 1024)}KB`,
 );

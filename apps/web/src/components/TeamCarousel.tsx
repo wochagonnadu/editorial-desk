@@ -5,27 +5,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import averyImage from '../public/images/team/avery.jpg';
-import blairImage from '../public/images/team/blair.jpg';
-import caseyImage from '../public/images/team/casey.jpg';
-import jordanImage from '../public/images/team/jordan.jpg';
-import morganImage from '../public/images/team/morgan.jpg';
-import quinnImage from '../public/images/team/quinn.jpg';
-import rowanImage from '../public/images/team/rowan.jpg';
-import samImage from '../public/images/team/sam.jpg';
-import taylorImage from '../public/images/team/taylor.jpg';
-
-const teamImages = {
-  avery: averyImage,
-  blair: blairImage,
-  casey: caseyImage,
-  jordan: jordanImage,
-  morgan: morganImage,
-  quinn: quinnImage,
-  rowan: rowanImage,
-  sam: samImage,
-  taylor: taylorImage,
-} as const;
+import { TeamPortrait } from './TeamPortrait';
+import { teamPortraits } from '../lib/teamPortraits';
 
 const teamMembers = [
   {
@@ -33,63 +14,63 @@ const teamMembers = [
     name: 'Morgan',
     role: 'Editor-in-Chief',
     quote: 'I decide what goes to production.',
-    image: teamImages.morgan,
+    image: teamPortraits.morgan,
   },
   {
     id: 'casey',
     name: 'Casey',
     role: 'The Interviewer',
     quote: "I capture the expert's voice in 2 minutes.",
-    image: teamImages.casey,
+    image: teamPortraits.casey,
   },
   {
     id: 'rowan',
     name: 'Rowan',
     role: 'Voice Stylist',
     quote: 'I make sure it sounds exactly like them.',
-    image: teamImages.rowan,
+    image: teamPortraits.rowan,
   },
   {
     id: 'blair',
     name: 'Blair',
     role: 'Structure Editor',
     quote: 'I build the draft into a clear structure.',
-    image: teamImages.blair,
+    image: teamPortraits.blair,
   },
   {
     id: 'avery',
     name: 'Avery',
     role: 'Fact Checker',
     quote: 'I catch the factual holes.',
-    image: teamImages.avery,
+    image: teamPortraits.avery,
   },
   {
     id: 'jordan',
     name: 'Jordan',
     role: 'Compliance Officer',
     quote: 'I ensure every claim is safe and honest.',
-    image: teamImages.jordan,
+    image: teamPortraits.jordan,
   },
   {
     id: 'sam',
     name: 'Sam',
     role: 'The Polisher',
     quote: 'I remove the corporate fluff.',
-    image: teamImages.sam,
+    image: teamPortraits.sam,
   },
   {
     id: 'quinn',
     name: 'Quinn',
     role: 'Revision Coordinator',
     quote: 'I merge all edits into one clean version.',
-    image: teamImages.quinn,
+    image: teamPortraits.quinn,
   },
   {
     id: 'taylor',
     name: 'Taylor',
     role: 'Quality Gatekeeper',
     quote: 'I give the final green light.',
-    image: teamImages.taylor,
+    image: teamPortraits.taylor,
   },
 ];
 
@@ -231,15 +212,14 @@ export function TeamCarousel() {
             >
               <div className="aspect-[3/4] rounded-[1.5rem] overflow-hidden relative bg-ink-100 mb-5 shadow-inner">
                 {/* Image with dynamic filters */}
-                <img
-                  src={member.image}
+                <TeamPortrait
+                  source={member.image}
                   alt={member.name}
                   className={`w-full h-full object-cover transition-all duration-700 ease-[0.22,1,0.36,1] ${
                     isActive
                       ? 'grayscale-0 blur-0 scale-100 opacity-100 contrast-100 sepia-0'
                       : 'grayscale-[0.6] blur-[2px] scale-105 opacity-90 contrast-125 sepia-[0.2]'
                   }`}
-                  referrerPolicy="no-referrer"
                 />
 
                 {/* Subtle grain overlay */}

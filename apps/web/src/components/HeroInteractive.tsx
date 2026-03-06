@@ -15,8 +15,8 @@ import {
   Mail,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import caseyImage from '../public/images/team/casey.jpg';
-import morganImage from '../public/images/team/morgan.jpg';
+import { TeamPortrait } from './TeamPortrait';
+import { teamPortraits } from '../lib/teamPortraits';
 
 const customEase = [0.22, 1, 0.36, 1] as const;
 
@@ -240,11 +240,10 @@ export function HeroInteractive() {
               <div className="flex-1 relative bg-beige-50/20 overflow-hidden">
                 {/* Team Pulse (Always visible) */}
                 <div className="absolute top-4 right-4 bg-white rounded-full shadow-sm border border-ink-100 p-1.5 pr-4 flex items-center space-x-2 z-30">
-                  <img
-                    src={morganImage}
-                    className="w-6 h-6 rounded-full"
+                  <TeamPortrait
+                    source={teamPortraits.morgan}
                     alt="Editor"
-                    referrerPolicy="no-referrer"
+                    className="w-6 h-6 rounded-full object-cover"
                   />
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-ink-900 leading-none">Morgan</span>
@@ -270,11 +269,10 @@ export function HeroInteractive() {
                       className="absolute top-12 left-12 w-64 bg-white rounded-2xl shadow-sm border border-ink-100 p-4 z-10"
                     >
                       <div className="flex items-center space-x-3 mb-3 relative">
-                        <img
-                          src={caseyImage}
-                          className="w-12 h-12 rounded-full"
+                        <TeamPortrait
+                          source={teamPortraits.casey}
                           alt="Expert"
-                          referrerPolicy="no-referrer"
+                          className="w-12 h-12 rounded-full object-cover"
                         />
                         <div>
                           <h4 className="text-sm font-bold text-ink-900">Dr. Taylor</h4>
