@@ -27,6 +27,8 @@ import { useSession } from '../services/session';
 type Tab = 'factcheck' | 'changes' | 'audit';
 
 const toStatus = (value: string) => value.replaceAll('_', ' ');
+const isClaimConfirmed = (verdict: string) =>
+  verdict === 'confirmed' || verdict === 'expert_confirmed';
 
 export function DraftEditor() {
   const { id = '' } = useParams();
@@ -46,6 +48,10 @@ export function DraftEditor() {
   const [confirmingClaimId, setConfirmingClaimId] = useState<string | null>(null);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [factcheckError, setFactcheckError] = useState<string | null>(null);
+  const [factcheckSuccess, setFactcheckSuccess] = useState<string | null>(null);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [approvalSuccess, setApprovalSuccess] = useState<string | null>(null);
   const [diffSourceVersionId, setDiffSourceVersionId] = useState('');
   const [diffTargetVersionId, setDiffTargetVersionId] = useState('');
   const [editorVersionId, setEditorVersionId] = useState('');
@@ -112,6 +118,46 @@ export function DraftEditor() {
     () => (detail ? content.trim() !== detail.content.trim() : false),
     [content, detail],
   );
+  const unresolvedClaimsCount = useMemo(
+    () =>
+      detail?.factcheckResults.filter((item) => !isClaimConfirmed(item.verdict)).length ?? 0,
+    [detail],
+  );
+  const factcheckStage = useMemo(() => {
+    if (isRunningFactcheck) {
+      return {
+        key: 'running',
+        badgeClass: 'status-pill status-factcheck',
+        title: 'Factcheck is running',
+        description: 'We are verifying the current version and refreshing claims/evidence.',
+      };
+    }
+    if (!detail || detail.factcheckResults.length === 0) {
+      return {
+        key: 'idle',
+        badgeClass: 'status-pill status-drafting',
+        title: 'Factcheck not started',
+        description: 'Run factcheck before sending this draft for approval.',
+      };
+    }
+    if (!detail.hasCompletedFactcheck || unresolvedClaimsCount > 0) {
+      return {
+        key: 'needs attention',
+        badgeClass: 'status-pill status-review',
+        title: 'Factcheck needs attention',
+        description:
+          unresolvedClaimsCount > 0
+            ? `${unresolvedClaimsCount} claim(s) still need review or expert confirmation.`
+            : 'Review the latest claim results before moving to approval.',
+      };
+    }
+    return {
+      key: 'completed',
+      badgeClass: 'status-pill status-approved',
+      title: 'Factcheck completed',
+      description: 'Claims are verified for the current version. Approval can be sent now.',
+    };
+  }, [detail, isRunningFactcheck, unresolvedClaimsCount]);
 
   useEffect(() => {
     if (versions.length === 0) {
@@ -212,19 +258,22 @@ export function DraftEditor() {
   const handleSendForReview = async () => {
     if (!session || !detail) return;
     if (!detail.hasCompletedFactcheck) {
-      setError('Run factcheck first before sending to approval');
+      setApprovalSuccess(null);
+      setApprovalError('Run factcheck first before sending to approval.');
       return;
     }
     try {
-      setError(null);
+      setApprovalError(null);
+      setApprovalSuccess(null);
       setIsSendingReview(true);
       await sendDraftForReview(session.token, detail.id, detail.expertId);
       await load();
+      setApprovalSuccess('Draft sent for approval. Reviewer flow is now active.');
     } catch (requestError) {
       if (requestError instanceof ApiError) {
-        setError(requestError.message);
+        setApprovalError(requestError.message);
       } else {
-        setError('Could not send for approval');
+        setApprovalError('Could not send for approval');
       }
     } finally {
       setIsSendingReview(false);
@@ -234,16 +283,19 @@ export function DraftEditor() {
   const handleRunFactcheck = async () => {
     if (!session || !detail) return;
     try {
-      setError(null);
+      setFactcheckError(null);
+      setFactcheckSuccess(null);
+      setApprovalError(null);
       setIsRunningFactcheck(true);
       await runDraftFactcheck(session.token, detail.id);
       await load();
       setActiveTab('factcheck');
+      setFactcheckSuccess('Factcheck completed. Review claims and evidence before approval.');
     } catch (requestError) {
       if (requestError instanceof ApiError) {
-        setError(requestError.message);
+        setFactcheckError(requestError.message);
       } else {
-        setError('Could not run factcheck');
+        setFactcheckError('Could not run factcheck');
       }
     } finally {
       setIsRunningFactcheck(false);
@@ -389,28 +441,78 @@ export function DraftEditor() {
           >
             {isUpdatingDraft ? 'Updating...' : 'Update draft'}
           </button>
-          <button
-            className="btn-secondary px-4 py-2 text-sm"
-            onClick={handleRunFactcheck}
-            disabled={isRunningFactcheck}
-          >
-            {isRunningFactcheck ? 'Running factcheck...' : 'Run factcheck'}
-          </button>
-          <button
-            className="btn-primary px-4 py-2 text-sm"
-            onClick={handleSendForReview}
-            disabled={isSendingReview || !detail.hasCompletedFactcheck}
-          >
-            {isSendingReview ? 'Sending...' : 'Send for approval'}
-          </button>
         </div>
       </header>
 
-      {!detail.hasCompletedFactcheck ? (
-        <div className="border-b border-ink-100 bg-beige-50 px-4 py-2 text-xs text-ink-700 md:px-6 lg:px-8">
-          Approval is available only after successful factcheck.
+      <div className="border-b border-ink-100 bg-white px-4 py-4 md:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="rounded-2xl border border-ink-100 bg-beige-50 p-4 xl:max-w-xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={factcheckStage.badgeClass}>{factcheckStage.key}</span>
+              <span className="text-xs uppercase tracking-wide text-ink-500">Factcheck stage</span>
+            </div>
+            <p className="mt-3 text-sm font-medium text-ink-900">{factcheckStage.title}</p>
+            <p className="mt-1 text-sm text-ink-600">{factcheckStage.description}</p>
+            <p className="mt-2 text-xs text-ink-500">
+              Claims found: {detail.factcheckResults.length} • Needs attention:{' '}
+              {unresolvedClaimsCount}
+            </p>
+          </div>
+
+          <div className="grid gap-3 xl:min-w-[22rem]">
+            <div className="rounded-2xl border border-ink-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-ink-500">Step 1</p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-ink-900">Run factcheck</p>
+                  <p className="text-xs text-ink-500">
+                    Verify claims and refresh evidence for the current draft version.
+                  </p>
+                </div>
+                <button
+                  className="btn-secondary px-4 py-2 text-sm"
+                  onClick={handleRunFactcheck}
+                  disabled={isRunningFactcheck}
+                >
+                  {isRunningFactcheck ? 'Running...' : 'Run factcheck'}
+                </button>
+              </div>
+              {factcheckError ? <p className="mt-3 text-sm text-red-600">{factcheckError}</p> : null}
+              {factcheckSuccess ? (
+                <p className="mt-3 text-sm text-approved-700">{factcheckSuccess}</p>
+              ) : null}
+            </div>
+
+            <div className="rounded-2xl border border-ink-100 p-4">
+              <p className="text-xs uppercase tracking-wide text-ink-500">Step 2</p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-ink-900">Send for approval</p>
+                  <p className="text-xs text-ink-500">
+                    Start reviewer flow only after factcheck is complete for this version.
+                  </p>
+                </div>
+                <button
+                  className="btn-primary px-4 py-2 text-sm"
+                  onClick={handleSendForReview}
+                  disabled={isSendingReview || !detail.hasCompletedFactcheck}
+                >
+                  {isSendingReview ? 'Sending...' : 'Send for approval'}
+                </button>
+              </div>
+              {!detail.hasCompletedFactcheck ? (
+                <p className="mt-3 text-sm text-ink-600">
+                  Approval unlocks after a successful factcheck run.
+                </p>
+              ) : null}
+              {approvalError ? <p className="mt-3 text-sm text-red-600">{approvalError}</p> : null}
+              {approvalSuccess ? (
+                <p className="mt-3 text-sm text-approved-700">{approvalSuccess}</p>
+              ) : null}
+            </div>
+          </div>
         </div>
-      ) : null}
+      </div>
 
       {error ? (
         <div className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-600 md:px-6 lg:px-8">
@@ -503,8 +605,7 @@ export function DraftEditor() {
                   <div className="text-sm text-ink-500">No factcheck results yet.</div>
                 ) : (
                   detail.factcheckResults.map((item) => {
-                    const isConfirmed =
-                      item.verdict === 'confirmed' || item.verdict === 'expert_confirmed';
+                    const isConfirmed = isClaimConfirmed(item.verdict);
                     return (
                       <div
                         key={item.claimId}
