@@ -21,6 +21,12 @@ import {
 import { useSession } from '../services/session';
 import { StrategyLockSummary } from './create-draft/StrategyLockSummary';
 import { StrategyPlanView } from './create-draft/StrategyPlanView';
+import {
+  getStrategyMismatchMessage,
+  isStrategyDirty as getIsStrategyDirty,
+  normalizeTopicSeed,
+  resetFormToSnapshot,
+} from './create-draft/strategy-lock';
 
 export function CreateDraft() {
   const navigate = useNavigate();
@@ -67,16 +73,18 @@ export function CreateDraft() {
     () => expertOptions.filter((item) => item.status === 'active'),
     [expertOptions],
   );
-  const normalizedTopicTitle = topicTitle.trim();
-  const isStrategyDirty =
-    strategySnapshot !== null &&
-    (strategySnapshot.expert.id !== selectedExpertId ||
-      strategySnapshot.topicSeed !== normalizedTopicTitle);
+  const normalizedTopicTitle = normalizeTopicSeed(topicTitle);
+  const isStrategyDirty = getIsStrategyDirty(strategySnapshot, {
+    expertId: selectedExpertId,
+    topicSeed: topicTitle,
+  });
+  const strategyMismatchMessage = getStrategyMismatchMessage(isStrategyDirty);
 
   const resetInputsToLockedSnapshot = () => {
     if (!strategySnapshot) return;
-    setSelectedExpertId(strategySnapshot.expert.id);
-    setTopicTitle(strategySnapshot.topicSeed);
+    const reset = resetFormToSnapshot(strategySnapshot);
+    setSelectedExpertId(reset.expertId);
+    setTopicTitle(reset.topicSeed);
     setPlanError(null);
     setCopyError(null);
   };
@@ -256,11 +264,8 @@ export function CreateDraft() {
             isGenerating={isGeneratingPlan}
           />
         ) : null}
-        {strategySnapshot && isStrategyDirty ? (
-          <p className="text-sm text-amber-700">
-            Current form inputs differ from the locked plan. Copy actions still use the locked
-            strategy context until you reset inputs or regenerate the plan.
-          </p>
+        {strategyMismatchMessage ? (
+          <p className="text-sm text-amber-700">{strategyMismatchMessage}</p>
         ) : null}
         {planError ? <p className="text-sm text-red-600">{planError}</p> : null}
         {strategyPlan ? (

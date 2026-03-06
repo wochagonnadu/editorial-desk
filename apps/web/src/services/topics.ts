@@ -119,20 +119,59 @@ type SuggestedTopicsResponse = {
 };
 
 type StrategyPlanResponse = {
-  plan: StrategyPlan;
-  input_snapshot: {
+  plan: {
+    horizonWeeks: number;
+    pillars: Array<{
+      pillarId: string;
+      title: string;
+      goal: string;
+      clusters: Array<{
+        itemId: string;
+        week: number;
+        title: string;
+        angle: string;
+        targetKeyword?: string;
+        interlinkTo: string[];
+        copyPayload: {
+          title: string;
+          description: string;
+          sourceType: string;
+          expertId?: string;
+        };
+      }>;
+      faq: Array<{
+        itemId: string;
+        week: number;
+        question: string;
+        shortAnswer: string;
+        interlinkTo: string[];
+        copyPayload: {
+          title: string;
+          description: string;
+          sourceType: string;
+          expertId?: string;
+        };
+      }>;
+    }>;
+    interlinking: Array<{
+      fromItemId: string;
+      toItemId: string;
+      anchorHint: string;
+    }>;
+  };
+  inputSnapshot: {
     expert: {
       id: string;
       name: string;
     };
-    topic_seed: string;
+    topicSeed: string;
     audience: string;
     market: string;
     constraints: {
       tone: string;
-      max_items_per_week: number;
+      maxItemsPerWeek: number;
     };
-    generated_at: string;
+    generatedAt: string;
   };
 };
 
@@ -199,17 +238,56 @@ export const generateStrategyPlan = async (
   });
   const response = mapDto<StrategyPlanResponse>(raw);
   return {
-    plan: response.plan,
+    plan: {
+      horizon_weeks: response.plan.horizonWeeks,
+      pillars: response.plan.pillars.map((pillar) => ({
+        pillar_id: pillar.pillarId,
+        title: pillar.title,
+        goal: pillar.goal,
+        clusters: pillar.clusters.map((cluster) => ({
+          item_id: cluster.itemId,
+          week: cluster.week,
+          title: cluster.title,
+          angle: cluster.angle,
+          target_keyword: cluster.targetKeyword,
+          interlink_to: cluster.interlinkTo,
+          copy_payload: {
+            title: cluster.copyPayload.title,
+            description: cluster.copyPayload.description,
+            source_type: cluster.copyPayload.sourceType,
+            expert_id: cluster.copyPayload.expertId,
+          },
+        })),
+        faq: pillar.faq.map((item) => ({
+          item_id: item.itemId,
+          week: item.week,
+          question: item.question,
+          short_answer: item.shortAnswer,
+          interlink_to: item.interlinkTo,
+          copy_payload: {
+            title: item.copyPayload.title,
+            description: item.copyPayload.description,
+            source_type: item.copyPayload.sourceType,
+            expert_id: item.copyPayload.expertId,
+          },
+        })),
+      })),
+      interlinking: response.plan.interlinking.map((edge) => ({
+        from_item_id: edge.fromItemId,
+        to_item_id: edge.toItemId,
+        anchor_hint: edge.anchorHint,
+      })),
+    },
     inputSnapshot: {
-      expert: response.input_snapshot.expert,
-      topicSeed: response.input_snapshot.topic_seed,
-      audience: response.input_snapshot.audience,
-      market: response.input_snapshot.market,
+      expert: response.inputSnapshot.expert,
+      topicSeed: response.inputSnapshot.topicSeed,
+      audience: response.inputSnapshot.audience,
+      market: response.inputSnapshot.market,
       constraints: {
-        tone: response.input_snapshot.constraints.tone,
-        maxItemsPerWeek: response.input_snapshot.constraints.max_items_per_week,
+        tone: response.inputSnapshot.constraints.tone,
+        maxItemsPerWeek: response.inputSnapshot.constraints.maxItemsPerWeek,
       },
-      generatedAt: response.input_snapshot.generated_at,
+      generatedAt: response.inputSnapshot.generatedAt,
     },
   };
 };
