@@ -208,6 +208,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: добавить отдельный first-run onboarding для manager/team-management пользователя после первого входа в систему.
     - Результат: менеджер не попадает в пустой app shell, а получает понятный стартовый сценарий с ближайшими шагами.
 
+17. `026-manager-company-context-onboarding` 🟡
+    - Scope: добавить в manager first-run onboarding сбор manager name, company description и настройку generation controls с preview.
+    - Результат: editorial pipeline и эксперты получают бизнес-контекст компании уже при первом входе, а не только после ручной настройки `Settings`.
+
 ## 8) Синхронизация с user stories (итог 010)
 
 Конфликтов формулировок между `docs/prd-gap-roadmap.md` и `docs/user_stories.md` не найдено.
@@ -217,6 +221,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - риск onboarding Step 1->5 закрыт в Spec 011 и снят как активная зависимость;
 - закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
 - оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap), `024` (marketing/UI parity), `025` (manager first-time onboarding) и отдельный `TD-014` для expert email/public-doc flow.
+- Следующим продуктовым хвостом после базового first-run стал `026`: manager должен задать company context и generation policy прямо в onboarding, а не только позже в `Settings`.
 
 ### Changelog 023-024 prep (коротко)
 
