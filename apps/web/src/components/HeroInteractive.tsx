@@ -1,3 +1,8 @@
+// PATH: apps/web/src/components/HeroInteractive.tsx
+// WHAT: Hero demo scene with guided editorial workflow preview
+// WHY:  Lets visitors understand the product before signup without leaving hero
+// RELEVANT: apps/web/src/pages/Landing.tsx,apps/web/src/components/TeamCarousel.tsx,apps/web/src/components/WorkflowInteractive.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   ArrowRight,
@@ -28,6 +33,9 @@ export function HeroInteractive() {
   const [currentStep, setCurrentStep] = useState(-1);
   const [isPaused, setIsPaused] = useState(false);
 
+  const canGoBack = currentStep > 0;
+  const isComplete = currentStep === steps.length - 1;
+
   useEffect(() => {
     if (!isActive || isPaused) return;
 
@@ -39,21 +47,20 @@ export function HeroInteractive() {
       1800, // 4 -> 5: Content Plan (7.6-9.4s)
       2600, // 5 -> 6: Review & Edits (9.4-12.0s)
       2800, // 6 -> 7: Fact Check + Final (12.0-14.8s)
-      2000, // 7 -> 0: Reset
     ];
 
     let timeout: NodeJS.Timeout;
 
     const advanceStep = () => {
       setCurrentStep((prev) => {
-        if (prev >= 6) return -1; // Reset
+        if (prev >= steps.length - 1) return prev;
         return prev + 1;
       });
     };
 
     if (currentStep === -1) {
       timeout = setTimeout(() => setCurrentStep(0), 700);
-    } else {
+    } else if (currentStep < steps.length - 1) {
       timeout = setTimeout(advanceStep, timings[currentStep]);
     }
 
@@ -68,6 +75,15 @@ export function HeroInteractive() {
   const handleReset = () => {
     setIsActive(false);
     setCurrentStep(-1);
+  };
+
+  const handleRestart = () => {
+    setIsActive(true);
+    setCurrentStep(0);
+  };
+
+  const handleBack = () => {
+    setCurrentStep((prev) => (prev > 0 ? prev - 1 : prev));
   };
 
   return (
@@ -120,14 +136,36 @@ export function HeroInteractive() {
                 See how it works <ArrowRight className="ml-2 w-5 h-5" />
               </motion.button>
             ) : (
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                onClick={handleReset}
-                className="text-sm font-medium text-ink-400 hover:text-ink-900 flex items-center transition-colors"
+                className="flex flex-wrap items-center gap-3"
               >
-                <RotateCcw className="w-4 h-4 mr-2" /> Restart
-              </motion.button>
+                <button
+                  onClick={handleBack}
+                  disabled={!canGoBack}
+                  className="text-sm font-medium text-ink-500 hover:text-ink-900 disabled:text-ink-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleRestart}
+                  className="text-sm font-medium text-ink-500 hover:text-ink-900 flex items-center transition-colors"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" /> Restart
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="text-sm font-medium text-ink-400 hover:text-ink-900 transition-colors"
+                >
+                  Close demo
+                </button>
+                <span className="text-xs uppercase tracking-[0.18em] text-ink-400">
+                  {isComplete
+                    ? 'Review-ready'
+                    : `Step ${Math.max(currentStep + 1, 1)} of ${steps.length}`}
+                </span>
+              </motion.div>
             )}
           </motion.div>
         </motion.div>
@@ -146,13 +184,29 @@ export function HeroInteractive() {
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
-            {/* Mobile Restart Button */}
-            <button
-              onClick={handleReset}
-              className="md:hidden absolute top-4 right-4 z-50 bg-white/90 backdrop-blur border border-ink-200 p-2.5 rounded-full shadow-sm text-ink-600 hover:text-ink-900"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+            <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between gap-3 md:hidden">
+              <div className="rounded-full bg-white/90 backdrop-blur border border-ink-200 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-ink-500 shadow-sm">
+                {isComplete
+                  ? 'Review-ready'
+                  : `Step ${Math.max(currentStep + 1, 1)} / ${steps.length}`}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleBack}
+                  disabled={!canGoBack}
+                  className="bg-white/90 backdrop-blur border border-ink-200 px-3 py-2 rounded-full shadow-sm text-xs font-medium text-ink-700 disabled:text-ink-300 disabled:cursor-not-allowed"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleRestart}
+                  className="bg-white/90 backdrop-blur border border-ink-200 p-2.5 rounded-full shadow-sm text-ink-600 hover:text-ink-900"
+                  aria-label="Restart demo"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
             {/* Scaled Wrapper for Mobile */}
             <div className="absolute md:relative w-[800px] h-[600px] origin-center md:origin-left transform scale-[0.45] sm:scale-[0.6] md:scale-100 flex">

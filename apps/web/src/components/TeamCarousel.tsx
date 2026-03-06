@@ -1,3 +1,8 @@
+// PATH: apps/web/src/components/TeamCarousel.tsx
+// WHAT: Horizontal landing carousel for the editorial team roles
+// WHY:  Shows who does what in the newsroom with readable touch-friendly cards
+// RELEVANT: apps/web/src/pages/Landing.tsx,apps/web/src/components/HeroInteractive.tsx,docs/user_stories.md
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 
@@ -68,9 +73,46 @@ const teamMembers = [
 ];
 
 export function TeamCarousel() {
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(teamMembers[0]?.id ?? null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(true);
+
+  const updateScrollState = React.useCallback(() => {
+    const node = carouselRef.current;
+    if (!node) return;
+
+    const maxScrollLeft = node.scrollWidth - node.clientWidth;
+    setCanScrollPrev(node.scrollLeft > 8);
+    setCanScrollNext(node.scrollLeft < maxScrollLeft - 8);
+  }, []);
+
+  const scrollToMember = React.useCallback((memberId: string) => {
+    const node = carouselRef.current;
+    const card = cardRefs.current[memberId];
+    if (!node || !card) return;
+
+    const left = card.offsetLeft - 24;
+    node.scrollTo({ left, behavior: 'smooth' });
+    setActiveId(memberId);
+  }, []);
+
+  const scrollByDirection = React.useCallback(
+    (direction: 'prev' | 'next') => {
+      const currentIndex = teamMembers.findIndex((member) => member.id === activeId);
+      const fallbackIndex = direction === 'next' ? 0 : teamMembers.length - 1;
+      const baseIndex = currentIndex === -1 ? fallbackIndex : currentIndex;
+      const nextIndex =
+        direction === 'next'
+          ? Math.min(baseIndex + 1, teamMembers.length - 1)
+          : Math.max(baseIndex - 1, 0);
+
+      scrollToMember(teamMembers[nextIndex].id);
+    },
+    [activeId, scrollToMember],
+  );
 
   // Handle click outside to close active card on mobile
   useEffect(() => {
@@ -83,8 +125,22 @@ export function TeamCarousel() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    updateScrollState();
+    const node = carouselRef.current;
+    if (!node) return;
+
+    node.addEventListener('scroll', updateScrollState, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+
+    return () => {
+      node.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [updateScrollState]);
+
   return (
-    <div className="w-full relative" ref={carouselRef}>
+    <div className="w-full relative">
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -99,19 +155,55 @@ export function TeamCarousel() {
         }}
       />
 
-      {/* 
-        The padding-left calculation ensures the carousel aligns with the max-w-7xl container 
-        (which is 80rem or 1280px wide) while allowing the cards to bleed off the right edge.
+      <div className="max-w-7xl mx-auto px-6 mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-ink-500 mb-2">
+            Roles across the newsroom
+          </p>
+          <p className="text-sm md:text-base text-ink-500 max-w-2xl leading-relaxed">
+            Swipe or scroll through the team. Tap any card to pin the role summary and read what
+            that person owns.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => scrollByDirection('prev')}
+            disabled={!canScrollPrev}
+            className="rounded-full border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-white disabled:text-ink-300 disabled:cursor-not-allowed"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollByDirection('next')}
+            disabled={!canScrollNext}
+            className="rounded-full border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-white disabled:text-ink-300 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
+      {/*
+        The padding-left calculation keeps the scroll rail aligned with the page container
+        while still letting the final cards breathe near the right edge.
       */}
-      <div className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-12 pt-4 px-6 md:pl-[max(1.5rem,calc((100vw-80rem)/2+1.5rem))] md:pr-6 hide-scrollbar">
+      <div
+        className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-12 pt-4 px-6 md:pl-[max(1.5rem,calc((100vw-80rem)/2+1.5rem))] md:pr-6 hide-scrollbar"
+        ref={carouselRef}
+      >
         {teamMembers.map((member) => {
           const isActive = activeId === member.id || hoveredId === member.id;
 
           return (
             <motion.div
               key={member.id}
+              ref={(node) => {
+                cardRefs.current[member.id] = node;
+              }}
               className={`relative flex-shrink-0 w-[260px] md:w-[300px] snap-start group cursor-pointer rounded-[2rem] p-3 transition-colors duration-500 border ${isActive ? 'bg-beige-50 border-ink-200' : 'bg-transparent border-transparent hover:border-ink-100'}`}
-              onClick={() => setActiveId(activeId === member.id ? null : member.id)}
+              onClick={() => setActiveId(member.id)}
               onMouseEnter={() => setHoveredId(member.id)}
               onMouseLeave={() => setHoveredId(null)}
               layout
@@ -154,6 +246,20 @@ export function TeamCarousel() {
                 <p className="text-ink-500 text-sm font-medium tracking-wide uppercase">
                   {member.role}
                 </p>
+                <p className="mt-3 text-sm leading-relaxed text-ink-600">{member.quote}</p>
+                <div className="mt-4 flex items-center justify-between text-[11px] font-medium uppercase tracking-[0.18em] text-ink-400">
+                  <span>{isActive ? 'Role in focus' : 'Tap to focus'}</span>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      scrollToMember(member.id);
+                    }}
+                    className="text-terracotta-600 hover:text-terracotta-700"
+                  >
+                    Reveal
+                  </button>
+                </div>
               </div>
             </motion.div>
           );
