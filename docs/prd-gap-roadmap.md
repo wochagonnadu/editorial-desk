@@ -196,7 +196,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Результат: пользователь видит отдельный поток «предложить темы», фактчек запускается и читается как самостоятельный этап, а отправка на approval не смешивается с проверкой фактов.
 
 14. `023-create-draft-input-lock` 🟡
-    - Scope: зафиксировать в `Create Draft` явный `input_snapshot` для `expert + topic seed + strategy plan`, чтобы copy/start-draft flow был воспроизводим и не зависел от скрытого состояния формы.
+    - Scope: зафиксировать в `Create Draft` явный `input_snapshot` для `expert + topic seed + strategy plan`, вернуть его echo из `topics/strategy-plan` и привязать copy/start-draft flow к locked context вместо скрытого состояния формы.
     - Результат: закрывается оставшаяся `must`-история Epic G про явную фиксацию входных параметров генерации.
 
 15. `024-landing-demo-editorial-polish` 🟡
@@ -224,6 +224,12 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Остаток user stories разбит на три spec-блока (`023`, `024`, `025`) и отдельный `TD-014` для future public-doc-only flow эксперта.
 - Для `023/024/025` созданы полные наборы артефактов (`README/context/plan/tasks/checklist`).
 - В `tech_debt` отдельно сохранено правило: эксперт работает через письмо или public-doc ссылку, а не через основной кабинет.
+
+### Changelog 023 (spec refresh)
+
+- Зафиксирован минимальный путь для `023`: `topics/strategy-plan` должен возвращать plan вместе с `input_snapshot`, а не только plan-данные.
+- В scope `023` явно разведены `locked snapshot` и mutable form values, чтобы `Copy cluster/FAQ` не зависели от текущего поля `selectedExpertId`.
+- Подтверждено ограничение без новой planning-session сущности: traceability решается через существующий topics/drafts flow и явный UI lock/reset контракт.
 
 ### Changelog 010 (коротко)
 

@@ -58,7 +58,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 ## Epic G — Create Draft (Content Strategy Builder)
 
 1. [done] Как пользователь, я хочу нажать Create draft с Home или Drafts, чтобы начать планирование.
-2. [partial][must][dep:023] Как пользователь, я хочу выбрать эксперта и тему с явной фиксацией входных параметров, чтобы генерация была воспроизводимой.
+2. [partial][must][dep:023] Как пользователь, я хочу выбрать эксперта и тему с явной фиксацией `input_snapshot`, чтобы strategy plan, copy-to-topics и start-draft flow были воспроизводимыми.
 3. [done] Как пользователь, я хочу нажать Generate Content Plan и увидеть «генерацию», чтобы понимать, что процесс идёт.
 4. [done] Как пользователь, я хочу получать структурированный 12-недельный план (pillars, clusters, FAQ, interlinking), чтобы быстрее запускать контент-ритм.
 5. [done] Как пользователь, я хочу копировать элементы плана в работу, чтобы ускорять запуск драфтов.
@@ -110,6 +110,7 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Spec 020 закрыт: в Settings добавлены generation controls (tone/defaults/guardrails) и preview; policy применяется в `draft.generate` и `draft.revise` системно.
 - Spec 021 закрыт: shell/navigation/logout/action states усилены для UX-надежности на desktop/tablet/mobile baseline.
 - Spec 022 закрыт: в web появился явный `Suggest topics` flow, а `DraftEditor` теперь разводит фактчек и approval как два последовательных этапа с читаемыми claims/evidence.
+- Spec 023 уточнен как explicit input-lock scope: `topics/strategy-plan` должен возвращать `input_snapshot`, а strategy actions не должны читать скрытое mutable состояние формы.
 - Оставшиеся `partial` истории после 022 привязаны к `023` (Create Draft input lock), `024` (landing demo + editorial polish), `025` (manager first-time onboarding) и отдельному `TD-014` по expert email/public-doc flow.
 - Остаточный desktop/tablet smoke с полным `DraftEditor` key-сценарием вынесен в `docs/tech_debt.md` как carry-over проверка.
 
