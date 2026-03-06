@@ -29,6 +29,7 @@ type Tab = 'factcheck' | 'changes' | 'audit';
 const toStatus = (value: string) => value.replaceAll('_', ' ');
 const isClaimConfirmed = (verdict: string) =>
   verdict === 'confirmed' || verdict === 'expert_confirmed';
+const verdictLabel = (verdict: string) => verdict.replaceAll('_', ' ');
 
 export function DraftEditor() {
   const { id = '' } = useParams();
@@ -158,6 +159,14 @@ export function DraftEditor() {
       description: 'Claims are verified for the current version. Approval can be sent now.',
     };
   }, [detail, isRunningFactcheck, unresolvedClaimsCount]);
+  const claimsNeedingAttention = useMemo(
+    () => detail?.factcheckResults.filter((item) => !isClaimConfirmed(item.verdict)) ?? [],
+    [detail],
+  );
+  const verifiedClaims = useMemo(
+    () => detail?.factcheckResults.filter((item) => isClaimConfirmed(item.verdict)) ?? [],
+    [detail],
+  );
 
   useEffect(() => {
     if (versions.length === 0) {
@@ -604,78 +613,196 @@ export function DraftEditor() {
                 {detail.factcheckResults.length === 0 ? (
                   <div className="text-sm text-ink-500">No factcheck results yet.</div>
                 ) : (
-                  detail.factcheckResults.map((item) => {
-                    const isConfirmed = isClaimConfirmed(item.verdict);
-                    return (
-                      <div
-                        key={item.claimId}
-                        className={`rounded-xl p-3 border ${isConfirmed ? 'bg-approved-50 border-approved-200' : 'bg-warning-50 border-warning-200'}`}
-                      >
-                        <div className="flex items-start space-x-2">
-                          {isConfirmed ? (
-                            <CheckCircle2 className="w-4 h-4 text-approved-700 mt-0.5" />
-                          ) : (
-                            <ShieldAlert className="w-4 h-4 text-warning-700 mt-0.5" />
-                          )}
-                          <div className="text-sm">
-                            <p className="font-medium">Verdict: {item.verdict}</p>
-                            <p className="text-xs text-ink-600 mt-1">
-                              Risk: {item.riskLevel ?? 'n/a'}
-                            </p>
-                            <p className="text-xs text-ink-700 mt-1">
-                              {item.text ?? 'Claim text unavailable'}
-                            </p>
-                            <p className="text-xs text-ink-600 mt-1">{item.notes ?? 'No notes'}</p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                className="text-xs underline"
-                                onClick={() => jumpToClaim(item.text)}
-                              >
-                                Highlight in text
-                              </button>
-                            </div>
-                            {Array.isArray(item.evidence) && item.evidence.length > 0 ? (
-                              <div className="mt-2 space-y-1">
-                                {item.evidence.map((evidence, idx) => (
-                                  <div
-                                    key={`${item.claimId}-evidence-${idx}`}
-                                    className="text-xs text-ink-600"
-                                  >
-                                    <span>{evidence.source ?? 'Source'}: </span>
-                                    {evidence.url ? (
-                                      <a
-                                        href={evidence.url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="underline"
-                                      >
-                                        {evidence.url}
-                                      </a>
-                                    ) : (
-                                      <span>{evidence.snippet ?? 'manual-review'}</span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                            {!isConfirmed ? (
-                              <button
-                                type="button"
-                                className="text-xs mt-2 underline disabled:no-underline disabled:opacity-50"
-                                onClick={() => confirmClaim(item.claimId)}
-                                disabled={confirmingClaimId === item.claimId}
-                              >
-                                {confirmingClaimId === item.claimId
-                                  ? 'Confirming...'
-                                  : 'Mark expert confirmed'}
-                              </button>
-                            ) : null}
-                          </div>
+                  <>
+                    <div className="rounded-xl border border-ink-100 bg-beige-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-ink-500">
+                        Current factcheck run
+                      </p>
+                      <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <p className="text-xs text-ink-500">Claims found</p>
+                          <p className="font-medium text-ink-900">{detail.factcheckResults.length}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-ink-500">Needs attention</p>
+                          <p className="font-medium text-warning-700">{claimsNeedingAttention.length}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-ink-500">Verified</p>
+                          <p className="font-medium text-approved-700">{verifiedClaims.length}</p>
                         </div>
                       </div>
-                    );
-                  })
+                    </div>
+
+                    {claimsNeedingAttention.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="text-xs uppercase tracking-wide text-ink-500">
+                          Needs attention before approval
+                        </p>
+                        {claimsNeedingAttention.map((item) => (
+                          <div
+                            key={item.claimId}
+                            className="rounded-xl border border-warning-200 bg-warning-50 p-3"
+                          >
+                            <div className="flex items-start space-x-2">
+                              <ShieldAlert className="mt-0.5 h-4 w-4 text-warning-700" />
+                              <div className="min-w-0 text-sm">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-medium text-ink-900">
+                                    Claim: {item.text ?? 'Claim text unavailable'}
+                                  </p>
+                                  <span className="status-pill status-review">
+                                    {verdictLabel(item.verdict)}
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-xs text-ink-600">
+                                  Risk level: {item.riskLevel ?? 'n/a'}
+                                </p>
+                                <p className="mt-1 text-xs text-ink-600">
+                                  Notes: {item.notes ?? 'Manual review required before approval.'}
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    className="text-xs underline"
+                                    onClick={() => jumpToClaim(item.text)}
+                                  >
+                                    Highlight in text
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="text-xs underline disabled:no-underline disabled:opacity-50"
+                                    onClick={() => confirmClaim(item.claimId)}
+                                    disabled={confirmingClaimId === item.claimId}
+                                  >
+                                    {confirmingClaimId === item.claimId
+                                      ? 'Confirming...'
+                                      : 'Mark expert confirmed'}
+                                  </button>
+                                </div>
+                                <div className="mt-3 space-y-2">
+                                  <p className="text-xs font-medium uppercase tracking-wide text-ink-500">
+                                    Evidence and sources
+                                  </p>
+                                  {Array.isArray(item.evidence) && item.evidence.length > 0 ? (
+                                    item.evidence.map((evidence, idx) => (
+                                      <div
+                                        key={`${item.claimId}-evidence-${idx}`}
+                                        className="rounded-lg border border-warning-200/60 bg-white/80 p-2 text-xs text-ink-600"
+                                      >
+                                        <p className="font-medium text-ink-700">
+                                          {evidence.source ?? `Source ${idx + 1}`}
+                                        </p>
+                                        {evidence.snippet ? (
+                                          <p className="mt-1">{evidence.snippet}</p>
+                                        ) : (
+                                          <p className="mt-1">No snippet provided.</p>
+                                        )}
+                                        {evidence.url ? (
+                                          <a
+                                            href={evidence.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-1 inline-block underline"
+                                          >
+                                            Open source
+                                          </a>
+                                        ) : null}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-xs text-ink-600">
+                                      No evidence links were returned for this claim. Manual review
+                                      is still required.
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {verifiedClaims.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="text-xs uppercase tracking-wide text-ink-500">
+                          Verified in this run
+                        </p>
+                        {verifiedClaims.map((item) => (
+                          <div
+                            key={item.claimId}
+                            className="rounded-xl border border-approved-200 bg-approved-50 p-3"
+                          >
+                            <div className="flex items-start space-x-2">
+                              <CheckCircle2 className="mt-0.5 h-4 w-4 text-approved-700" />
+                              <div className="min-w-0 text-sm">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-medium text-ink-900">
+                                    Claim: {item.text ?? 'Claim text unavailable'}
+                                  </p>
+                                  <span className="status-pill status-approved">
+                                    {verdictLabel(item.verdict)}
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-xs text-ink-600">
+                                  Risk level: {item.riskLevel ?? 'n/a'}
+                                </p>
+                                <p className="mt-1 text-xs text-ink-600">
+                                  Notes: {item.notes ?? 'Verified in current factcheck run.'}
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    className="text-xs underline"
+                                    onClick={() => jumpToClaim(item.text)}
+                                  >
+                                    Highlight in text
+                                  </button>
+                                </div>
+                                <div className="mt-3 space-y-2">
+                                  <p className="text-xs font-medium uppercase tracking-wide text-ink-500">
+                                    Evidence and sources
+                                  </p>
+                                  {Array.isArray(item.evidence) && item.evidence.length > 0 ? (
+                                    item.evidence.map((evidence, idx) => (
+                                      <div
+                                        key={`${item.claimId}-evidence-${idx}`}
+                                        className="rounded-lg border border-approved-200/60 bg-white/80 p-2 text-xs text-ink-600"
+                                      >
+                                        <p className="font-medium text-ink-700">
+                                          {evidence.source ?? `Source ${idx + 1}`}
+                                        </p>
+                                        {evidence.snippet ? (
+                                          <p className="mt-1">{evidence.snippet}</p>
+                                        ) : (
+                                          <p className="mt-1">No snippet provided.</p>
+                                        )}
+                                        {evidence.url ? (
+                                          <a
+                                            href={evidence.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-1 inline-block underline"
+                                          >
+                                            Open source
+                                          </a>
+                                        ) : null}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-xs text-ink-600">
+                                      No evidence links were returned for this claim.
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </>
                 )}
                 {claimError ? <p className="text-sm text-red-600">{claimError}</p> : null}
               </div>
