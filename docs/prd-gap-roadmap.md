@@ -19,7 +19,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md` (Spec 010, Phases A-D).
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 - [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
-- [ ] Следующий spec-блок сформирован: `023-create-draft-input-lock` + `024-landing-demo-editorial-polish`.
+- [ ] Следующий spec-блок сформирован: `023-create-draft-input-lock` + `024-landing-demo-editorial-polish` + `025-expert-first-login-onboarding`.
 
 ## 1) Что уже совпадает с PRD
 
@@ -203,6 +203,10 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: дожать `Landing` по кластерам Hero / Team / Workflow, добавить demo-controls, mobile simplification и единый motion/visual contract.
     - Результат: закрывается оставшийся marketing/UI хвост из Epic B/C/D и partial-истории Epic L про motion и editorial tone.
 
+16. `025-expert-first-login-onboarding` 🟡
+    - Scope: добавить отдельный first-login onboarding для эксперта после входа по magic link с обязательным контекстом `имя + компания + голос компании`.
+    - Результат: эксперт попадает не в “пустой” кабинет, а в понятный стартовый сценарий, который сразу задает авторский и brand-контекст перед review и дальнейшей работой.
+
 ## 8) Синхронизация с user stories (итог 010)
 
 Конфликтов формулировок между `docs/prd-gap-roadmap.md` и `docs/user_stories.md` не найдено.
@@ -211,14 +215,14 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - незакрытые backend-контракты из roadmap (Settings write/team management, Expert Setup save) в user stories помечены как `gap`;
 - риск onboarding Step 1->5 закрыт в Spec 011 и снят как активная зависимость;
 - закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
-- оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap) и `024` (marketing/UI parity), без смешивания этих scope в одной спеки.
+- оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap), `024` (marketing/UI parity) и `025` (expert first-login onboarding), без смешивания этих scope в одной спеки.
 
-### Changelog 023-024 prep (коротко)
+### Changelog 023-025 prep (коротко)
 
 - Проверены `docs/.PRDS/prd_start.md`, `docs/prd-gap-roadmap.md` и `docs/user_stories.md` перед новым циклом спек.
-- Остаток user stories разбит на два независимых блока: `023` закрывает `Create Draft` reproducibility, `024` закрывает landing/demo/editorial polish.
-- Для обеих спек созданы полные наборы артефактов (`README/context/plan/tasks/checklist`) и зафиксирован out-of-scope.
-- В `user_stories` добавлены явные зависимости `dep:023` и `dep:024`, чтобы следующий рабочий цикл был прозрачен.
+- Остаток user stories разбит на три независимых блока: `023` закрывает `Create Draft` reproducibility, `024` закрывает landing/demo/editorial polish, `025` закрывает first-login onboarding эксперта.
+- Для `023/024` уже созданы полные наборы артефактов (`README/context/plan/tasks/checklist`); `025` зафиксирован как следующий отдельный product-flow scope.
+- В `user_stories` добавлены явные зависимости `dep:023`, `dep:024` и `dep:025`, чтобы следующий рабочий цикл был прозрачен.
 
 ### Changelog 010 (коротко)
 
