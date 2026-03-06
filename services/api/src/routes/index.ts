@@ -18,6 +18,7 @@ import { buildLandingRequestRoutes } from './landing-requests.js';
 import { buildReportsRoutes } from './reports.js';
 import { buildTeamRoutes } from './team.js';
 import { buildTopicRoutes } from './topics.js';
+import { buildUserRoutes } from './users.js';
 import { buildWebhookRoutes } from './webhooks.js';
 import type { RouteDeps } from './deps.js';
 
@@ -40,11 +41,13 @@ export const buildApiRouter = (deps: RouteDeps): Hono => {
   router.use('/experts/*', authMiddleware);
   router.use('/topics/*', authMiddleware);
   router.use('/team/*', authMiddleware);
+  router.use('/users/*', authMiddleware);
   router.route('/companies', buildCompanyRoutes(deps));
   router.route('/dashboard', buildDashboardRoutes(deps));
   router.route('/experts', buildExpertRoutes(deps));
   router.route('/team', buildTeamRoutes(deps));
   router.route('/topics', buildTopicRoutes(deps));
+  router.route('/users', buildUserRoutes(deps));
 
   return router;
 };

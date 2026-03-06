@@ -13,7 +13,7 @@ type Props = {
 
 export function WorkspaceSettingsCard({ value, saving, onChange }: Props) {
   return (
-    <section className="card space-y-4">
+    <section id="workspace-settings" className="card space-y-4">
       <h2 className="text-xl font-serif font-medium border-b border-ink-100 pb-3">
         Workspace Settings
       </h2>

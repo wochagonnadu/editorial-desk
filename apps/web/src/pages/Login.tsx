@@ -8,6 +8,7 @@ import { Mail, ArrowRight } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError } from '../services/api/client';
 import { loginWithMagicLink, verifyMagicLink } from '../services/auth';
+import { fetchOnboardingState } from '../services/onboarding';
 import { useSession } from '../services/session';
 
 export function Login() {
@@ -22,10 +23,18 @@ export function Login() {
   const { session, setSession } = useSession();
   const redirectPath = (location.state as { from?: string } | null)?.from ?? '/app';
 
+  const resolvePostLoginPath = async (token: string, fallbackPath: string) => {
+    const nextState = await fetchOnboardingState(token).catch(() => null);
+    if (!nextState) return fallbackPath;
+    return ['not_started', 'in_progress'].includes(nextState.status)
+      ? '/app/onboarding'
+      : fallbackPath;
+  };
+
   useEffect(() => {
-    if (!session) return;
+    if (!session || isVerifying) return;
     navigate(redirectPath, { replace: true });
-  }, [navigate, redirectPath, session]);
+  }, [isVerifying, navigate, redirectPath, session]);
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -37,7 +46,7 @@ export function Login() {
         setIsVerifying(true);
         const nextSession = await verifyMagicLink(token);
         setSession(nextSession);
-        navigate(redirectPath, { replace: true });
+        navigate(await resolvePostLoginPath(nextSession.token, redirectPath), { replace: true });
       } catch (verifyError) {
         if (verifyError instanceof ApiError) {
           setError(verifyError.message);
@@ -64,7 +73,7 @@ export function Login() {
         setIsVerifying(true);
         const nextSession = await verifyMagicLink(result.devMagicToken);
         setSession(nextSession);
-        navigate(redirectPath, { replace: true });
+        navigate(await resolvePostLoginPath(nextSession.token, redirectPath), { replace: true });
         return;
       }
       setSent(true);

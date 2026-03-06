@@ -5,8 +5,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchDashboard, type DashboardData } from '../services/dashboard';
+import { fetchOnboardingState, type OnboardingState } from '../services/onboarding';
 import { useSession } from '../services/session';
 
 const toRelative = (isoOrDate: string): string => {
@@ -23,8 +24,10 @@ const statusLabel = (status: string): string =>
   status.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
 export function Home() {
+  const navigate = useNavigate();
   const { session } = useSession();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,12 +37,19 @@ export function Home() {
         setError(null);
         const next = await fetchDashboard(session.token);
         setData(next);
+        if (['owner', 'manager'].includes(session.user.role)) {
+          const nextOnboarding = await fetchOnboardingState(session.token);
+          setOnboarding(nextOnboarding);
+          if (nextOnboarding.status === 'not_started') {
+            navigate('/app/onboarding', { replace: true });
+          }
+        }
       } catch {
         setError('Could not load dashboard');
       }
     };
     void load();
-  }, [session]);
+  }, [navigate, session]);
 
   const greetingName = useMemo(() => {
     const email = session?.user.email ?? '';
@@ -65,6 +75,20 @@ export function Home() {
       </header>
 
       {error ? <div className="card text-red-600">{error}</div> : null}
+      {onboarding && ['skipped', 'in_progress'].includes(onboarding.status) ? (
+        <div className="card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-serif text-xl text-ink-900">Finish your manager setup</h2>
+            <p className="text-ink-500 mt-1">
+              Resume onboarding to keep workspace, team, experts, and your first workflow path in
+              one place.
+            </p>
+          </div>
+          <Link to="/app/onboarding" className="btn-primary">
+            Resume onboarding
+          </Link>
+        </div>
+      ) : null}
       {!data ? (
         <div className="card text-ink-500">Loading dashboard...</div>
       ) : (

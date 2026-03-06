@@ -24,7 +24,7 @@ const tokenForEmail = (email: string): string => {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `dev-${safe || 'user'}-token`;
+  return `dev-${safe || 'user'}-${Date.now()}-token`;
 };
 
 export const issueDevMockMagicLink = async (
@@ -37,7 +37,7 @@ export const issueDevMockMagicLink = async (
   await deps.db
     .update(notificationTable)
     .set({ magicLinkRevoked: true } as Partial<typeof notificationTable.$inferInsert>)
-    .where(eq(notificationTable.magicLinkToken, token));
+    .where(eq(notificationTable.recipientEmail, input.email));
 
   await deps.db.insert(notificationTable).values({
     companyId: input.companyId,

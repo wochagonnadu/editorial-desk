@@ -38,7 +38,7 @@ export function TeamManagementCard(props: Props) {
   } = props;
 
   return (
-    <section className="card space-y-4">
+    <section id="team-management" className="card space-y-4">
       <h2 className="text-xl font-serif font-medium border-b border-ink-100 pb-3">
         Team Management
       </h2>

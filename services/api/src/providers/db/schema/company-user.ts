@@ -21,5 +21,10 @@ export const userTable = pgTable('user', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   name: varchar('name', { length: 255 }).notNull(),
   role: varchar('role', { length: 20 }).notNull(),
+  onboardingStatus: varchar('onboarding_status', { length: 30 }).notNull().default('not_started'),
+  onboardingCurrentStep: varchar('onboarding_current_step', { length: 50 }),
+  onboardingStartedAt: timestamp('onboarding_started_at', { withTimezone: true }),
+  onboardingSkippedAt: timestamp('onboarding_skipped_at', { withTimezone: true }),
+  onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

@@ -10,6 +10,7 @@ import { RequireAuth } from './components/RequireAuth';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Logout } from './pages/Logout';
+import { ManagerOnboarding } from './pages/ManagerOnboarding';
 import { PublicDoc } from './pages/PublicDoc';
 import { Home } from './pages/Home';
 import { Experts } from './pages/Experts';
@@ -36,6 +37,14 @@ export default function App() {
           <Route path="/auth/verify" element={<Login />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/docs/:draftId" element={<PublicDoc />} />
+          <Route
+            path="/app/onboarding"
+            element={
+              <RequireAuth>
+                <ManagerOnboarding />
+              </RequireAuth>
+            }
+          />
 
           {/* Authenticated App Routes */}
           <Route
