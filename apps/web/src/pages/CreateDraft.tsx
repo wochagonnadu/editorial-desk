@@ -19,6 +19,7 @@ import {
   type TopicItem,
 } from '../services/topics';
 import { useSession } from '../services/session';
+import { StrategyLockSummary } from './create-draft/StrategyLockSummary';
 import { StrategyPlanView } from './create-draft/StrategyPlanView';
 
 export function CreateDraft() {
@@ -66,15 +67,28 @@ export function CreateDraft() {
     () => expertOptions.filter((item) => item.status === 'active'),
     [expertOptions],
   );
+  const normalizedTopicTitle = topicTitle.trim();
+  const isStrategyDirty =
+    strategySnapshot !== null &&
+    (strategySnapshot.expert.id !== selectedExpertId ||
+      strategySnapshot.topicSeed !== normalizedTopicTitle);
+
+  const resetInputsToLockedSnapshot = () => {
+    if (!strategySnapshot) return;
+    setSelectedExpertId(strategySnapshot.expert.id);
+    setTopicTitle(strategySnapshot.topicSeed);
+    setPlanError(null);
+    setCopyError(null);
+  };
 
   const startFromNewTopic = async () => {
-    if (!session || !selectedExpertId || topicTitle.trim().length < 3) return;
+    if (!session || !selectedExpertId || normalizedTopicTitle.length < 3) return;
     try {
       setNewTopicError(null);
       setPageError(null);
       setIsBusy(true);
       const topicId = await createTopic(session.token, {
-        title: topicTitle.trim(),
+        title: normalizedTopicTitle,
         expertId: selectedExpertId,
       });
       await approveTopic(session.token, topicId);
@@ -106,7 +120,7 @@ export function CreateDraft() {
   };
 
   const generateContentPlan = async () => {
-    if (!session || !selectedExpertId || topicTitle.trim().length < 3) return;
+    if (!session || !selectedExpertId || normalizedTopicTitle.length < 3) return;
     const expert = expertOptions.find((item) => item.id === selectedExpertId);
     try {
       setPlanError(null);
@@ -114,7 +128,7 @@ export function CreateDraft() {
       setIsGeneratingPlan(true);
       const result = await generateStrategyPlan(session.token, {
         expertId: selectedExpertId,
-        topicSeed: topicTitle.trim(),
+        topicSeed: normalizedTopicTitle,
         audience: 'general',
         market: 'en-US',
         constraints: { tone: 'practical and calm', maxItemsPerWeek: 2 },
@@ -177,6 +191,10 @@ export function CreateDraft() {
 
       <section className="card space-y-4">
         <h2 className="text-xl font-serif font-medium">New topic flow</h2>
+        <p className="text-sm text-ink-500">
+          Manual path: use the current expert and topic fields to create a topic and open a draft
+          right away. This path does not depend on the strategy plan lock.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <select
             value={selectedExpertId}
@@ -200,7 +218,7 @@ export function CreateDraft() {
         <button
           type="button"
           onClick={startFromNewTopic}
-          disabled={isBusy || !selectedExpertId || topicTitle.trim().length < 3}
+          disabled={isBusy || !selectedExpertId || normalizedTopicTitle.length < 3}
           className="btn-primary"
         >
           <Sparkles className="w-4 h-4 mr-2" />
@@ -215,15 +233,35 @@ export function CreateDraft() {
           <button
             type="button"
             onClick={generateContentPlan}
-            disabled={isGeneratingPlan || !selectedExpertId || topicTitle.trim().length < 3}
+            disabled={isGeneratingPlan || !selectedExpertId || normalizedTopicTitle.length < 3}
             className="btn-secondary"
           >
-            {isGeneratingPlan ? 'Generating...' : 'Generate Content Plan'}
+            {isGeneratingPlan
+              ? 'Generating...'
+              : strategySnapshot
+                ? 'Regenerate plan'
+                : 'Generate Content Plan'}
           </button>
         </div>
         <p className="text-sm text-ink-500">
-          Generate a structured 12-week plan with pillars, clusters, FAQ, and interlink hints.
+          Strategy path: lock the current inputs into a plan, copy clusters or FAQ into topics, then
+          start a draft from those saved topics.
         </p>
+        {strategySnapshot ? (
+          <StrategyLockSummary
+            snapshot={strategySnapshot}
+            isDirty={isStrategyDirty}
+            onResetInputs={resetInputsToLockedSnapshot}
+            onRegeneratePlan={generateContentPlan}
+            isGenerating={isGeneratingPlan}
+          />
+        ) : null}
+        {strategySnapshot && isStrategyDirty ? (
+          <p className="text-sm text-amber-700">
+            Current form inputs differ from the locked plan. Copy actions still use the locked
+            strategy context until you reset inputs or regenerate the plan.
+          </p>
+        ) : null}
         {planError ? <p className="text-sm text-red-600">{planError}</p> : null}
         {strategyPlan ? (
           <StrategyPlanView
@@ -243,6 +281,10 @@ export function CreateDraft() {
 
       <section className="card space-y-4">
         <h2 className="text-xl font-serif font-medium">Existing topics</h2>
+        <p className="text-sm text-ink-500">
+          Strategy-based draft start happens here after you copy a locked plan item into topics.
+          Manual and strategy flows meet on the same saved topic list.
+        </p>
         {topics.length === 0 ? (
           <p className="text-sm text-ink-500">No topics yet.</p>
         ) : (
