@@ -15,6 +15,13 @@
       "when": 1772012357380,
       "tag": "0001_enable_rls_public_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772780400000,
+      "tag": "0003_track_company_generation_policy",
+      "breakpoints": true
     }
   ]
 }

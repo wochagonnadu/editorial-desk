@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { toErrorResponse } from './core/errors.js';
 import { createDbClient, describeDatabaseTarget } from './providers/db/index.js';
+import { ensureSchemaReadiness } from './providers/db/schema-readiness.js';
 import { createEmailPort } from './providers/email.js';
 import { createContentPort } from './providers/llm.js';
 import { createLogger } from './providers/logger.js';
@@ -58,6 +59,9 @@ export const createApp = (): Hono => {
     const path = context.req.path || 'unknown';
     logger.info('request.start', { method: context.req.method, path, url: context.req.url });
     try {
+      if (context.req.method !== 'OPTIONS') {
+        await ensureSchemaReadiness(db, logger);
+      }
       await next();
     } finally {
       logger.info('request.done', {
