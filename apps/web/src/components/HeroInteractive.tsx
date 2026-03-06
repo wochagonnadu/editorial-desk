@@ -15,6 +15,8 @@ import {
   Mail,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import caseyImage from '../public/images/team/casey.png';
+import morganImage from '../public/images/team/morgan.png';
 
 const customEase = [0.22, 1, 0.36, 1] as const;
 
@@ -239,7 +241,7 @@ export function HeroInteractive() {
                 {/* Team Pulse (Always visible) */}
                 <div className="absolute top-4 right-4 bg-white rounded-full shadow-sm border border-ink-100 p-1.5 pr-4 flex items-center space-x-2 z-30">
                   <img
-                    src="https://picsum.photos/seed/user8/100/100"
+                    src={morganImage}
                     className="w-6 h-6 rounded-full"
                     alt="Editor"
                     referrerPolicy="no-referrer"
@@ -269,7 +271,7 @@ export function HeroInteractive() {
                     >
                       <div className="flex items-center space-x-3 mb-3 relative">
                         <img
-                          src="https://picsum.photos/seed/user2/100/100"
+                          src={caseyImage}
                           className="w-12 h-12 rounded-full"
                           alt="Expert"
                           referrerPolicy="no-referrer"

@@ -5,6 +5,27 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
+import averyImage from '../public/images/team/avery.png';
+import blairImage from '../public/images/team/blair.png';
+import caseyImage from '../public/images/team/casey.png';
+import jordanImage from '../public/images/team/jordan.png';
+import morganImage from '../public/images/team/morgan.png';
+import quinnImage from '../public/images/team/quinn.png';
+import rowanImage from '../public/images/team/rowan.png';
+import samImage from '../public/images/team/sam.png';
+import taylorImage from '../public/images/team/taylor.png';
+
+const teamImages = {
+  avery: averyImage,
+  blair: blairImage,
+  casey: caseyImage,
+  jordan: jordanImage,
+  morgan: morganImage,
+  quinn: quinnImage,
+  rowan: rowanImage,
+  sam: samImage,
+  taylor: taylorImage,
+} as const;
 
 const teamMembers = [
   {
@@ -12,63 +33,63 @@ const teamMembers = [
     name: 'Morgan',
     role: 'Editor-in-Chief',
     quote: 'I decide what goes to production.',
-    image: 'user8',
+    image: teamImages.morgan,
   },
   {
     id: 'casey',
     name: 'Casey',
     role: 'The Interviewer',
     quote: "I capture the expert's voice in 2 minutes.",
-    image: 'user2',
+    image: teamImages.casey,
   },
   {
     id: 'rowan',
     name: 'Rowan',
     role: 'Voice Stylist',
     quote: 'I make sure it sounds exactly like them.',
-    image: 'user3',
+    image: teamImages.rowan,
   },
   {
     id: 'blair',
     name: 'Blair',
     role: 'Structure Editor',
     quote: 'I build the draft into a clear structure.',
-    image: 'user4',
+    image: teamImages.blair,
   },
   {
     id: 'avery',
     name: 'Avery',
     role: 'Fact Checker',
     quote: 'I catch the factual holes.',
-    image: 'user5',
+    image: teamImages.avery,
   },
   {
     id: 'jordan',
     name: 'Jordan',
     role: 'Compliance Officer',
     quote: 'I ensure every claim is safe and honest.',
-    image: 'user6',
+    image: teamImages.jordan,
   },
   {
     id: 'sam',
     name: 'Sam',
     role: 'The Polisher',
     quote: 'I remove the corporate fluff.',
-    image: 'user7',
+    image: teamImages.sam,
   },
   {
     id: 'quinn',
     name: 'Quinn',
     role: 'Revision Coordinator',
     quote: 'I merge all edits into one clean version.',
-    image: 'user9',
+    image: teamImages.quinn,
   },
   {
     id: 'taylor',
     name: 'Taylor',
     role: 'Quality Gatekeeper',
     quote: 'I give the final green light.',
-    image: 'user1',
+    image: teamImages.taylor,
   },
 ];
 
@@ -211,7 +232,7 @@ export function TeamCarousel() {
               <div className="aspect-[3/4] rounded-[1.5rem] overflow-hidden relative bg-ink-100 mb-5 shadow-inner">
                 {/* Image with dynamic filters */}
                 <img
-                  src={`https://picsum.photos/seed/${member.image}/600/800`}
+                  src={member.image}
                   alt={member.name}
                   className={`w-full h-full object-cover transition-all duration-700 ease-[0.22,1,0.36,1] ${
                     isActive
