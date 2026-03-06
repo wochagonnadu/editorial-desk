@@ -24,23 +24,23 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 
 ## Epic B — Лендинг как «продающий продукт»
 
-1. [partial][should][dep:024] Как гость, я хочу пройти лендинг от Hero до Workflow без сломанных переходов, чтобы быстро понять продукт.
-2. [partial][could][dep:024] Как гость, я хочу запускать демо по кнопке “See how it works”, чтобы увидеть процесс до регистрации.
-3. [partial][could][dep:024] Как гость, я хочу кнопки “Restart/Back” в Hero-демо, чтобы повторить сценарий или вернуться на шаг назад.
-4. [partial][should][dep:024] Как гость, я хочу упрощенный Hero на мобильном (фокус на сцене), чтобы демо оставалось читаемым.
+1. [done] Как гость, я хочу пройти лендинг от Hero до Workflow без сломанных переходов, чтобы быстро понять продукт.
+2. [done] Как гость, я хочу запускать демо по кнопке “See how it works”, чтобы увидеть процесс до регистрации.
+3. [done] Как гость, я хочу кнопки “Restart/Back” в Hero-демо, чтобы повторить сценарий или вернуться на шаг назад.
+4. [done] Как гость, я хочу упрощенный Hero на мобильном (фокус на сцене), чтобы демо оставалось читаемым.
 5. [done] Как гость, я хочу нормальный мобильный скролл без обрезаний контента, чтобы лендинг был полностью доступен.
 
 ## Epic C — Team (виртуальная редакция)
 
-1. [partial][should][dep:024] Как гость, я хочу видеть роли команды в карусели, чтобы понять состав редакции.
-2. [partial][should][dep:024] Как гость, я хочу листать карточки команды свайпом/скроллом, чтобы просмотреть всех экспертов.
-3. [partial][could][dep:024] Как гость, я хочу reveal и краткий тезис на карточке, чтобы быстрее оценить пользу роли.
+1. [done] Как гость, я хочу видеть роли команды в карусели, чтобы понять состав редакции.
+2. [done] Как гость, я хочу листать карточки команды свайпом/скроллом, чтобы просмотреть всех экспертов.
+3. [done] Как гость, я хочу reveal и краткий тезис на карточке, чтобы быстрее оценить пользу роли.
 
 ## Epic D — Workflow (доверие через предсказуемость)
 
-1. [partial][should][dep:024] Как гость, я хочу видеть автопроигрываемый workflow с понятными шагами, чтобы оценить предсказуемость процесса.
-2. [partial][could][dep:024] Как гость, я хочу наводить на шаг и видеть подпись, чтобы разбирать этапы без лишних кликов.
-3. [partial][could][dep:024] Как гость, я хочу спокойные анимации без визуального шума, чтобы интерфейс вызывал доверие.
+1. [done] Как гость, я хочу видеть автопроигрываемый workflow с понятными шагами, чтобы оценить предсказуемость процесса.
+2. [done] Как гость, я хочу наводить на шаг и видеть подпись, чтобы разбирать этапы без лишних кликов.
+3. [done] Как гость, я хочу спокойные анимации без визуального шума, чтобы интерфейс вызывал доверие.
 
 ## Epic E — Home и навигация внутри приложения
 
@@ -92,10 +92,10 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 ## Epic L — Качество и нефункциональные истории
 
 1. [done] Как пользователь, я хочу адаптивный интерфейс без перекрытий на мобильном, чтобы выполнять базовые сценарии с телефона.
-2. [partial][should][dep:024] Как пользователь, я хочу плавные анимации без лагов, чтобы интерфейс не мешал чтению и правке.
+2. [done] Как пользователь, я хочу плавные анимации без лагов, чтобы интерфейс не мешал чтению и правке.
 3. [done] Как пользователь, я хочу явные состояния загрузки и ошибок в ключевых действиях, чтобы понимать что делать дальше.
 4. [done] Как пользователь, я хочу предсказуемую навигацию и стабильный возврат назад, чтобы не терять контекст.
-5. [partial][could][dep:024] Как владелец продукта, я хочу единый editorial visual tone, чтобы продукт ощущался целостным.
+5. [done] Как владелец продукта, я хочу единый editorial visual tone, чтобы продукт ощущался целостным.
 
 ## Факты сверки (roadmap + gap-map)
 - `done`: auth/login/verify, dashboard/drafts/versions/comments/factcheck/approvals покрыты endpoint-ами и отмечены как закрытый P0-контур в roadmap.
@@ -111,7 +111,8 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Spec 021 закрыт: shell/navigation/logout/action states усилены для UX-надежности на desktop/tablet/mobile baseline.
 - Spec 022 закрыт: в web появился явный `Suggest topics` flow, а `DraftEditor` теперь разводит фактчек и approval как два последовательных этапа с читаемыми claims/evidence.
 - Spec 023 закрыт: `topics/strategy-plan` возвращает `input_snapshot`, `Create Draft` показывает locked context и strategy actions больше не читают скрытое mutable состояние формы.
-- Оставшиеся `partial` истории после 022 привязаны к `023` (Create Draft input lock), `024` (landing demo + editorial polish), `025` (manager first-time onboarding) и отдельному `TD-014` по expert email/public-doc flow.
+- `024` закрыт: landing demo-controls, team/workflow parity, calm motion baseline и local portraits подтверждены desktop/mobile проверкой.
+- Оставшиеся `partial` истории после 024 привязаны к `025` (manager first-time onboarding) и отдельному `TD-014` по expert email/public-doc flow.
 - Остаточный desktop/tablet smoke с полным `DraftEditor` key-сценарием вынесен в `docs/tech_debt.md` как carry-over проверка.
 
 ## Зависимости на следующую спеку
@@ -120,7 +121,6 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Активных зависимостей на `016-editorial-doc-prd-parity` не осталось: doc/magic-link/diff контекст доведен до reviewer-ready состояния.
 - Активных зависимостей на `017-expert-setup-rich-profile-save` не осталось: Expert Setup сохраняет и читает единый rich profile контракт с валидацией и audit trail.
 - Активных зависимостей на `018-content-strategy-12w-output` не осталось: strategy output и copy-to-topics сценарии подтверждены тестами и route/UI интеграцией.
-- Активная зависимость на `023-create-draft-input-lock`: Epic G / story 2 (`partial`, `must`) остается главным продуктовым хвостом по воспроизводимости Create Draft.
-- Активная зависимость на `024-landing-demo-editorial-polish`: Epic B/C/D и часть Epic L остаются открыты как marketing/UI parity блок.
+- Активных зависимостей на `023-create-draft-input-lock` не осталось: locked input snapshot и copy flow подтверждены и закрыты.
 - Активная зависимость на `025-manager-first-time-onboarding`: Epic A / story 6 (`partial`, `should`) остается отдельным first-run сценарием для manager/team-management роли.
 - Активный `TD-014`: expert flow остается email/doc-first и не должен попадать в основной app shell.

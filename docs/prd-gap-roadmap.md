@@ -19,7 +19,8 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md` (Spec 010, Phases A-D).
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 - [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
-- [ ] Следующий spec-блок сформирован: `023-create-draft-input-lock` + `024-landing-demo-editorial-polish` + `025-manager-first-time-onboarding`.
+- [x] `024-landing-demo-editorial-polish` закрыт: hero/team/workflow доведены до marketing/UI parity, mobile baseline подтвержден, visual tone и локальные portraits синхронизированы.
+- [ ] Следующий spec-блок сформирован: `025-manager-first-time-onboarding`.
 
 ## 1) Что уже совпадает с PRD
 
@@ -199,7 +200,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: в `Create Draft` зафиксирован явный `input_snapshot` для `expert + topic seed + strategy plan`; `topics/strategy-plan` возвращает echo snapshot, а copy flow читает locked context вместо скрытого состояния формы.
     - Результат: закрыта оставшаяся `must`-история Epic G про явную фиксацию входных параметров генерации и воспроизводимый `generate -> copy -> topic -> draft` контур.
 
-15. `024-landing-demo-editorial-polish` 🟡
+15. `024-landing-demo-editorial-polish` ✅
     - Scope: дожать `Landing` по кластерам Hero / Team / Workflow, добавить demo-controls, mobile simplification и единый motion/visual contract.
     - Результат: закрывается оставшийся marketing/UI хвост из Epic B/C/D и partial-истории Epic L про motion и editorial tone.
 
@@ -237,6 +238,13 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - В `Create Draft` добавлен locked context summary, а состояния `dirty/reset/regenerate` теперь явно видны пользователю.
 - `Copy cluster` / `Copy FAQ` больше не читают текущее mutable поле формы и используют только locked snapshot.
 - Phase D подтвержден реальной проверкой: typecheck web прошел, targeted tests на strategy lock и create-draft flow прошли успешно.
+
+### Changelog 024 (closed)
+
+- Hero demo получил явные `See how it works`, `Back`, `Restart` и mobile controls без отдельного layout tree.
+- Team carousel переведен на локальные portraits, роли и reveal-тезисы читаются сразу, а scroll/nav подтверждены на desktop и mobile.
+- Workflow block доведен до autoplay narrative с caption states через hover/focus/click и более спокойным motion baseline.
+- Реальная verification закрыта через локальный web run + browser check: desktop/mobile путь `Hero -> Team -> Workflow -> CTA` проходит без тупиков.
 
 ### Changelog 010 (коротко)
 
