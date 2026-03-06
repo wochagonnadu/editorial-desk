@@ -23,3 +23,5 @@ docs/
 .opencode
 .specify
 .vercel
+
+tmp/
