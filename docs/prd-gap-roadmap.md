@@ -204,9 +204,9 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: дожать `Landing` по кластерам Hero / Team / Workflow, добавить demo-controls, mobile simplification и единый motion/visual contract.
     - Результат: закрывается оставшийся marketing/UI хвост из Epic B/C/D и partial-истории Epic L про motion и editorial tone.
 
-16. `025-manager-first-time-onboarding` 🟡
+16. `025-manager-first-time-onboarding` ✅
     - Scope: добавить отдельный first-run onboarding для manager/team-management пользователя после первого входа в систему.
-    - Результат: менеджер не попадает в пустой app shell, а получает понятный стартовый сценарий с ближайшими шагами.
+    - Результат: менеджер больше не попадает в пустой app shell; first-run, completion и skip/resume работают через server-side onboarding state и отдельный onboarding surface.
 
 17. `026-manager-company-context-onboarding` 🟡
     - Scope: добавить в manager first-run onboarding сбор manager name, company description и настройку generation controls с preview.
@@ -220,8 +220,14 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - незакрытые backend-контракты из roadmap (Settings write/team management, Expert Setup save) в user stories помечены как `gap`;
 - риск onboarding Step 1->5 закрыт в Spec 011 и снят как активная зависимость;
 - закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
-- оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap), `024` (marketing/UI parity), `025` (manager first-time onboarding) и отдельный `TD-014` для expert email/public-doc flow.
+- оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap), `024` (marketing/UI parity), закрытый `025` (manager first-time onboarding) и отдельный `TD-014` для expert email/public-doc flow.
 - Следующим продуктовым хвостом после базового first-run стал `026`: manager должен задать company context и generation policy прямо в onboarding, а не только позже в `Settings`.
+
+### Changelog 025 (closed)
+
+- Для manager/owner добавлен отдельный first-run route `/app/onboarding`, который больше не смешивается с обычным `Home`.
+- Статус onboarding перенесен в server-side state пользователя, поэтому first login, completion и skip/resume работают предсказуемо между сессиями и устройствами.
+- После `skip` обычный app shell показывает явный `Resume onboarding`, а expert public-doc flow не попадает в manager onboarding контур.
 
 ### Changelog 023-024 prep (коротко)
 
