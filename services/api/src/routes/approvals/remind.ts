@@ -8,6 +8,7 @@ import { and, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { reminderTemplate } from '../../core/email-templates/approval.js';
 import { logAudit } from '../../core/audit.js';
+import { findSenderNameByUserId } from '../../core/email-sender.js';
 import { AppError } from '../../core/errors.js';
 import {
   approvalFlowTable,
@@ -63,6 +64,8 @@ export const sendReminder = (deps: RouteDeps) => async (context: Context) => {
     topic?.title ?? 'Draft',
     step.deadlineAt ?? new Date(Date.now() + 24 * 3600_000),
   );
+  const fromName =
+    step.approverType === 'expert' ? await findSenderNameByUserId(deps.db, flow.createdBy) : undefined;
 
   log.info('approvals.remind.sending', { recipient: approver.email });
   await deps.db.insert(notificationTable).values({
@@ -80,6 +83,7 @@ export const sendReminder = (deps: RouteDeps) => async (context: Context) => {
     subject: message.subject,
     html: message.html,
     textBody: message.textBody,
+    fromName,
   });
   await logAudit(deps.db, {
     companyId: authUser.companyId,

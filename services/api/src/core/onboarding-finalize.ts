@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import type { ContentPort, EmailPort } from '@newsroom/shared';
 import { buildRatingTemplate } from './email-templates/rating.js';
+import { findSenderNameByUserId } from './email-sender.js';
 import { buildVoiceProfile, calculateVoiceScore, generateVoiceTest } from './voice.js';
 import type { Database } from '../providers/db/index.js';
 import {
@@ -234,7 +235,8 @@ export const finalizeOnboardingVoiceTest = async (context: FinalizeContext, expe
     process.env.API_URL ?? process.env.APP_URL ?? 'http://localhost:3000',
     content,
   );
-  await context.email.sendEmail({ to: expert.email, ...template });
+  const fromName = await findSenderNameByUserId(context.db, expert.managerUserId);
+  await context.email.sendEmail({ to: expert.email, fromName, ...template });
   await context.db
     .update(expertTable)
     .set({ status: 'voice_testing' } as Partial<typeof expertTable.$inferInsert>)

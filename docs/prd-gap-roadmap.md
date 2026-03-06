@@ -19,6 +19,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md` (Spec 010, Phases A-D).
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 - [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
+- [ ] Следующий spec-блок сформирован: `023-create-draft-input-lock` + `024-landing-demo-editorial-polish`.
 
 ## 1) Что уже совпадает с PRD
 
@@ -48,21 +49,22 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 
 ## 2.2 P1 (важно для полного соответствия PRD)
 
-4. **Web-doc experience неполный**
-   - Сейчас `docs/:draft_id` read-only, а в PRD ожидается живой документ с понятной работой версий/комментариев.
-   - Нужен фронтовой сценарий для magic-link документа и версии-контекста.
+4. **Web-doc experience доведен до PRD parity** ✅
+   - В Spec 016 `docs/:draft_id?token=...` получил version context, diff summary/diff view и reviewer-friendly ошибки stale/expired link.
+   - Magic-link документ больше не read-only заглушка и закрывает PRD-ожидание по живому review surface.
 
-5. **Diff summary / diff view для ревьюеров не реализован до уровня PRD**
-   - В PRD есть требование видеть, что изменилось между версиями.
-   - Сейчас в письмах есть summary и действия, но нет полноценного diff-view UX.
+5. **Diff summary / diff view для ревьюеров реализован** ✅
+   - В Spec 016 добавлены `What changed`, line-level diff и синхронизация формулировок между email и doc surface.
+   - Ревьюеру больше не нужно вручную сопоставлять версии по письмам.
 
 6. **Settings read-only по сути** ✅
    - Добавлен `PATCH /api/v1/companies/me` с owner guard и audit.
    - Добавлены team endpoints `GET /api/v1/team/users`, `PATCH /api/v1/team/users/:id/role`, `POST /api/v1/team/invites`.
    - UI `/app/settings` подключен к write/read контрактам и больше не read-only.
 
-7. **Expert Setup расширенный save не закрыт контрактом**
-   - Создание эксперта есть, но сохранение richer profile (tags/sources/background) не покрыто единым endpoint-ом.
+7. **Expert Setup расширенный save закрыт контрактом** ✅
+   - В Spec 017 добавлен единый write/read контракт rich profile с валидацией и audit trail.
+   - Поля `role/tone/contacts/tags/sources/background` больше не живут как разрозненный UI-state.
 
 8. **Надежность 5-шагового onboarding email процесса подтверждена в Spec 011** ✅
    - Подтвержден e2e проход Step 1→5 и финальное письмо voice rating на preview.
@@ -189,9 +191,17 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: закрыть must-gap по UX-надежности: мобильный скролл без обрезаний, стабильная навигация back/forward, logout в 1 клик, явные loading/error состояния в ключевых действиях.
     - Результат: базовые сценарии проходят на телефоне и desktop одинаково предсказуемо, без потери контекста.
 
-13. `022-topics-suggest-and-factcheck-ux-separation`
+13. `022-topics-suggest-and-factcheck-ux-separation` ✅
     - Scope: вернуть в web явный сценарий `topics.suggest` (кнопка/экран предложений тем), а также разделить в Draft Editor действия `Run factcheck` и `Send for approval` с понятным статусом и отображением проверяемых claim/evidence.
     - Результат: пользователь видит отдельный поток «предложить темы», фактчек запускается и читается как самостоятельный этап, а отправка на approval не смешивается с проверкой фактов.
+
+14. `023-create-draft-input-lock` 🟡
+    - Scope: зафиксировать в `Create Draft` явный `input_snapshot` для `expert + topic seed + strategy plan`, чтобы copy/start-draft flow был воспроизводим и не зависел от скрытого состояния формы.
+    - Результат: закрывается оставшаяся `must`-история Epic G про явную фиксацию входных параметров генерации.
+
+15. `024-landing-demo-editorial-polish` 🟡
+    - Scope: дожать `Landing` по кластерам Hero / Team / Workflow, добавить demo-controls, mobile simplification и единый motion/visual contract.
+    - Результат: закрывается оставшийся marketing/UI хвост из Epic B/C/D и partial-истории Epic L про motion и editorial tone.
 
 ## 8) Синхронизация с user stories (итог 010)
 
@@ -201,6 +211,14 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - незакрытые backend-контракты из roadmap (Settings write/team management, Expert Setup save) в user stories помечены как `gap`;
 - риск onboarding Step 1->5 закрыт в Spec 011 и снят как активная зависимость;
 - закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
+- оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap) и `024` (marketing/UI parity), без смешивания этих scope в одной спеки.
+
+### Changelog 023-024 prep (коротко)
+
+- Проверены `docs/.PRDS/prd_start.md`, `docs/prd-gap-roadmap.md` и `docs/user_stories.md` перед новым циклом спек.
+- Остаток user stories разбит на два независимых блока: `023` закрывает `Create Draft` reproducibility, `024` закрывает landing/demo/editorial polish.
+- Для обеих спек созданы полные наборы артефактов (`README/context/plan/tasks/checklist`) и зафиксирован out-of-scope.
+- В `user_stories` добавлены явные зависимости `dep:023` и `dep:024`, чтобы следующий рабочий цикл был прозрачен.
 
 ### Changelog 010 (коротко)
 
@@ -290,3 +308,11 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Навигация и auth history усилены: единые `push/replace` правила, logout переведен в 1 явное действие из shell (`clearSession` + `replace` на `/login`).
 - В `CreateDraft`, `DraftEditor`, `Approvals`, `Settings` добавлены action-level loading/error состояния и защита от повторных submit.
 - Phase E smoke зафиксирован через MCP Chrome DevTools; остаточная desktop/tablet проверка с полным DraftEditor-сценарием вынесена в `docs/tech_debt.md`.
+
+### Changelog 022 (коротко)
+
+- В web добавлен явный flow `Suggest topics`: route `/app/topics/suggest`, отдельный `POST /api/v1/topics/suggest` adapter и карточки suggestions с действием `Save to topics`.
+- Suggestions сохраняются в обычный topics pipeline без ручного копипаста и без отдельного параллельного UI-контракта.
+- В `DraftEditor` фактчек оформлен как самостоятельный stage с состояниями `idle/running/completed/needs attention` и отдельными action-level feedback сообщениями для factcheck/approval.
+- Factcheck panel перестроена как итог отдельного run: digest по claims, секции `Needs attention`/`Verified in this run`, явные `verdict/risk/notes/evidence`.
+- Live smoke на Vercel подтвержден через MCP Chrome DevTools: `suggest -> save topic -> draft -> factcheck -> approval` прошел до появления pending item в `/app/approvals`.

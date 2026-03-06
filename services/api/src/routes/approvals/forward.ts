@@ -6,6 +6,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { logAudit } from '../../core/audit.js';
+import { findSenderNameByUserId } from '../../core/email-sender.js';
 import { buildDiffSummaryBullets } from '../../core/diff-summary.js';
 import { AppError } from '../../core/errors.js';
 import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
@@ -116,6 +117,7 @@ export const forwardReviewer = (deps: RouteDeps) => async (context: Context) => 
     )
     .limit(1);
   const changes = buildDiffSummaryBullets(previousVersion?.content ?? null, version.content);
+  const fromName = await findSenderNameByUserId(deps.db, authUser.userId);
   await sendApprovalRequest(deps, {
     companyId: authUser.companyId,
     draftId: draft.id,
@@ -126,6 +128,7 @@ export const forwardReviewer = (deps: RouteDeps) => async (context: Context) => 
     version: version.versionNumber,
     baseVersion: previousVersion?.versionNumber ?? null,
     changes,
+    fromName: type === 'expert' ? fromName : undefined,
   });
   await logAudit(deps.db, {
     companyId: authUser.companyId,

@@ -5,6 +5,7 @@
 
 import { request } from 'node:https';
 import type { SendEmailInput } from '@newsroom/shared';
+import { buildEmailFrom } from './email-from.js';
 import { buildEmailTlsOptionsFromEnv } from './email-tls.js';
 import type { Logger } from './logger.js';
 
@@ -66,7 +67,7 @@ const postResend = async (
 export const sendWithResend = async (logger: Logger, input: SendEmailInput, replyTo?: string) => {
   const apiKey = process.env.EMAIL_API_KEY;
   if (!apiKey) throw new Error('EMAIL_API_KEY is required for EMAIL_PROVIDER=resend');
-  const from = process.env.EMAIL_FROM ?? 'Editorial Desk <no-reply@vsche.ru>';
+  const from = buildEmailFrom(process.env.EMAIL_FROM, input.fromName);
   const payload = JSON.stringify({
     from,
     to: [input.to],
@@ -93,6 +94,7 @@ export const sendWithResend = async (logger: Logger, input: SendEmailInput, repl
     message_id: data.id,
     to: input.to,
     subject: input.subject,
+    from,
     reply_to: replyTo,
   });
   return { messageId: data.id };

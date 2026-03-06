@@ -14,6 +14,7 @@ export interface SendEmailInput {
   subject: string;
   html: string;
   textBody?: string;
+  fromName?: string;
   replyTo?: string;
   replyToContext?: ReplyToContext;
   metadata?: Record<string, string>;

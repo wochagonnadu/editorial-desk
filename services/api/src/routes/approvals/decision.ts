@@ -12,6 +12,7 @@ import {
   recordDecision,
 } from '../../core/approval.js';
 import { logAudit } from '../../core/audit.js';
+import { findSenderNameByUserId } from '../../core/email-sender.js';
 import { buildDiffSummaryBullets } from '../../core/diff-summary.js';
 import { AppError } from '../../core/errors.js';
 import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
@@ -132,6 +133,10 @@ export const decideApprovalStep = (deps: RouteDeps) => async (context: Context) 
         )
         .limit(1);
       const changes = buildDiffSummaryBullets(previousVersion?.content ?? null, version.content);
+      const fromName =
+        nextStep.approverType === 'expert'
+          ? await findSenderNameByUserId(deps.db, flow.createdBy)
+          : undefined;
       await sendApprovalRequest(deps, {
         companyId: authUser.companyId,
         draftId: draft.id,
@@ -142,6 +147,7 @@ export const decideApprovalStep = (deps: RouteDeps) => async (context: Context) 
         version: version.versionNumber,
         baseVersion: previousVersion?.versionNumber ?? null,
         changes,
+        fromName,
       });
     }
   }

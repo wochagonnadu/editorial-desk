@@ -9,6 +9,7 @@ import type { Database } from '../providers/db/index.js';
 import type { Logger } from '../providers/logger.js';
 import { expertTable, onboardingSequenceTable, userTable } from '../providers/db/index.js';
 import { logAudit } from './audit.js';
+import { findSenderNameByUserId } from './email-sender.js';
 import { getOnboardingTemplate } from './email-templates/onboarding.js';
 
 export interface OnboardingContext {
@@ -37,6 +38,7 @@ interface OverdueOnboardingStep {
 interface SendStepEmailOptions {
   attempt: number;
   reason: 'initial' | 'next_step' | 'reminder';
+  fromName?: string;
 }
 
 export interface OnboardingReminderCycleResult {
@@ -118,9 +120,11 @@ const sendStepEmail = async (
     const template = getOnboardingTemplate(step, expert.name);
     const inbound = process.env.EMAIL_INBOUND_ADDRESS ?? 'reply@mail-dev.vschernyshev.ru';
     const replyTo = buildOnboardingReplyAddress(expertId, step, inbound);
+    const fromName = options.fromName ?? (await findSenderNameByUserId(context.db, expert.managerUserId));
     await context.email.sendEmail({
       to: expert.email,
       ...template,
+      fromName,
       replyTo,
       metadata: { step: String(step) },
     });
@@ -333,7 +337,11 @@ export const processOnboardingReminderJob = async (
   return { status: 'sent', escalated: true, stalled: true };
 };
 
-export const startOnboarding = async (context: OnboardingContext, expertId: string) => {
+export const startOnboarding = async (
+  context: OnboardingContext,
+  expertId: string,
+  fromName?: string,
+) => {
   await context.db
     .delete(onboardingSequenceTable)
     .where(eq(onboardingSequenceTable.expertId, expertId));
@@ -344,7 +352,7 @@ export const startOnboarding = async (context: OnboardingContext, expertId: stri
     .update(expertTable)
     .set({ status: 'onboarding' } as Partial<typeof expertTable.$inferInsert>)
     .where(eq(expertTable.id, expertId));
-  await sendStepEmail(context, expertId, 1, { attempt: 0, reason: 'initial' });
+  await sendStepEmail(context, expertId, 1, { attempt: 0, reason: 'initial', fromName });
 };
 
 export const processReply = async (

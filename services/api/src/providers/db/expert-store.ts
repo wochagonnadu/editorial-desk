@@ -29,6 +29,7 @@ export class DrizzleExpertStore implements ExpertStore {
       .insert(expertTable)
       .values({
         companyId: input.companyId,
+        managerUserId: input.managerUserId,
         name: input.name,
         roleTitle: input.roleTitle,
         email: input.email,

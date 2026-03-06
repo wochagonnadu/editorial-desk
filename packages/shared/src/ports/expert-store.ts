@@ -11,6 +11,7 @@ export interface CreateExpertInput {
   roleTitle: string;
   email: string;
   domain: CompanyDomain;
+  managerUserId?: EntityId;
   publicTextUrls?: string[];
   status?: ExpertStatus;
 }

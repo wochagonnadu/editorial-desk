@@ -10,6 +10,7 @@ import type {
   SendEmailInput,
   SendMagicLinkInput,
 } from '@newsroom/shared';
+import { buildEmailFrom } from './email-from.js';
 import type { Logger } from './logger.js';
 import { sendWithResend } from './email-resend.js';
 
@@ -28,9 +29,11 @@ const buildReplyAddress = (context: ReplyToContext): string => {
 
 const sendWithStub = async (logger: Logger, input: SendEmailInput, replyTo?: string) => {
   const messageId = randomUUID();
+  const from = buildEmailFrom(process.env.EMAIL_FROM, input.fromName);
   logger.info('email.send', {
     provider: 'stub',
     message_id: messageId,
+    from,
     to: input.to,
     subject: input.subject,
     reply_to: replyTo,

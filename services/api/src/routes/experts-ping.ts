@@ -5,6 +5,7 @@
 
 import type { Context } from 'hono';
 import { logAudit } from '../core/audit.js';
+import { findSenderNameByUserId } from '../core/email-sender.js';
 import { AppError } from '../core/errors.js';
 import type { DrizzleExpertStore } from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
@@ -33,11 +34,13 @@ export const requestTwoMinutes =
 
     log.info('experts.ping.requested');
     const message = buildPingMessage(expert.name);
+    const fromName = await findSenderNameByUserId(deps.db, authUser.userId);
     await deps.email.sendEmail({
       to: expert.email,
       subject: message.subject,
       html: message.html,
       textBody: message.textBody,
+      fromName,
     });
 
     await logAudit(deps.db, {

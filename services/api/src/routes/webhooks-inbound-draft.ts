@@ -6,6 +6,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { logAudit } from '../core/audit.js';
+import { findSenderNameByUserId } from '../core/email-sender.js';
 import { draftTable, draftVersionTable, expertTable, notificationTable } from '../providers/db/index.js';
 import type { RouteDeps } from './deps.js';
 
@@ -76,11 +77,13 @@ export const processDraftInbound = async (
   } as unknown as typeof notificationTable.$inferInsert);
 
   const link = docsLink(draft.id, magicToken);
+  const fromName = await findSenderNameByUserId(deps.db, expert.managerUserId);
   await deps.email.sendEmail({
     to: payload.from,
     subject: `Актуальная версия: v${currentVersion.versionNumber}`,
     textBody: `Вы ответили на устаревшую версию. Актуальна версия v${currentVersion.versionNumber}: ${link}`,
     html: `<p>Вы ответили на устаревшую версию.</p><p>Актуальна версия <strong>v${currentVersion.versionNumber}</strong>: <a href="${link}">${link}</a></p>`,
+    fromName,
   });
 
   await logAudit(deps.db, {

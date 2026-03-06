@@ -1,7 +1,7 @@
 // PATH: services/api/src/providers/db/schema-readiness.ts
 // WHAT: Checks required DB columns before runtime routes touch drifted tables
 // WHY:  Fails fast with explicit schema mismatch instead of route-specific SQL crashes
-// RELEVANT: services/api/src/app.ts,services/api/src/providers/db/pool.ts,services/api/drizzle/0003_track_company_generation_policy.sql
+// RELEVANT: services/api/src/app.ts,services/api/src/providers/db/pool.ts,services/api/drizzle/0004_add_expert_manager_user.sql
 
 import { sql } from 'drizzle-orm';
 import { withDbTimeout } from '../../core/db/with-db-timeout.js';
@@ -9,7 +9,10 @@ import { AppError } from '../../core/errors.js';
 import type { Logger } from '../logger.js';
 import type { Database } from './pool.js';
 
-const REQUIRED_COLUMNS = [{ table: 'company', column: 'generation_policy' }] as const;
+const REQUIRED_COLUMNS = [
+  { table: 'company', column: 'generation_policy' },
+  { table: 'expert', column: 'manager_user_id' },
+] as const;
 
 let schemaReadyPromise: Promise<void> | null = null;
 
@@ -28,6 +31,7 @@ const loadPresentColumns = async (db: Database): Promise<string[]> => {
     where table_schema = 'public'
       and (
         (table_name = 'company' and column_name = 'generation_policy')
+        or (table_name = 'expert' and column_name = 'manager_user_id')
       )
   `));
   return readRows(result).map((row) => `${row.table_name ?? ''}.${row.column_name ?? ''}`);

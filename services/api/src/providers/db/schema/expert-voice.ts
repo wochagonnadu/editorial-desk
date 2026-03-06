@@ -8,6 +8,7 @@ import { pgTable, integer, jsonb, timestamp, uuid, varchar } from 'drizzle-orm/p
 export const expertTable = pgTable('expert', {
   id: uuid('id').defaultRandom().primaryKey(),
   companyId: uuid('company_id').notNull(),
+  managerUserId: uuid('manager_user_id'),
   name: varchar('name', { length: 255 }).notNull(),
   roleTitle: varchar('role_title', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),

@@ -4,6 +4,7 @@
 // RELEVANT: services/api/src/routes/cron.ts,services/api/src/core/email-templates/approval.ts
 
 import { eq, sql } from 'drizzle-orm';
+import { findSenderNameByUserId } from '../../core/email-sender.js';
 import { reminderTemplate } from '../../core/email-templates/approval.js';
 import {
   approvalFlowTable,
@@ -54,11 +55,14 @@ export const runApprovalOverdueJob = async (
   if (!email) return { status: 'ignored' as const, reason: 'approver_missing' };
 
   const template = reminderTemplate(topic?.title ?? 'Draft', step.deadlineAt);
+  const fromName =
+    step.approverType === 'expert' ? await findSenderNameByUserId(deps.db, flow.createdBy) : undefined;
   await deps.email.sendEmail({
     to: email,
     subject: template.subject,
     html: template.html,
     textBody: template.textBody,
+    fromName,
   });
   await deps.db.execute(
     sql`update approval_step set reminder_count = reminder_count + 1 where id = ${step.id}`,

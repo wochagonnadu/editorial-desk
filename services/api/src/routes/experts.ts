@@ -6,6 +6,7 @@
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { ExpertStatus } from '@newsroom/shared';
+import { findSenderNameByUserId } from '../core/email-sender.js';
 import { readJsonBodyStrict } from '../core/http/read-json-body.js';
 import { logAudit } from '../core/audit.js';
 import { logStage } from '../core/observability/log-stage.js';
@@ -74,6 +75,7 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
     const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
     const created = await expertStore.create({
       companyId: authUser.companyId,
+      managerUserId: authUser.userId,
       name: parseString(body.name, 'name'),
       roleTitle: parseString(body.role_title, 'role_title'),
       email: parseString(body.email, 'email').toLowerCase(),
@@ -92,7 +94,12 @@ export const buildExpertRoutes = (deps: RouteDeps): Hono => {
       durationMs: Date.now() - startedAt,
     });
     try {
-      await startOnboarding({ db: deps.db, email: deps.email, logger: deps.logger }, created.id);
+      const fromName = await findSenderNameByUserId(deps.db, authUser.userId);
+      await startOnboarding(
+        { db: deps.db, email: deps.email, logger: deps.logger },
+        created.id,
+        fromName,
+      );
     } catch (error) {
       log.error('experts.create.onboarding_failed', {
         expert_id: created.id,

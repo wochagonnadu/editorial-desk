@@ -13,6 +13,7 @@ import {
   recordDecision,
 } from '../core/approval.js';
 import { logAudit } from '../core/audit.js';
+import { findSenderNameByUserId } from '../core/email-sender.js';
 import { buildDiffSummaryBullets } from '../core/diff-summary.js';
 import { consolidatedFeedbackTemplate } from '../core/email-templates/approval.js';
 import { AppError } from '../core/errors.js';
@@ -138,6 +139,10 @@ export const processApprovalClick =
           previousVersion?.content ?? null,
           currentVersion.content,
         );
+        const fromName =
+          nextStep.approverType === 'expert'
+            ? await findSenderNameByUserId(deps.db, flow.createdBy)
+            : undefined;
         await sendApprovalRequest(deps, {
           companyId: draft.companyId,
           draftId,
@@ -148,6 +153,7 @@ export const processApprovalClick =
           version: currentVersion.versionNumber,
           baseVersion: previousVersion?.versionNumber ?? null,
           changes,
+          fromName,
         });
         await deps.db
           .update(notificationTable)

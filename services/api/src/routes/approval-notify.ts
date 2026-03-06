@@ -33,6 +33,7 @@ export const sendApprovalRequest = async (
     version: number;
     baseVersion?: number | null;
     changes?: string[];
+    fromName?: string;
   },
 ) => {
   const token = randomUUID();
@@ -62,5 +63,6 @@ export const sendApprovalRequest = async (
     subject: email.subject,
     html: email.html,
     textBody: email.textBody,
+    fromName: input.fromName,
   });
 };

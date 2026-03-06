@@ -1,7 +1,7 @@
 // PATH: services/api/tests/unit/schema-readiness.test.ts
 // WHAT: Unit tests for required DB schema readiness guard
 // WHY:  Prevents silent schema drift from reaching runtime auth and company routes
-// RELEVANT: services/api/src/providers/db/schema-readiness.ts,services/api/src/app.ts,services/api/drizzle/0003_track_company_generation_policy.sql
+// RELEVANT: services/api/src/providers/db/schema-readiness.ts,services/api/src/app.ts,services/api/drizzle/0004_add_expert_manager_user.sql
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppError } from '../../src/core/errors';
@@ -34,7 +34,10 @@ describe('schema readiness', () => {
   });
 
   it('passes when required company column exists', async () => {
-    const db = createDb([{ table_name: 'company', column_name: 'generation_policy' }]);
+    const db = createDb([
+      { table_name: 'company', column_name: 'generation_policy' },
+      { table_name: 'expert', column_name: 'manager_user_id' },
+    ]);
 
     await expect(assertRequiredColumnsPresent(asDatabase(db), createLogger())).resolves.toBeUndefined();
   });
@@ -47,14 +50,17 @@ describe('schema readiness', () => {
     await expect(assertRequiredColumnsPresent(asDatabase(db), logger)).rejects.toMatchObject({
       code: 'DB_SCHEMA_MISMATCH',
       status: 503,
-      details: { missing_columns: ['company.generation_policy'] },
+      details: { missing_columns: ['company.generation_policy', 'expert.manager_user_id'] },
     } satisfies Pick<AppError, 'code' | 'status' | 'details'>);
     expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
   it('memoizes successful readiness checks outside test env', async () => {
     process.env.NODE_ENV = 'development';
-    const db = createDb([{ table_name: 'company', column_name: 'generation_policy' }]);
+    const db = createDb([
+      { table_name: 'company', column_name: 'generation_policy' },
+      { table_name: 'expert', column_name: 'manager_user_id' },
+    ]);
 
     await ensureSchemaReadiness(asDatabase(db), createLogger());
     await ensureSchemaReadiness(asDatabase(db), createLogger());

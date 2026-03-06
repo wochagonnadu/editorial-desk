@@ -8,6 +8,7 @@ import type { Context } from 'hono';
 import { createFlow } from '../../core/approval.js';
 import type { ApprovalConfig } from '../../core/approval.js';
 import { logAudit } from '../../core/audit.js';
+import { findSenderNameByUserId } from '../../core/email-sender.js';
 import { buildDiffSummaryBullets } from '../../core/diff-summary.js';
 import { AppError } from '../../core/errors.js';
 import { readJsonBodyStrict } from '../../core/http/read-json-body.js';
@@ -87,6 +88,7 @@ export const sendForReview = (deps: RouteDeps) => async (context: Context) => {
 
   const { flow, steps } = await createFlow(deps.db, draft.id, authUser.userId, config);
   const pendingSteps = steps.filter((step) => step.status === 'pending');
+  const fromName = await findSenderNameByUserId(deps.db, authUser.userId);
 
   const notifications = await Promise.all(
     pendingSteps.map(async (step) => {
@@ -105,6 +107,7 @@ export const sendForReview = (deps: RouteDeps) => async (context: Context) => {
         version: version.versionNumber,
         baseVersion: previousVersion?.versionNumber ?? null,
         changes,
+        fromName: step.approverType === 'expert' ? fromName : undefined,
       });
       return step.id;
     }),
