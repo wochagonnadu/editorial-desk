@@ -12,6 +12,8 @@ import { expertTable } from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
 import type { RouteDeps } from './deps.js';
 
+const toIsoNow = (): string => new Date().toISOString();
+
 const parseRequiredString = (value: unknown, field: string, min = 1): string => {
   if (typeof value !== 'string' || value.trim().length < min) {
     throw new AppError(400, 'VALIDATION_ERROR', `${field} is required`);
@@ -88,7 +90,23 @@ export const createStrategyPlanHandler =
         market,
         constraints,
       });
-      return context.json(plan);
+      return context.json({
+        plan,
+        input_snapshot: {
+          expert: {
+            id: expert.id,
+            name: expert.name,
+          },
+          topic_seed: topicSeed,
+          audience,
+          market,
+          constraints: {
+            tone: constraints.tone,
+            max_items_per_week: constraints.maxItemsPerWeek,
+          },
+          generated_at: toIsoNow(),
+        },
+      });
     } catch (error) {
       throw toAppError(error);
     }

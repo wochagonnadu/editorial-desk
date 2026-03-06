@@ -14,6 +14,7 @@ import {
   fetchTopics,
   generateStrategyPlan,
   type StrategyCopyPayload,
+  type StrategyInputSnapshot,
   type StrategyPlan,
   type TopicItem,
 } from '../services/topics';
@@ -27,6 +28,7 @@ export function CreateDraft() {
   const [topicTitle, setTopicTitle] = useState('');
   const [topics, setTopics] = useState<TopicItem[]>([]);
   const [strategyPlan, setStrategyPlan] = useState<StrategyPlan | null>(null);
+  const [strategySnapshot, setStrategySnapshot] = useState<StrategyInputSnapshot | null>(null);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [copyingItemId, setCopyingItemId] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -110,32 +112,37 @@ export function CreateDraft() {
       setPlanError(null);
       setPageError(null);
       setIsGeneratingPlan(true);
-      const plan = await generateStrategyPlan(session.token, {
+      const result = await generateStrategyPlan(session.token, {
         expertId: selectedExpertId,
         topicSeed: topicTitle.trim(),
         audience: 'general',
         market: 'en-US',
         constraints: { tone: 'practical and calm', maxItemsPerWeek: 2 },
       });
-      setStrategyPlan(plan);
+      setStrategyPlan(result.plan);
+      setStrategySnapshot(result.inputSnapshot);
       if (!expert) setPlanError('Plan generated, but selected expert context is incomplete');
     } catch {
       setPlanError('Could not generate structured content plan');
       setStrategyPlan(null);
+      setStrategySnapshot(null);
     } finally {
       setIsGeneratingPlan(false);
     }
   };
 
   const copyPlanItem = async (itemId: string, payload: StrategyCopyPayload) => {
-    if (!session) return;
+    if (!session || !strategySnapshot) {
+      setCopyError('Locked strategy context is required before copying plan items');
+      return;
+    }
     try {
       setCopyError(null);
       setPageError(null);
       setCopyingItemId(itemId);
       await createTopic(session.token, {
         title: payload.title,
-        expertId: payload.expert_id ?? selectedExpertId,
+        expertId: strategySnapshot.expert.id,
         description: payload.description,
         sourceType: payload.source_type,
       });

@@ -60,6 +60,26 @@ export type StrategyPlan = {
   interlinking: StrategyInterlink[];
 };
 
+export type StrategyInputSnapshot = {
+  expert: {
+    id: string;
+    name: string;
+  };
+  topicSeed: string;
+  audience: string;
+  market: string;
+  constraints: {
+    tone: string;
+    maxItemsPerWeek: number;
+  };
+  generatedAt: string;
+};
+
+export type StrategyPlanResult = {
+  plan: StrategyPlan;
+  inputSnapshot: StrategyInputSnapshot;
+};
+
 export type SuggestedTopicItem = {
   title: string;
   description: string;
@@ -96,6 +116,24 @@ type SuggestedTopicsResponse = {
       expertId?: string | null;
     };
   }>;
+};
+
+type StrategyPlanResponse = {
+  plan: StrategyPlan;
+  input_snapshot: {
+    expert: {
+      id: string;
+      name: string;
+    };
+    topic_seed: string;
+    audience: string;
+    market: string;
+    constraints: {
+      tone: string;
+      max_items_per_week: number;
+    };
+    generated_at: string;
+  };
 };
 
 export const fetchTopics = async (token: string): Promise<TopicItem[]> => {
@@ -141,7 +179,7 @@ export const generateStrategyPlan = async (
     market?: string;
     constraints?: { tone?: string; maxItemsPerWeek?: number };
   },
-): Promise<StrategyPlan> => {
+): Promise<StrategyPlanResult> => {
   const raw = await apiRequest<unknown>('/api/v1/topics/strategy-plan', {
     method: 'POST',
     token,
@@ -159,7 +197,21 @@ export const generateStrategyPlan = async (
             },
     },
   });
-  return mapDto<StrategyPlan>(raw);
+  const response = mapDto<StrategyPlanResponse>(raw);
+  return {
+    plan: response.plan,
+    inputSnapshot: {
+      expert: response.input_snapshot.expert,
+      topicSeed: response.input_snapshot.topic_seed,
+      audience: response.input_snapshot.audience,
+      market: response.input_snapshot.market,
+      constraints: {
+        tone: response.input_snapshot.constraints.tone,
+        maxItemsPerWeek: response.input_snapshot.constraints.max_items_per_week,
+      },
+      generatedAt: response.input_snapshot.generated_at,
+    },
+  };
 };
 
 export const suggestTopics = async (

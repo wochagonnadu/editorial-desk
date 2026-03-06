@@ -36,20 +36,38 @@ const mockWindowAndFetch = (responses: Array<{ status?: number; body: unknown }>
 
 test('generate plan then copy item creates topic', async (t) => {
   const { calls, restore } = mockWindowAndFetch([
-    { body: { horizon_weeks: 12, pillars: [], interlinking: [] } },
+    {
+      body: {
+        plan: { horizon_weeks: 12, pillars: [], interlinking: [] },
+        input_snapshot: {
+          expert: { id: 'e1', name: 'Dr. Example' },
+          topic_seed: 'Implants FAQ',
+          audience: 'general',
+          market: 'en-US',
+          constraints: { tone: 'practical and calm', max_items_per_week: 2 },
+          generated_at: '2026-03-06T12:00:00.000Z',
+        },
+      },
+    },
     { body: { id: 'topic-1', status: 'proposed' } },
   ]);
   t.after(restore);
   const { generateStrategyPlan, createTopic } = await import('../topics');
 
-  await generateStrategyPlan('token-1', { expertId: 'e1', topicSeed: 'Implants FAQ' });
+  const result = await generateStrategyPlan('token-1', {
+    expertId: 'e1',
+    topicSeed: 'Implants FAQ',
+  });
   await createTopic('token-1', {
     title: 'FAQ: Is implant painful?',
-    expertId: 'e1',
+    expertId: result.inputSnapshot.expert.id,
     description: 'Week 1 FAQ item',
     sourceType: 'faq',
   });
 
+  assert.equal(result.plan.horizon_weeks, 12);
+  assert.equal(result.inputSnapshot.expert.id, 'e1');
+  assert.equal(result.inputSnapshot.topicSeed, 'Implants FAQ');
   assert.equal(calls[0]?.url, 'http://localhost:3000/api/v1/topics/strategy-plan');
   assert.equal(calls[1]?.url, 'http://localhost:3000/api/v1/topics');
   assert.match(String(calls[1]?.init?.body), /"source_type":"faq"/);
