@@ -15,6 +15,7 @@ import { ApiError } from '../services/api/client';
 
 // Premium easing curve (Apple-like)
 const customEase = [0.16, 1, 0.3, 1] as const;
+const calmMotion = { duration: 0.7, ease: customEase } as const;
 
 const Slide = ({
   children,
@@ -78,10 +79,10 @@ const Slide = ({
 
 const FadeUp = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
   <motion.div
-    initial={{ opacity: 0, y: 60 }}
+    initial={{ opacity: 0, y: 24 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: false, amount: 0.2 }}
-    transition={{ duration: 1, ease: customEase, delay }}
+    viewport={{ once: true, amount: 0.25 }}
+    transition={{ ...calmMotion, delay }}
   >
     {children}
   </motion.div>
@@ -283,17 +284,17 @@ export function Landing() {
           isPast={activeSection >= 4}
           className="bg-ink-900 text-white px-6 relative overflow-hidden"
         >
-          {/* Premium gradient drift background */}
+          {/* Keep motion atmospheric, not attention-seeking. */}
           <motion.div
             animate={{
-              x: ['-5%', '5%', '-5%'],
-              y: ['-5%', '5%', '-5%'],
+              opacity: [0.16, 0.24, 0.16],
+              scale: [1, 1.02, 1],
             }}
-            transition={{ duration: 20, ease: 'easeInOut', repeat: Infinity }}
+            transition={{ duration: 16, ease: 'easeInOut', repeat: Infinity }}
             className="absolute top-0 left-0 w-[110%] h-[110%] -ml-[5%] -mt-[5%] pointer-events-none z-0"
             style={{
               background:
-                'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 60%)',
+                'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 62%)',
             }}
           />
           <div className="max-w-7xl mx-auto w-full relative z-10">
