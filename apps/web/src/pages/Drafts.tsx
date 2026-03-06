@@ -51,9 +51,14 @@ export function Drafts() {
           <h1 className="text-3xl font-serif">Drafts</h1>
           <p className="text-ink-500 mt-1">Inventory of all materials in progress.</p>
         </div>
-        <Link to="/app/drafts/new" className="btn-primary">
-          Create draft
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/app/topics/suggest" className="btn-secondary">
+            Suggest topics
+          </Link>
+          <Link to="/app/drafts/new" className="btn-primary">
+            Create draft
+          </Link>
+        </div>
       </header>
 
       {error ? <div className="card text-red-600">{error}</div> : null}

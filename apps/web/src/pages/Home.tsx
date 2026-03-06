@@ -54,9 +54,14 @@ export function Home() {
           <h1 className="text-3xl font-serif">Good morning, {greetingName}</h1>
           <p className="text-ink-500 mt-1">Here is what needs your attention today.</p>
         </div>
-        <Link to="/app/drafts/new" className="btn-primary">
-          Create draft
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/app/topics/suggest" className="btn-secondary">
+            Suggest topics
+          </Link>
+          <Link to="/app/drafts/new" className="btn-primary">
+            Create draft
+          </Link>
+        </div>
       </header>
 
       {error ? <div className="card text-red-600">{error}</div> : null}

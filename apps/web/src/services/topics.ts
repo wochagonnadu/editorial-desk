@@ -60,12 +60,41 @@ export type StrategyPlan = {
   interlinking: StrategyInterlink[];
 };
 
+export type SuggestedTopicItem = {
+  title: string;
+  description: string;
+  sourceType: string;
+  expertId: string | null;
+  expertName: string | null;
+  savePayload: {
+    title: string;
+    description: string;
+    sourceType: string;
+    expertId?: string;
+  };
+};
+
 type TopicsResponse = {
   data: Array<{
     id: string;
     title: string;
     status: string;
     expert: { id: string; name: string } | null;
+  }>;
+};
+
+type SuggestedTopicsResponse = {
+  data: Array<{
+    title: string;
+    description: string;
+    sourceType: string;
+    expert: { id: string; name: string } | null;
+    savePayload: {
+      title: string;
+      description: string;
+      sourceType: string;
+      expertId?: string | null;
+    };
   }>;
 };
 
@@ -131,6 +160,31 @@ export const generateStrategyPlan = async (
     },
   });
   return mapDto<StrategyPlan>(raw);
+};
+
+export const suggestTopics = async (
+  token: string,
+  payload?: { expertIds?: string[] },
+): Promise<SuggestedTopicItem[]> => {
+  const raw = await apiRequest<unknown>('/api/v1/topics/suggest', {
+    method: 'POST',
+    token,
+    body: { expert_ids: payload?.expertIds ?? [] },
+  });
+  const response = mapDto<SuggestedTopicsResponse>(raw);
+  return response.data.map((item) => ({
+    title: item.title,
+    description: item.description,
+    sourceType: item.sourceType,
+    expertId: item.expert?.id ?? null,
+    expertName: item.expert?.name ?? null,
+    savePayload: {
+      title: item.savePayload.title,
+      description: item.savePayload.description,
+      sourceType: item.savePayload.sourceType,
+      expertId: item.savePayload.expertId ?? undefined,
+    },
+  }));
 };
 
 export const approveTopic = async (token: string, topicId: string): Promise<void> => {

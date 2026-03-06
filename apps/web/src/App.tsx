@@ -19,6 +19,7 @@ import { Calendar } from './pages/Calendar';
 import { Drafts } from './pages/Drafts';
 import { DraftEditor } from './pages/DraftEditor';
 import { CreateDraft } from './pages/CreateDraft';
+import { SuggestTopics } from './pages/SuggestTopics';
 import { Approvals } from './pages/Approvals';
 import { Settings } from './pages/Settings';
 import { Audit } from './pages/Audit';
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="calendar" element={<Calendar />} />
             <Route path="drafts" element={<Drafts />} />
             <Route path="drafts/new" element={<CreateDraft />} />
+            <Route path="topics/suggest" element={<SuggestTopics />} />
             <Route path="drafts/:id" element={<DraftEditor />} />
             <Route path="approvals" element={<Approvals />} />
             <Route path="audit" element={<Audit />} />
