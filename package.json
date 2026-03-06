@@ -11,6 +11,7 @@
     "check:push": "pnpm install --frozen-lockfile --force && pnpm check:api-esm-imports && pnpm turbo run build --force && pnpm --filter @newsroom/api exec tsc -p tsconfig.json --noEmit --pretty false",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "optimize:team-images": "node scripts/optimize-team-images.mjs",
     "prepare": "simple-git-hooks",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck"

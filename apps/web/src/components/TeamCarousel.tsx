@@ -5,15 +5,15 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import averyImage from '../public/images/team/avery.png';
-import blairImage from '../public/images/team/blair.png';
-import caseyImage from '../public/images/team/casey.png';
-import jordanImage from '../public/images/team/jordan.png';
-import morganImage from '../public/images/team/morgan.png';
-import quinnImage from '../public/images/team/quinn.png';
-import rowanImage from '../public/images/team/rowan.png';
-import samImage from '../public/images/team/sam.png';
-import taylorImage from '../public/images/team/taylor.png';
+import averyImage from '../public/images/team/avery.jpg';
+import blairImage from '../public/images/team/blair.jpg';
+import caseyImage from '../public/images/team/casey.jpg';
+import jordanImage from '../public/images/team/jordan.jpg';
+import morganImage from '../public/images/team/morgan.jpg';
+import quinnImage from '../public/images/team/quinn.jpg';
+import rowanImage from '../public/images/team/rowan.jpg';
+import samImage from '../public/images/team/sam.jpg';
+import taylorImage from '../public/images/team/taylor.jpg';
 
 const teamImages = {
   avery: averyImage,

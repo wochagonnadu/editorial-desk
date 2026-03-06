@@ -15,8 +15,8 @@ import {
   Mail,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import caseyImage from '../public/images/team/casey.png';
-import morganImage from '../public/images/team/morgan.png';
+import caseyImage from '../public/images/team/casey.jpg';
+import morganImage from '../public/images/team/morgan.jpg';
 
 const customEase = [0.22, 1, 0.36, 1] as const;
 
