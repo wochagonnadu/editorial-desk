@@ -20,7 +20,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 - [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
 - [x] `024-landing-demo-editorial-polish` закрыт: hero/team/workflow доведены до marketing/UI parity, mobile baseline подтвержден, visual tone и локальные portraits синхронизированы.
-- [ ] Следующий spec-блок сформирован: `025-manager-first-time-onboarding`.
+- [ ] Активный spec-блок: `026-manager-company-context-onboarding` (Phase A contract baseline зафиксирован, дальше wiring и UX integration).
 
 ## 1) Что уже совпадает с PRD
 
@@ -222,6 +222,13 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
 - оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap), `024` (marketing/UI parity), закрытый `025` (manager first-time onboarding) и отдельный `TD-014` для expert email/public-doc flow.
 - Следующим продуктовым хвостом после базового first-run стал `026`: manager должен задать company context и generation policy прямо в onboarding, а не только позже в `Settings`.
+
+### Changelog 026 (Phase A)
+
+- Для manager first-run зафиксирован baseline полей: `manager_name`, `company_description`, `generation_policy.tone`, `generation_policy.default_audience` и onboarding `Preview`.
+- `company_description` закреплен как рабочий editorial context для generation/expert writing, а не как декоративное описание компании.
+- `Generation Controls` и `Preview` зафиксированы как часть onboarding setup, но без нового параллельного settings flow.
+- Переиспользование текущего server-side settings contract уточнено явно: company context идет через `/api/v1/companies/me`, preview — через `/api/v1/companies/me/generation-preview`.
 
 ### Changelog 025 (closed)
 
