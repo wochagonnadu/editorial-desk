@@ -230,6 +230,13 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - `Preview` больше не считается обязательной частью регистрации/setup и остается optional refinement в `Settings`.
 - `025` сужен до short onboarding-tour после setup, без формы company context внутри tour.
 
+### Changelog 026 (Phase A)
+
+- Зафиксирован contract baseline setup: `manager_name`, `company_name`, `company_domain`, `company_description` и optional `generation_policy.tone`.
+- Явно закреплено, что `company_description` — это рабочий editorial context для generation pipeline.
+- Явно закреплено разделение source of truth: `manager_name` живет в `user`, company context живет в `company`.
+- Подтверждено, что `Preview` не блокирует регистрацию/setup и остается optional после setup.
+
 ### Changelog 025 (closed)
 
 - Для manager/owner добавлен отдельный first-run route `/app/onboarding`, который больше не смешивается с обычным `Home`.
