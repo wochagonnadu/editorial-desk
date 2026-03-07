@@ -233,6 +233,9 @@ describe('companies settings endpoint', () => {
     expect(String(previewCall.promptVars?.workspace_generation_policy_json)).toContain(
       'hype wording',
     );
+    expect(previewCall.promptVars?.company_editorial_context).toBe(
+      'No company editorial context provided.',
+    );
   });
 
   it('persists generation policy across patch and subsequent get', async () => {

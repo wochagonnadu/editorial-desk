@@ -1,23 +1,40 @@
 // PATH: apps/web/src/pages/settings/WorkspaceSettingsCard.tsx
-// WHAT: Editable workspace form for company settings in Settings page
-// WHY:  Isolates company form UI from page-level data loading and actions
-// RELEVANT: apps/web/src/pages/Settings.tsx,apps/web/src/services/company.ts
+// WHAT: Editable workspace and manager setup form for Settings page
+// WHY:  Keeps first-run setup fields editable later from one shared settings surface
+// RELEVANT: apps/web/src/pages/Settings.tsx,apps/web/src/services/company.ts,apps/web/src/services/user.ts
 
 import type { CompanySettings } from '../../services/company';
 
 type Props = {
   value: CompanySettings;
+  managerName: string;
   saving: boolean;
-  onChange: (field: 'name' | 'domain' | 'language', value: string) => void;
+  onChange: (field: 'name' | 'domain' | 'language' | 'description', value: string) => void;
+  onManagerNameChange: (value: string) => void;
 };
 
-export function WorkspaceSettingsCard({ value, saving, onChange }: Props) {
+export function WorkspaceSettingsCard({
+  value,
+  managerName,
+  saving,
+  onChange,
+  onManagerNameChange,
+}: Props) {
   return (
     <section id="workspace-settings" className="card space-y-4">
       <h2 className="text-xl font-serif font-medium border-b border-ink-100 pb-3">
         Workspace Settings
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <label className="space-y-1">
+          <span className="text-ink-500">Manager name</span>
+          <input
+            value={managerName}
+            onChange={(event) => onManagerNameChange(event.target.value)}
+            disabled={saving}
+            className="w-full px-3 py-2 rounded-xl border border-ink-100 bg-white"
+          />
+        </label>
         <label className="space-y-1">
           <span className="text-ink-500">Workspace Name</span>
           <input
@@ -51,6 +68,16 @@ export function WorkspaceSettingsCard({ value, saving, onChange }: Props) {
           />
         </label>
       </div>
+      <label className="space-y-1 block text-sm">
+        <span className="text-ink-500">Company description</span>
+        <textarea
+          value={value.description}
+          onChange={(event) => onChange('description', event.target.value)}
+          disabled={saving}
+          rows={5}
+          className="w-full px-3 py-2 rounded-2xl border border-ink-100 bg-white"
+        />
+      </label>
     </section>
   );
 }

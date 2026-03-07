@@ -23,6 +23,11 @@ import type { RouteDeps } from '../deps.js';
 import { normalizeGenerationPolicy } from '../generation-policy.js';
 import { sseResponse } from './sse.js';
 
+const companyEditorialContext = (description: string) => {
+  const value = description.trim();
+  return value || 'No company editorial context provided.';
+};
+
 const readBody = async (context: Context) =>
   readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
 
@@ -103,6 +108,7 @@ export const createDraftFromTopic = (deps: RouteDeps) => async (context: Context
       promptVars: {
         topic_title: topic.title,
         expert_name: expert.name,
+        company_editorial_context: companyEditorialContext(company.description),
         voice_profile_json: JSON.stringify(profileData),
         audience: workspacePolicy.default_audience,
         workspace_generation_policy_json: JSON.stringify(workspacePolicy),
@@ -210,6 +216,7 @@ export const generateDraft = (deps: RouteDeps) => async (context: Context) => {
       promptVars: {
         topic_title: topic.title,
         expert_name: expert.name,
+        company_editorial_context: companyEditorialContext(company.description),
         voice_profile_json: JSON.stringify(profileData),
         audience: workspacePolicy.default_audience,
         workspace_generation_policy_json: JSON.stringify(workspacePolicy),

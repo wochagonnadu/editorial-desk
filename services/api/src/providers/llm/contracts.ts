@@ -51,6 +51,7 @@ export const promptRegistry: Record<string, PromptTemplate> = {
       'expert_name',
       'voice_profile_json',
       'audience',
+      'company_editorial_context',
       'workspace_generation_policy_json',
     ],
   },
@@ -62,6 +63,7 @@ export const promptRegistry: Record<string, PromptTemplate> = {
     requiredVars: [
       'instructions',
       'draft_content',
+      'company_editorial_context',
       'voice_profile_json',
       'workspace_generation_policy_json',
     ],

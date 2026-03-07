@@ -14,6 +14,7 @@ export function Settings() {
   const {
     session,
     draft,
+    managerName,
     team,
     inviteName,
     inviteEmail,
@@ -35,6 +36,7 @@ export function Settings() {
     roleUpdatingId,
     canSave,
     setDraft,
+    setManagerName,
     setInviteName,
     setInviteEmail,
     setInviteRole,
@@ -69,10 +71,12 @@ export function Settings() {
         <>
           <WorkspaceSettingsCard
             value={draft}
+            managerName={managerName}
             saving={isSaving}
             onChange={(field, value) =>
               setDraft((current) => (current ? { ...current, [field]: value } : current))
             }
+            onManagerNameChange={setManagerName}
           />
           <GenerationControlsCard
             value={draft.generation_policy}

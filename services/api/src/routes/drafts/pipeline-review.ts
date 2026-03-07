@@ -30,6 +30,11 @@ import type { RouteDeps } from '../deps.js';
 import { normalizeGenerationPolicy } from '../generation-policy.js';
 import { sseResponse } from './sse.js';
 
+const companyEditorialContext = (description: string) => {
+  const value = description.trim();
+  return value || 'No company editorial context provided.';
+};
+
 export const factcheckDraft = (deps: RouteDeps) => async (context: Context) => {
   const authUser = getAuthUser(context);
   const draftId = context.req.param('id');
@@ -177,6 +182,7 @@ export const reviseDraft = (deps: RouteDeps) => async (context: Context) => {
       promptVars: {
         instructions,
         draft_content: current.content,
+        company_editorial_context: companyEditorialContext(company.description),
         voice_profile_json: JSON.stringify(profileData),
         workspace_generation_policy_json: JSON.stringify(workspacePolicy),
       },

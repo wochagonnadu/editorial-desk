@@ -1,7 +1,7 @@
 // PATH: apps/web/src/pages/settings/useSettingsPageState.ts
 // WHAT: State and actions hook for Settings workspace and team management
 // WHY:  Keeps Settings page component focused on rendering and under 100 LOC
-// RELEVANT: apps/web/src/pages/Settings.tsx,apps/web/src/services/company.ts
+// RELEVANT: apps/web/src/pages/Settings.tsx,apps/web/src/services/company.ts,apps/web/src/services/user.ts
 
 import { useEffect, useState } from 'react';
 import {
@@ -20,11 +20,14 @@ import {
   type TeamRole,
   type TeamUser,
 } from '../../services/team';
+import { fetchCurrentUser, updateCurrentUser } from '../../services/user';
 
 export const useSettingsPageState = () => {
   const { session } = useSession();
   const [company, setCompany] = useState<CompanySettings | null>(null);
   const [draft, setDraft] = useState<CompanySettings | null>(null);
+  const [managerName, setManagerName] = useState('');
+  const [savedManagerName, setSavedManagerName] = useState('');
   const [team, setTeam] = useState<TeamUser[]>([]);
   const [experts, setExperts] = useState<ExpertItem[]>([]);
   const [inviteName, setInviteName] = useState('');
@@ -85,13 +88,16 @@ export const useSettingsPageState = () => {
     if (!session) return;
     try {
       setLoadError(null);
-      const [companyData, teamData, expertsData] = await Promise.all([
+      const [companyData, userData, teamData, expertsData] = await Promise.all([
         fetchCompanySettings(session.token),
+        fetchCurrentUser(session.token),
         fetchTeamUsers(session.token),
         fetchExperts(session.token),
       ]);
       setCompany(companyData);
       setDraft(companyData);
+      setManagerName(userData.name);
+      setSavedManagerName(userData.name);
       setTeam(teamData);
       setExperts(expertsData);
       setPreviewExpertId((current) => current || expertsData[0]?.id || '');
@@ -106,8 +112,10 @@ export const useSettingsPageState = () => {
 
   const canSave =
     Boolean(company && draft) &&
-    (company?.name !== draft?.name ||
+    (savedManagerName !== managerName ||
+      company?.name !== draft?.name ||
       company?.domain !== draft?.domain ||
+      company?.description !== draft?.description ||
       company?.language !== draft?.language ||
       JSON.stringify(company?.generation_policy) !== JSON.stringify(draft?.generation_policy));
 
@@ -117,14 +125,17 @@ export const useSettingsPageState = () => {
       setSaveError(null);
       setNotice(null);
       setIsSaving(true);
+      await updateCurrentUser(session.token, { name: managerName.trim() });
       const updated = await updateCompanySettings(session.token, {
         name: draft.name,
         domain: draft.domain,
+        description: draft.description,
         language: draft.language,
         generation_policy: draft.generation_policy,
       });
       setCompany(updated);
       setDraft(updated);
+      setSavedManagerName(managerName.trim());
       setNotice('Workspace settings saved');
     } catch {
       setSaveError('Could not save workspace settings');
@@ -201,6 +212,7 @@ export const useSettingsPageState = () => {
   return {
     session,
     draft,
+    managerName,
     team,
     experts,
     inviteName,
@@ -222,6 +234,7 @@ export const useSettingsPageState = () => {
     roleUpdatingId,
     canSave,
     setDraft,
+    setManagerName,
     setInviteName,
     setInviteEmail,
     setInviteRole,

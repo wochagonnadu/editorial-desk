@@ -58,6 +58,7 @@ const createDeps = (draft: { currentVersionId: string | null }, calls: unknown[]
               return queryResult([
                 {
                   id: 'c1',
+                  description: 'Clinical newsroom for regulated patient education.',
                   generationPolicy: {
                     tone: 'calm compliance style',
                     default_audience: 'practitioners',
@@ -132,6 +133,12 @@ describe('draft generation policy wiring', () => {
     const generateVars = (generateCalls[0] as { promptVars?: Record<string, unknown> }).promptVars;
     const reviseVars = (reviseCalls[0] as { promptVars?: Record<string, unknown> }).promptVars;
     expect(generateVars?.audience).toBe('practitioners');
+    expect(generateVars?.company_editorial_context).toBe(
+      'Clinical newsroom for regulated patient education.',
+    );
+    expect(reviseVars?.company_editorial_context).toBe(
+      'Clinical newsroom for regulated patient education.',
+    );
     expect(generateVars?.workspace_generation_policy_json).toBe(
       reviseVars?.workspace_generation_policy_json,
     );

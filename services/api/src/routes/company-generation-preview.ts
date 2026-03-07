@@ -12,6 +12,11 @@ import { getAuthUser } from './auth-middleware.js';
 import type { RouteDeps } from './deps.js';
 import { normalizeGenerationPolicy } from './generation-policy.js';
 
+const companyEditorialContext = (description: string) => {
+  const value = description.trim();
+  return value || 'No company editorial context provided.';
+};
+
 const parseField = (value: unknown, field: string, min: number, max: number): string => {
   if (typeof value !== 'string')
     throw new AppError(400, 'VALIDATION_ERROR', `${field} is required`);
@@ -58,12 +63,14 @@ export const previewCompanyGeneration = (deps: RouteDeps) => async (context: Con
     ? {
         instructions,
         draft_content: `# ${topicTitle}\n\nЧерновой фрагмент для предпросмотра тональности.`,
+        company_editorial_context: companyEditorialContext(company.description),
         voice_profile_json: JSON.stringify(profileData),
         workspace_generation_policy_json: JSON.stringify(workspacePolicy),
       }
     : {
         topic_title: topicTitle,
         expert_name: expert.name,
+        company_editorial_context: companyEditorialContext(company.description),
         voice_profile_json: JSON.stringify(profileData),
         audience: workspacePolicy.default_audience,
         workspace_generation_policy_json: JSON.stringify(workspacePolicy),

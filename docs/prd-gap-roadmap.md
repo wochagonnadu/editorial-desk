@@ -251,6 +251,12 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Post-verify routing теперь идет через общий resolver: `setup -> onboarding-tour -> app shell`.
 - Web-контур `025` подчищен под новый смысл: onboarding больше говорит про review/tour, а не про первичный company setup.
 
+### Changelog 026 (Phase E)
+
+- Обычный `Settings` теперь показывает setup-поля `manager_name` и `company_description`, поэтому first-run context можно править в том же surface без отдельной onboarding-only формы.
+- `Preview` остался в `Settings` как optional refinement step и не превратился в обязательный блок setup flow.
+- В draft generate/revise и preview prompt vars добавлен `company_editorial_context`, который берется из `company.description` и идет рядом с generation policy.
+
 ### Changelog 025 (closed)
 
 - Для manager/owner добавлен отдельный first-run route `/app/onboarding`, который больше не смешивается с обычным `Home`.
