@@ -20,7 +20,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 - [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
 - [x] `024-landing-demo-editorial-polish` закрыт: hero/team/workflow доведены до marketing/UI parity, mobile baseline подтвержден, visual tone и локальные portraits синхронизированы.
-- [ ] Активный spec-блок: `026-manager-company-context-onboarding` (Phase A contract baseline зафиксирован, дальше wiring и UX integration).
+- [ ] Активный spec-блок: `026-manager-company-context-onboarding` (Phase A-B зафиксированы; дальше UX integration и verification).
 
 ## 1) Что уже совпадает с PRD
 
@@ -229,6 +229,12 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - `company_description` закреплен как рабочий editorial context для generation/expert writing, а не как декоративное описание компании.
 - `Generation Controls` и `Preview` зафиксированы как часть onboarding setup, но без нового параллельного settings flow.
 - Переиспользование текущего server-side settings contract уточнено явно: company context идет через `/api/v1/companies/me`, preview — через `/api/v1/companies/me/generation-preview`.
+
+### Changelog 026 (Phase B)
+
+- Новый onboarding шаг зафиксирован внутри manager first-run пути как `company_context_setup` между `workspace_basics` и `team_setup`.
+- Переход выровнен с `025`: `login -> onboarding -> company_context_setup -> app shell`, без отдельного второго wizard после forced first-run.
+- Для generation pipeline уточнен единый источник истины: onboarding preview, `draft.generate` и `draft.revise` должны читать один и тот же сохраненный company context bundle из server-side settings contract.
 
 ### Changelog 025 (closed)
 

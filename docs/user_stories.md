@@ -122,5 +122,5 @@ RELEVANT: specs/001-virtual-newsroom-mvp/plan.md, docs/prd_start.md
 - Активных зависимостей на `017-expert-setup-rich-profile-save` не осталось: Expert Setup сохраняет и читает единый rich profile контракт с валидацией и audit trail.
 - Активных зависимостей на `018-content-strategy-12w-output` не осталось: strategy output и copy-to-topics сценарии подтверждены тестами и route/UI интеграцией.
 - Активных зависимостей на `023-create-draft-input-lock` не осталось: locked input snapshot и copy flow подтверждены и закрыты.
-- Активная зависимость на `026-manager-company-context-onboarding`: после базового first-run manager должен сразу задать company context и generation controls, чтобы onboarding не заканчивался пустым editorial setup.
+- Активная зависимость на `026-manager-company-context-onboarding`: flow уже привязан к manager first-run, теперь нужно закрыть UX surface и verification для шага `company_context_setup`, чтобы company context реально сохранялся и читался pipeline без рассинхрона.
 - Активный `TD-014`: expert flow остается email/doc-first и не должен попадать в основной app shell.
