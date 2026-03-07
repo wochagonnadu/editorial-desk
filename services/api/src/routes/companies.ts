@@ -8,7 +8,7 @@ import { Hono } from 'hono';
 import { logAudit } from '../core/audit.js';
 import { AppError } from '../core/errors.js';
 import { readJsonBodyStrict } from '../core/http/read-json-body.js';
-import { companyTable } from '../providers/db/index.js';
+import { companyTable, userTable } from '../providers/db/index.js';
 import { getAuthUser } from './auth-middleware.js';
 import { previewCompanyGeneration } from './company-generation-preview.js';
 import { parseCompanyPatch } from './company-patch.js';
@@ -46,6 +46,11 @@ export const buildCompanyRoutes = (deps: RouteDeps): Hono => {
 
     const body = await readJsonBodyStrict<Record<string, unknown>>(context.req.raw);
     const patch = parseCompanyPatch(body);
+    const [user] = await deps.db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, authUser.userId))
+      .limit(1);
     const [company] = await deps.db
       .select()
       .from(companyTable)
@@ -58,6 +63,7 @@ export const buildCompanyRoutes = (deps: RouteDeps): Hono => {
     const { updateValues, changedFields, policySections } = buildCompanyUpdateFromPatch(
       company,
       patch,
+      user?.name,
     );
     const [updatedCompany] = await deps.db
       .update(companyTable)

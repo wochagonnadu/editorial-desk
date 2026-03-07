@@ -7,7 +7,7 @@ import { Hono } from 'hono';
 import type { ContentPort } from '@newsroom/shared';
 import { toErrorResponse } from '../../src/core/errors';
 import { createLogger } from '../../src/providers/logger';
-import { companyTable, expertTable, voiceProfileTable } from '../../src/providers/db';
+import { companyTable, expertTable, userTable, voiceProfileTable } from '../../src/providers/db';
 import { buildCompanyRoutes } from '../../src/routes/companies';
 import type { RouteDeps } from '../../src/routes/deps';
 
@@ -22,7 +22,9 @@ const createDeps = () => {
     id: 'c1',
     name: 'Old',
     domain: 'business',
+    description: '',
     language: 'en',
+    setupCompletedAt: null,
     generationPolicy: {
       tone: 'clear, calm, practical',
       default_audience: 'general',
@@ -33,6 +35,7 @@ const createDeps = () => {
       },
     },
   };
+  const user = { id: 'u1', companyId: 'c1', name: 'Manager Name' };
   const expert = { id: 'exp-1', companyId: 'c1', name: 'Expert One' };
   const voiceProfile = {
     expertId: 'exp-1',
@@ -46,6 +49,7 @@ const createDeps = () => {
       from: (table: unknown) => ({
         where: () => {
           if (table === companyTable) return queryResult([company]);
+          if (table === userTable) return queryResult([user]);
           if (table === expertTable) return queryResult([expert]);
           if (table === voiceProfileTable) return queryResult([voiceProfile]);
           return queryResult([]);
@@ -108,6 +112,7 @@ describe('companies settings endpoint', () => {
       body: JSON.stringify({
         name: 'New Name',
         domain: 'medical',
+        description: 'Clinical newsroom for regulated patient education',
         language: 'ru',
         generation_policy: {
           tone: 'calm, practical, no hype for regulated readers',
@@ -120,7 +125,9 @@ describe('companies settings endpoint', () => {
     await expect(response.json()).resolves.toMatchObject({
       name: 'New Name',
       domain: 'medical',
+      description: 'Clinical newsroom for regulated patient education',
       language: 'ru',
+      setup_completed_at: expect.any(String),
       generation_policy: {
         tone: 'calm, practical, no hype for regulated readers',
       },
@@ -134,6 +141,7 @@ describe('companies settings endpoint', () => {
       };
     };
     expect(audit.metadata?.changed_fields).toContain('generation_policy');
+    expect(audit.metadata?.changed_fields).toContain('description');
     expect(audit.metadata?.generation_policy_changed).toBe(true);
     expect(audit.metadata?.generation_policy_changed_sections).toEqual([
       'tone',
@@ -256,6 +264,7 @@ describe('companies settings endpoint', () => {
     const getResponse = await app.request('http://local/companies/me');
     expect(getResponse.status).toBe(200);
     await expect(getResponse.json()).resolves.toMatchObject({
+      description: '',
       generation_policy: {
         tone: 'calm, direct, no hype for compliance-oriented audience',
         guardrails: { avoid: ['fear framing'] },

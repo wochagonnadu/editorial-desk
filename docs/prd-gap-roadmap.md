@@ -237,6 +237,13 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Явно закреплено разделение source of truth: `manager_name` живет в `user`, company context живет в `company`.
 - Подтверждено, что `Preview` не блокирует регистрацию/setup и остается optional после setup.
 
+### Changelog 026 (Phase C)
+
+- В persistence добавлены `company.description` и `company.setup_completed_at`, чтобы setup получил явный storage и marker для route decision после verify.
+- `GET/PATCH /api/v1/companies/me` расширен полями `description` и `setup_completed_at`, поэтому `Settings` и будущий setup читают один и тот же company source of truth.
+- Добавлены `GET/PATCH /api/v1/users/me` и `GET /api/v1/users/me/setup-status` для `manager_name` и post-verify gating.
+- `Preview` не добавлялся в setup contract и остался отдельным optional действием вне обязательного first-run save.
+
 ### Changelog 025 (closed)
 
 - Для manager/owner добавлен отдельный first-run route `/app/onboarding`, который больше не смешивается с обычным `Home`.

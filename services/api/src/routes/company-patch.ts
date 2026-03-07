@@ -20,6 +20,7 @@ const parseOptionalString = (value: unknown, field: string): string | undefined 
 
 export interface CompanyPatchInput {
   name?: string;
+  description?: string;
   language?: string;
   domain?: CompanyDomain;
   generationPolicy?: GenerationPolicyPatch;
@@ -27,6 +28,7 @@ export interface CompanyPatchInput {
 
 export const parseCompanyPatch = (body: Record<string, unknown>): CompanyPatchInput => {
   const name = parseOptionalString(body.name, 'name');
+  const description = parseOptionalString(body.description, 'description');
   const language = parseOptionalString(body.language, 'language');
   const domainRaw = parseOptionalString(body.domain, 'domain');
   const generationPolicy = parseGenerationPolicyPatch(body.generation_policy);
@@ -35,15 +37,22 @@ export const parseCompanyPatch = (body: Record<string, unknown>): CompanyPatchIn
   }
   const patch = {
     name,
+    description,
     language,
     domain: domainRaw as CompanyDomain | undefined,
     generationPolicy,
   };
-  if (!patch.name && !patch.language && !patch.domain && !patch.generationPolicy) {
+  if (
+    !patch.name &&
+    !patch.description &&
+    !patch.language &&
+    !patch.domain &&
+    !patch.generationPolicy
+  ) {
     throw new AppError(
       400,
       'VALIDATION_ERROR',
-      'at least one field is required: name, language, domain, generation_policy',
+      'at least one field is required: name, description, language, domain, generation_policy',
     );
   }
   return patch;

@@ -12,7 +12,9 @@ export interface Company {
   id: EntityId;
   name: string;
   domain: CompanyDomain;
+  description: string;
   language: string;
+  setupCompletedAt?: ISODateTime | null;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

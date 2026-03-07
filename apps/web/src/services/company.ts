@@ -19,13 +19,16 @@ export type CompanySettings = {
   id: string;
   name: string;
   domain: string;
+  description: string;
   language: string;
   generation_policy: GenerationPolicy;
+  setup_completed_at?: string | null;
 };
 
 export type UpdateCompanySettingsInput = {
   name?: string;
   domain?: string;
+  description?: string;
   language?: string;
   generation_policy?: Partial<GenerationPolicy> & {
     guardrails?: Partial<GenerationPolicy['guardrails']>;

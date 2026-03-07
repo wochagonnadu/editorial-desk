@@ -38,11 +38,32 @@ test('updateCompanySettings sends PATCH /companies/me with body', async (t) => {
   t.after(restore);
   const { updateCompanySettings } = await import('../company');
 
-  await updateCompanySettings('token-1', { name: 'Desk', domain: 'medical', language: 'ru' });
+  await updateCompanySettings('token-1', {
+    name: 'Desk',
+    domain: 'medical',
+    description: 'Clinical newsroom',
+    language: 'ru',
+  });
   assert.equal(calls.length, 1);
   assert.equal(calls[0]?.url, 'http://localhost:3000/api/v1/companies/me');
   assert.equal(calls[0]?.init?.method, 'PATCH');
   assert.match(String(calls[0]?.init?.body), /"name":"Desk"/);
+  assert.match(String(calls[0]?.init?.body), /"description":"Clinical newsroom"/);
+});
+
+test('user setup services hit profile and setup-status contracts', async (t) => {
+  const { calls, restore } = mockWindowAndFetch();
+  t.after(restore);
+  const { fetchSetupStatus, updateCurrentUser } = await import('../user');
+
+  await fetchSetupStatus('token-1');
+  await updateCurrentUser('token-1', { name: 'Jane Owner' });
+
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0]?.url, 'http://localhost:3000/api/v1/users/me/setup-status');
+  assert.equal(calls[1]?.url, 'http://localhost:3000/api/v1/users/me');
+  assert.equal(calls[1]?.init?.method, 'PATCH');
+  assert.match(String(calls[1]?.init?.body), /"name":"Jane Owner"/);
 });
 
 test('previewCompanyGeneration sends POST /companies/me/generation-preview', async (t) => {
