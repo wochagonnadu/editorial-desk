@@ -208,7 +208,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: добавить отдельный short onboarding-tour для manager/team-management пользователя после setup и первого входа в систему.
     - Результат: менеджер после setup не попадает в пустой app shell; tour, completion и skip/resume работают через server-side onboarding state и отдельный onboarding surface.
 
-17. `026-manager-company-context-onboarding` 🟡
+17. `026-manager-company-context-onboarding` ✅
     - Scope: добавить отдельный post-verify setup для manager/company context до onboarding-tour.
     - Результат: editorial pipeline и эксперты получают бизнес-контекст компании уже до входа в product tour, а `025` остается коротким tour без дублирования setup.
 
