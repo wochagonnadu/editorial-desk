@@ -257,6 +257,13 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - `Preview` остался в `Settings` как optional refinement step и не превратился в обязательный блок setup flow.
 - В draft generate/revise и preview prompt vars добавлен `company_editorial_context`, который берется из `company.description` и идет рядом с generation policy.
 
+### Changelog 026 (Phase F)
+
+- Ручная verification через Chrome DevTools подтверждила fresh flow для `vsch.spm@gmail.com`: `verify -> setup -> onboarding-tour -> app shell`.
+- Повторный вход после setup completion больше не открывает setup и сразу ведет в обычный app shell.
+- `Settings` прочитал те же `manager_name`, `company_name`, `company_domain`, `company_description` и tone, которые были сохранены в setup.
+- После создания expert profile preview в `Settings` успешно отработал на сохраненном company context и подтвердил runtime use-case `draft.generate` с тем же generation policy.
+
 ### Changelog 025 (closed)
 
 - Для manager/owner добавлен отдельный first-run route `/app/onboarding`, который больше не смешивается с обычным `Home`.
