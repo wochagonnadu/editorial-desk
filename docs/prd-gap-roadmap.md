@@ -205,12 +205,12 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Результат: закрывается оставшийся marketing/UI хвост из Epic B/C/D и partial-истории Epic L про motion и editorial tone.
 
 16. `025-manager-first-time-onboarding` ✅
-    - Scope: добавить отдельный first-run onboarding для manager/team-management пользователя после первого входа в систему.
-    - Результат: менеджер больше не попадает в пустой app shell; first-run, completion и skip/resume работают через server-side onboarding state и отдельный onboarding surface.
+    - Scope: добавить отдельный short onboarding-tour для manager/team-management пользователя после setup и первого входа в систему.
+    - Результат: менеджер после setup не попадает в пустой app shell; tour, completion и skip/resume работают через server-side onboarding state и отдельный onboarding surface.
 
 17. `026-manager-company-context-onboarding` 🟡
-    - Scope: добавить в manager first-run onboarding сбор manager name, company description и настройку generation controls с preview.
-    - Результат: editorial pipeline и эксперты получают бизнес-контекст компании уже при первом входе, а не только после ручной настройки `Settings`.
+    - Scope: добавить отдельный post-verify setup для manager/company context до onboarding-tour.
+    - Результат: editorial pipeline и эксперты получают бизнес-контекст компании уже до входа в product tour, а `025` остается коротким tour без дублирования setup.
 
 ## 8) Синхронизация с user stories (итог 010)
 
@@ -221,38 +221,21 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - риск onboarding Step 1->5 закрыт в Spec 011 и снят как активная зависимость;
 - закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
 - оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap), `024` (marketing/UI parity), закрытый `025` (manager first-time onboarding) и отдельный `TD-014` для expert email/public-doc flow.
-- Следующим продуктовым хвостом после базового first-run стал `026`: manager должен задать company context и generation policy прямо в onboarding, а не только позже в `Settings`.
+- Следующим продуктовым хвостом после базового first-run стал `026`: manager должен завершить company context setup сразу после verify, а не позже искать это в `Settings` или внутри tour.
 
-### Changelog 026 (Phase A)
+### Changelog 026 (reset)
 
-- Для manager first-run зафиксирован baseline полей: `manager_name`, `company_description`, `generation_policy.tone`, `generation_policy.default_audience` и onboarding `Preview`.
-- `company_description` закреплен как рабочий editorial context для generation/expert writing, а не как декоративное описание компании.
-- `Generation Controls` и `Preview` зафиксированы как часть onboarding setup, но без нового параллельного settings flow.
-- Переиспользование текущего server-side settings contract уточнено явно: company context идет через `/api/v1/companies/me`, preview — через `/api/v1/companies/me/generation-preview`.
-
-### Changelog 026 (Phase B)
-
-- Новый onboarding шаг зафиксирован внутри manager first-run пути как `company_context_setup` между `workspace_basics` и `team_setup`.
-- Переход выровнен с `025`: `login -> onboarding -> company_context_setup -> app shell`, без отдельного второго wizard после forced first-run.
-- Для generation pipeline уточнен единый источник истины: onboarding preview, `draft.generate` и `draft.revise` должны читать один и тот же сохраненный company context bundle из server-side settings contract.
-
-### Changelog 026 (Phase C)
-
-- Для `company_context_setup` зафиксирован отдельный first-run surface: верхний блок собирает `manager_name` и `company_description`, нижний - `Editorial tone`, `Default audience` и `Preview`.
-- Onboarding entry для generation controls описан как часть того же шага, без отправки менеджера в обычный `Settings` посреди first-run.
-- Явно закреплены состояния `save`, `preview`, `continue`, `skip`, чтобы первый проход не опирался на скрытый auto-save и не путал verify-step с persisted-state.
-
-### Changelog 026 (Phase D attempt)
-
-- Проверка по текущему коду показала, что `company_context_setup` еще не реализован: в web onboarding по-прежнему только 4 шага без manager/company context формы.
-- В текущем settings contract отсутствует `company_description`, поэтому spec 026 пока не может пройти проверку на сохранение и чтение одного и того же editorial context через onboarding и обычный `Settings`.
-- Подтверждена только уже существующая часть `020`: preview и draft pipeline читают `generation_policy`, но это еще не равно закрытому manager company context onboarding.
+- После проверки старый вариант `company_context_setup inside onboarding-tour` признан неудачным и снят.
+- `026` переопределен: теперь это отдельный post-verify setup для `manager_name`, `company_name`, `company_domain`, `company_description` и optional `editorial tone`.
+- `Preview` больше не считается обязательной частью регистрации/setup и остается optional refinement в `Settings`.
+- `025` сужен до short onboarding-tour после setup, без формы company context внутри tour.
 
 ### Changelog 025 (closed)
 
 - Для manager/owner добавлен отдельный first-run route `/app/onboarding`, который больше не смешивается с обычным `Home`.
 - Статус onboarding перенесен в server-side state пользователя, поэтому first login, completion и skip/resume работают предсказуемо между сессиями и устройствами.
 - После `skip` обычный app shell показывает явный `Resume onboarding`, а expert public-doc flow не попадает в manager onboarding контур.
+- После пересборки `026` этот route трактуется как short onboarding-tour после setup, а не как место первичного сбора company context.
 
 ### Changelog 023-024 prep (коротко)
 
