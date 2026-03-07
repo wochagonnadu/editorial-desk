@@ -20,7 +20,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 - [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
 - [x] `024-landing-demo-editorial-polish` закрыт: hero/team/workflow доведены до marketing/UI parity, mobile baseline подтвержден, visual tone и локальные portraits синхронизированы.
-- [ ] Активный spec-блок: `026-manager-company-context-onboarding` (Phase A-C зафиксированы; дальше verification).
+- [ ] Активный spec-блок: `026-manager-company-context-onboarding` (Phase A-C зафиксированы; Phase D показал, что реализация еще не догнала spec).
 
 ## 1) Что уже совпадает с PRD
 
@@ -241,6 +241,12 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Для `company_context_setup` зафиксирован отдельный first-run surface: верхний блок собирает `manager_name` и `company_description`, нижний - `Editorial tone`, `Default audience` и `Preview`.
 - Onboarding entry для generation controls описан как часть того же шага, без отправки менеджера в обычный `Settings` посреди first-run.
 - Явно закреплены состояния `save`, `preview`, `continue`, `skip`, чтобы первый проход не опирался на скрытый auto-save и не путал verify-step с persisted-state.
+
+### Changelog 026 (Phase D attempt)
+
+- Проверка по текущему коду показала, что `company_context_setup` еще не реализован: в web onboarding по-прежнему только 4 шага без manager/company context формы.
+- В текущем settings contract отсутствует `company_description`, поэтому spec 026 пока не может пройти проверку на сохранение и чтение одного и того же editorial context через onboarding и обычный `Settings`.
+- Подтверждена только уже существующая часть `020`: preview и draft pipeline читают `generation_policy`, но это еще не равно закрытому manager company context onboarding.
 
 ### Changelog 025 (closed)
 
