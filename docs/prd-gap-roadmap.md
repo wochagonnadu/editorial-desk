@@ -20,7 +20,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 - [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
 - [x] `024-landing-demo-editorial-polish` закрыт: hero/team/workflow доведены до marketing/UI parity, mobile baseline подтвержден, visual tone и локальные portraits синхронизированы.
-- [ ] Активный spec-блок: `026-manager-company-context-onboarding` (Phase A-B зафиксированы; дальше UX integration и verification).
+- [ ] Активный spec-блок: `026-manager-company-context-onboarding` (Phase A-C зафиксированы; дальше verification).
 
 ## 1) Что уже совпадает с PRD
 
@@ -235,6 +235,12 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Новый onboarding шаг зафиксирован внутри manager first-run пути как `company_context_setup` между `workspace_basics` и `team_setup`.
 - Переход выровнен с `025`: `login -> onboarding -> company_context_setup -> app shell`, без отдельного второго wizard после forced first-run.
 - Для generation pipeline уточнен единый источник истины: onboarding preview, `draft.generate` и `draft.revise` должны читать один и тот же сохраненный company context bundle из server-side settings contract.
+
+### Changelog 026 (Phase C)
+
+- Для `company_context_setup` зафиксирован отдельный first-run surface: верхний блок собирает `manager_name` и `company_description`, нижний - `Editorial tone`, `Default audience` и `Preview`.
+- Onboarding entry для generation controls описан как часть того же шага, без отправки менеджера в обычный `Settings` посреди first-run.
+- Явно закреплены состояния `save`, `preview`, `continue`, `skip`, чтобы первый проход не опирался на скрытый auto-save и не путал verify-step с persisted-state.
 
 ### Changelog 025 (closed)
 
