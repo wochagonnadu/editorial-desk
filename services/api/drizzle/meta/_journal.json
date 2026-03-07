@@ -36,6 +36,13 @@
       "when": 1772833200000,
       "tag": "0005_add_user_onboarding_state",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772880600000,
+      "tag": "0006_add_company_setup_fields",
+      "breakpoints": true
     }
   ]
 }
