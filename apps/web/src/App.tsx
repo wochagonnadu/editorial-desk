@@ -11,6 +11,7 @@ import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Logout } from './pages/Logout';
 import { ManagerOnboarding } from './pages/ManagerOnboarding';
+import { ManagerSetup } from './pages/ManagerSetup';
 import { PublicDoc } from './pages/PublicDoc';
 import { Home } from './pages/Home';
 import { Experts } from './pages/Experts';
@@ -37,6 +38,14 @@ export default function App() {
           <Route path="/auth/verify" element={<Login />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/docs/:draftId" element={<PublicDoc />} />
+          <Route
+            path="/app/setup"
+            element={
+              <RequireAuth>
+                <ManagerSetup />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/app/onboarding"
             element={

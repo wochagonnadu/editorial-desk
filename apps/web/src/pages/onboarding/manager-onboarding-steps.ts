@@ -14,14 +14,14 @@ export const managerOnboardingSteps: Array<{
 }> = [
   {
     id: 'welcome',
-    title: 'Start your newsroom setup',
-    body: 'We will point you to the few places that matter first: workspace basics, team setup, experts, and your first workflow action.',
+    title: 'Start your newsroom tour',
+    body: 'Your workspace context is saved. Now we will point you to the few product surfaces that matter first: workspace review, team setup, experts, and your first workflow action.',
     actionLabel: 'Continue',
   },
   {
     id: 'workspace_basics',
-    title: 'Set workspace basics',
-    body: 'Open Settings to review the core workspace setup before your team starts using the editorial system.',
+    title: 'Review workspace settings',
+    body: 'Open Settings to review the workspace details you already saved and refine them later if the newsroom context changes.',
     actionLabel: 'Open Settings',
     actionPath: '/app/settings#workspace-settings',
   },

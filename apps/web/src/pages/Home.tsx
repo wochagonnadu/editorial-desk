@@ -9,6 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { fetchDashboard, type DashboardData } from '../services/dashboard';
 import { fetchOnboardingState, type OnboardingState } from '../services/onboarding';
 import { useSession } from '../services/session';
+import { fetchSetupStatus } from '../services/user';
 
 const toRelative = (isoOrDate: string): string => {
   const value = new Date(isoOrDate).getTime();
@@ -35,6 +36,10 @@ export function Home() {
     const load = async () => {
       try {
         setError(null);
+        if (['owner', 'manager'].includes(session.user.role)) {
+          const setup = await fetchSetupStatus(session.token);
+          if (setup.setupRequired) return navigate('/app/setup', { replace: true });
+        }
         const next = await fetchDashboard(session.token);
         setData(next);
         if (['owner', 'manager'].includes(session.user.role)) {
@@ -78,10 +83,10 @@ export function Home() {
       {onboarding && ['skipped', 'in_progress'].includes(onboarding.status) ? (
         <div className="card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-serif text-xl text-ink-900">Finish your manager setup</h2>
+            <h2 className="font-serif text-xl text-ink-900">Finish your onboarding tour</h2>
             <p className="text-ink-500 mt-1">
-              Resume onboarding to keep workspace, team, experts, and your first workflow path in
-              one place.
+              Resume the onboarding tour to keep workspace review, team, experts, and your first
+              workflow path in one place.
             </p>
           </div>
           <Link to="/app/onboarding" className="btn-primary">

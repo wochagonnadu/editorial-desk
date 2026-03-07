@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchSetupStatus } from '../services/user';
 import { useSession } from '../services/session';
 import {
   fetchOnboardingState,
@@ -28,6 +29,8 @@ export function ManagerOnboarding() {
       if (!['owner', 'manager'].includes(session.user.role))
         return navigate('/app', { replace: true });
       try {
+        const setup = await fetchSetupStatus(session.token);
+        if (setup.setupRequired) return navigate('/app/setup', { replace: true });
         const state = await fetchOnboardingState(session.token);
         if (state.status === 'completed') return navigate('/app', { replace: true });
         setStep(state.status === 'not_started' ? 'welcome' : state.currentStep);
@@ -72,7 +75,7 @@ export function ManagerOnboarding() {
     <div className="min-h-screen bg-beige-50 p-4 md:p-8">
       <div className="mx-auto max-w-3xl space-y-6">
         <div className="card space-y-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Manager first run</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-ink-500">Manager onboarding tour</p>
           <h1 className="text-3xl font-serif text-ink-900">{current.title}</h1>
           <p className="text-ink-500">{current.body}</p>
           <div className="flex flex-wrap gap-3 text-sm text-ink-500">

@@ -244,6 +244,13 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - Добавлены `GET/PATCH /api/v1/users/me` и `GET /api/v1/users/me/setup-status` для `manager_name` и post-verify gating.
 - `Preview` не добавлялся в setup contract и остался отдельным optional действием вне обязательного first-run save.
 
+### Changelog 026 (Phase D)
+
+- В web добавлен отдельный route `/app/setup`, который открывается после verify раньше onboarding-tour, если setup еще не завершен.
+- Setup screen собирает `manager_name`, `company_name`, `company_domain`, `company_description` и optional `editorial tone`, а потом сохраняет их в существующие `users/me` и `companies/me` contracts.
+- Post-verify routing теперь идет через общий resolver: `setup -> onboarding-tour -> app shell`.
+- Web-контур `025` подчищен под новый смысл: onboarding больше говорит про review/tour, а не про первичный company setup.
+
 ### Changelog 025 (closed)
 
 - Для manager/owner добавлен отдельный first-run route `/app/onboarding`, который больше не смешивается с обычным `Home`.
