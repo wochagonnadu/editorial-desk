@@ -19,7 +19,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - [x] Следующий этап: проверка и настройка USER STORIES в `docs/user_stories.md` (Spec 010, Phases A-D).
 - [x] Settings + Team contracts закрыты в Spec 012 (company update + users/roles/invite + UI wiring).
 - [x] Worker runtime hardening закрыт в Spec 013 (queue-контур + idempotency/retry/visibility для критичных cron jobs).
-- [x] `024-landing-demo-editorial-polish` закрыт: hero/team/workflow доведены до marketing/UI parity, mobile baseline подтвержден, visual tone и локальные portraits синхронизированы.
+- [ ] `024-landing-demo-editorial-polish` снова активен: UI-polish по hero/team/workflow откатан, локальные portraits и asset optimization оставлены.
 - [ ] Активный spec-блок: `026-manager-company-context-onboarding` (Phase A-C зафиксированы; Phase D показал, что реализация еще не догнала spec).
 
 ## 1) Что уже совпадает с PRD
@@ -200,7 +200,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
     - Scope: в `Create Draft` зафиксирован явный `input_snapshot` для `expert + topic seed + strategy plan`; `topics/strategy-plan` возвращает echo snapshot, а copy flow читает locked context вместо скрытого состояния формы.
     - Результат: закрыта оставшаяся `must`-история Epic G про явную фиксацию входных параметров генерации и воспроизводимый `generate -> copy -> topic -> draft` контур.
 
-15. `024-landing-demo-editorial-polish` ✅
+15. `024-landing-demo-editorial-polish` 🟡
     - Scope: дожать `Landing` по кластерам Hero / Team / Workflow, добавить demo-controls, mobile simplification и единый motion/visual contract.
     - Результат: закрывается оставшийся marketing/UI хвост из Epic B/C/D и partial-истории Epic L про motion и editorial tone.
 
@@ -220,7 +220,7 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - незакрытые backend-контракты из roadmap (Settings write/team management, Expert Setup save) в user stories помечены как `gap`;
 - риск onboarding Step 1->5 закрыт в Spec 011 и снят как активная зависимость;
 - закрытый P0-контур (`004`) в roadmap соответствует историям со статусом `done` по auth/drafts/approvals/factcheck.
-- оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap), `024` (marketing/UI parity), закрытый `025` (manager first-time onboarding) и отдельный `TD-014` для expert email/public-doc flow.
+- оставшиеся открытые истории после 022 разложены на следующий spec-блок `023` (product must-gap), переоткрытый `024` (marketing/UI parity), закрытые `025/026` и отдельный `TD-014` для expert email/public-doc flow.
 - Следующим продуктовым хвостом после базового first-run стал `026`: manager должен завершить company context setup сразу после verify, а не позже искать это в `Settings` или внутри tour.
 
 ### Changelog 026 (reset)
@@ -292,12 +292,11 @@ RELEVANT: docs/prd_start.md,docs/frontend-backend-gap-map.md,specs/004-api-adapt
 - `Copy cluster` / `Copy FAQ` больше не читают текущее mutable поле формы и используют только locked snapshot.
 - Phase D подтвержден реальной проверкой: typecheck web прошел, targeted tests на strategy lock и create-draft flow прошли успешно.
 
-### Changelog 024 (closed)
+### Changelog 024 (reopened)
 
-- Hero demo получил явные `See how it works`, `Back`, `Restart` и mobile controls без отдельного layout tree.
-- Team carousel переведен на локальные portraits, роли и reveal-тезисы читаются сразу, а scroll/nav подтверждены на desktop и mobile.
-- Workflow block доведен до autoplay narrative с caption states через hover/focus/click и более спокойным motion baseline.
-- Реальная verification закрыта через локальный web run + browser check: desktop/mobile путь `Hero -> Team -> Workflow -> CTA` проходит без тупиков.
+- UI-polish `024` по hero/team/workflow откатан обратно к до-024 baseline, потому что текущая страница больше рассматривается как главная, а не как marketing-storydeck.
+- Локальные portraits, `TeamPortrait` и optimized asset pipeline оставлены, чтобы не откатывать полезные performance-изменения вместе с UX.
+- После отката user stories Epic B/C/D и часть Epic L снова переведены в `partial`, а spec 024 перестала считаться закрытой.
 
 ### Changelog 010 (коротко)
 

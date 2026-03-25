@@ -1,0 +1,11 @@
+# PATH: marketing/.gitignore
+# WHAT: Ignores temporary marketing artifacts while keeping source markdown files tracked
+# WHY: Allows storing plan docs without polluting git with exports, drafts, and generated assets
+# RELEVANT: marketing/30-day-gtm-plan.md,.gitignore
+
+exports/
+research/
+assets/generated/
+*.csv
+*.tsv
+*.tmp
