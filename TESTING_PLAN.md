@@ -105,10 +105,10 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/web smoke:create-topic-draft-editor`.
   GPT-5.5 reasoning: `high`.
 
-- [ ] **Добавить browser smoke `edit draft -> save`.**
+- [x] **Добавить browser smoke `edit draft -> save`.**
   Описание: открыть существующий draft, изменить текст, сохранить и дождаться успешного состояния. Edge cases оставить API/service-тестам.
   Достаточно: после reload сохранённый текст остаётся на месте.
-  Проверка: локальный dev server + browser smoke command.
+  Проверка: `pnpm --filter @newsroom/web smoke:edit-draft-save`.
   GPT-5.5 reasoning: `high`.
 
 - [ ] **Задокументировать быстрые команды и правило PR.**
