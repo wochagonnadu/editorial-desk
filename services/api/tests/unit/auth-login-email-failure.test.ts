@@ -1,6 +1,6 @@
 // PATH: services/api/tests/unit/auth-login-email-failure.test.ts
-// WHAT: Verifies login route maps email transport failures to 502 response
-// WHY:  Keeps auth failure mode explicit when provider TLS/network is broken
+// WHAT: Verifies auth route negative responses for login and magic-link reuse
+// WHY:  Keeps auth API error status and payload stable without external email calls
 // RELEVANT: services/api/src/routes/auth.ts,services/api/src/core/errors.ts,services/api/src/providers/email-resend.ts
 
 import { Hono } from 'hono';
@@ -78,6 +78,50 @@ const createDepsWithHangingSelect = (): RouteDeps => {
   };
 };
 
+const createDepsWithRevokedMagicLink = (): RouteDeps => {
+  const db = {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          orderBy: () => ({
+            limit: async () => [
+              {
+                id: 'n1',
+                recipientEmail: 'mail@mail.com',
+                magicLinkRevoked: true,
+                magicLinkExpiresAt: new Date(Date.now() + 60_000),
+              },
+            ],
+          }),
+        }),
+      }),
+    }),
+  } as unknown as RouteDeps['db'];
+
+  const content: ContentPort = {
+    streamText: async () => (async function* () {})(),
+    generateObject: async <T>() => ({} as T),
+  };
+
+  return {
+    db,
+    content,
+    logger: createLogger(),
+    email: {
+      buildReplyToAddress: () => 'reply@vsche.ru',
+      sendEmail: async () => ({ messageId: 'ok' }),
+      sendMagicLink: async () => ({ messageId: 'ok' }),
+    },
+  };
+};
+
+const createAuthApp = (deps: RouteDeps): Hono => {
+  const app = new Hono();
+  app.onError((error, context) => toErrorResponse(context, error));
+  app.route('/', buildAuthRoutes(deps));
+  return app;
+};
+
 describe('auth login email failure', () => {
   const originalBypass = process.env.DEV_DISABLE_AUTH;
   const originalMock = process.env.DEV_MOCK_MAGIC_LINK;
@@ -96,9 +140,7 @@ describe('auth login email failure', () => {
     process.env.DEV_DISABLE_AUTH = 'false';
     process.env.DEV_MOCK_MAGIC_LINK = 'false';
 
-    const app = new Hono();
-    app.onError((error, context) => toErrorResponse(context, error));
-    app.route('/', buildAuthRoutes(createDeps()));
+    const app = createAuthApp(createDeps());
 
     const response = await app.request('http://local/login', {
       method: 'POST',
@@ -106,8 +148,51 @@ describe('auth login email failure', () => {
     });
 
     expect(response.status).toBe(502);
-    await expect(response.json()).resolves.toMatchObject({
-      error: { code: 'EMAIL_DELIVERY_FAILED' },
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: 'EMAIL_DELIVERY_FAILED',
+        message: 'Failed to send login email',
+      },
+    });
+  });
+
+  it('returns 400 VALIDATION_ERROR when x-auth-email is empty', async () => {
+    process.env.DEV_DISABLE_AUTH = 'false';
+    process.env.DEV_MOCK_MAGIC_LINK = 'false';
+
+    const app = createAuthApp(createDeps());
+
+    const response = await app.request('http://local/login', {
+      method: 'POST',
+      headers: { 'x-auth-email': '   ' },
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'x-auth-email header is required',
+      },
+    });
+  });
+
+  it('returns 400 VALIDATION_ERROR when x-auth-email is invalid', async () => {
+    process.env.DEV_DISABLE_AUTH = 'false';
+    process.env.DEV_MOCK_MAGIC_LINK = 'false';
+
+    const app = createAuthApp(createDeps());
+
+    const response = await app.request('http://local/login', {
+      method: 'POST',
+      headers: { 'x-auth-email': 'not-an-email' },
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'email must be valid',
+      },
     });
   });
 
@@ -115,17 +200,35 @@ describe('auth login email failure', () => {
     process.env.DEV_DISABLE_AUTH = 'false';
     process.env.DEV_MOCK_MAGIC_LINK = 'false';
 
-    const app = new Hono();
-    app.onError((error, context) => toErrorResponse(context, error));
-    app.route('/', buildAuthRoutes(createDeps()));
+    const app = createAuthApp(createDeps());
 
     const response = await app.request('http://local/login', {
       method: 'POST',
     });
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toMatchObject({
-      error: { code: 'VALIDATION_ERROR' },
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'x-auth-email header is required',
+      },
+    });
+  });
+
+  it('returns 401 INVALID_TOKEN when magic link is requested again', async () => {
+    process.env.DEV_DISABLE_AUTH = 'false';
+    process.env.DEV_MOCK_MAGIC_LINK = 'false';
+
+    const app = createAuthApp(createDepsWithRevokedMagicLink());
+
+    const response = await app.request('http://local/verify?token=already-used');
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: 'INVALID_TOKEN',
+        message: 'Magic link is invalid',
+      },
     });
   });
 
@@ -134,9 +237,7 @@ describe('auth login email failure', () => {
     process.env.DEV_MOCK_MAGIC_LINK = 'false';
     process.env.DB_OPERATION_TIMEOUT_MS = '5';
 
-    const app = new Hono();
-    app.onError((error, context) => toErrorResponse(context, error));
-    app.route('/', buildAuthRoutes(createDepsWithHangingSelect()));
+    const app = createAuthApp(createDepsWithHangingSelect());
 
     const response = await app.request('http://local/login', {
       method: 'POST',
