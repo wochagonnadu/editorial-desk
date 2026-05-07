@@ -33,6 +33,12 @@ export const saveDraftVersion = (deps: RouteDeps) => async (context: Context) =>
   const concurrentEdit = Boolean(
     expectedId && draft.currentVersionId && expectedId !== draft.currentVersionId,
   );
+  if (concurrentEdit) {
+    throw new AppError(409, 'STALE_VERSION', 'Referenced version is stale', {
+      expected_version_id: expectedId,
+      current_version_id: draft.currentVersionId,
+    });
+  }
 
   const summary =
     typeof body.summary === 'string' && body.summary.trim()
@@ -50,7 +56,7 @@ export const saveDraftVersion = (deps: RouteDeps) => async (context: Context) =>
     companyId: authUser.companyId,
     actorType: 'user',
     actorId: authUser.userId,
-    action: concurrentEdit ? 'draft.version_saved_concurrent' : 'draft.version_saved',
+    action: 'draft.version_saved',
     entityType: 'draft',
     entityId: draft.id,
     draftVersionId: version.id,
@@ -60,8 +66,5 @@ export const saveDraftVersion = (deps: RouteDeps) => async (context: Context) =>
     },
   });
 
-  return context.json(
-    { id: version.id, version_number: version.versionNumber, concurrent_edit: concurrentEdit },
-    201,
-  );
+  return context.json({ id: version.id, version_number: version.versionNumber }, 201);
 };
