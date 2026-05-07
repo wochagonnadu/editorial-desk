@@ -2,7 +2,7 @@
   "name": "editorialdesk",
   "private": true,
   "version": "0.1.0",
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "turbo run build",
     "check:api-esm-imports": "node scripts/check-api-esm-imports.mjs",
