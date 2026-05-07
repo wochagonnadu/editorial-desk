@@ -99,10 +99,10 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: локальный dev server + browser smoke command.
   GPT-5.5 reasoning: `high`.
 
-- [ ] **Добавить browser smoke `create topic -> draft editor`.**
+- [x] **Добавить browser smoke `create topic -> draft editor`.**
   Описание: через UI пройти главный путь создания контента: strategy/topic, approve, create draft, открыть editor.
   Достаточно: editor открыт с созданным draft id.
-  Проверка: локальный dev server + browser smoke command.
+  Проверка: `pnpm --filter @newsroom/web smoke:create-topic-draft-editor`.
   GPT-5.5 reasoning: `high`.
 
 - [ ] **Добавить browser smoke `edit draft -> save`.**
@@ -122,6 +122,6 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
 - [x] `pnpm --filter @newsroom/web test` запускает реальные web-тесты.
 - [ ] `pnpm --filter @newsroom/api test` проходит.
 - [x] `pnpm test` запускает все пакетные тесты.
-- [ ] Главный content flow покрыт service/API/browser smoke-тестами.
+- [x] Главный content flow покрыт service/API/browser smoke-тестами.
 - [ ] Browser smoke-тестов не больше необходимого минимума.
 - [ ] В документации есть быстрые команды для ежедневной разработки.
