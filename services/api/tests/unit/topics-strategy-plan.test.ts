@@ -69,13 +69,19 @@ describe('topics strategy-plan route', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
-      horizon_weeks: 12,
-      pillars: [
-        {
-          clusters: [{ copy_payload: { title: 'Topic C1' } }],
-          faq: [{ copy_payload: { title: 'FAQ Q1' } }],
-        },
-      ],
+      plan: {
+        horizon_weeks: 12,
+        pillars: [
+          {
+            clusters: [{ copy_payload: { title: 'Topic C1' } }],
+            faq: [{ copy_payload: { title: 'FAQ Q1' } }],
+          },
+        ],
+      },
+      input_snapshot: {
+        expert: { id: 'e1', name: 'Dr A' },
+        topic_seed: 'Dental implants for busy adults',
+      },
     });
   });
 

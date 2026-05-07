@@ -27,7 +27,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/web test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Проверить общий test pipeline.**
+- [x] **Проверить общий test pipeline.**
   Описание: убедиться, что `pnpm test` через turbo запускает API, web и shared без ложного успеха. Shared-заглушка допустима, если тестов там нет; web-заглушка должна исчезнуть.
   Достаточно: общий прогон показывает реальные тесты `@newsroom/api` и `@newsroom/web`.
   Проверка: `pnpm test`.
@@ -121,7 +121,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
 
 - [x] `pnpm --filter @newsroom/web test` запускает реальные web-тесты.
 - [ ] `pnpm --filter @newsroom/api test` проходит.
-- [ ] `pnpm test` запускает все пакетные тесты.
+- [x] `pnpm test` запускает все пакетные тесты.
 - [ ] Главный content flow покрыт service/API/browser smoke-тестами.
 - [ ] Browser smoke-тестов не больше необходимого минимума.
 - [ ] В документации есть быстрые команды для ежедневной разработки.
