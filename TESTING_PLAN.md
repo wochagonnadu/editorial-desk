@@ -39,13 +39,13 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/web test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Покрыть auth API негативными сценариями.**
+- [x] **Покрыть auth API негативными сценариями.**
   Описание: расширить API-тесты для пустого email, невалидного email, ошибки отправки письма и повторного запроса. Внешний email-сервис не трогать.
   Достаточно: ошибки стабильны по HTTP-статусу и payload.
   Проверка: `pnpm --filter @newsroom/api test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Зафиксировать onboarding API happy path.**
+- [x] **Зафиксировать onboarding API happy path.**
   Описание: проверить 5-шаговый путь менеджера: company, workspace settings, team, generation settings, завершение onboarding. Использовать существующие тестовые моки/хранилище, без реальной БД.
   Достаточно: тест подтверждает финальный статус и сохранённые настройки.
   Проверка: `pnpm --filter @newsroom/api test`.
