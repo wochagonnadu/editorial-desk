@@ -33,7 +33,7 @@ export function ManagerOnboarding() {
         if (setup.setupRequired) return navigate('/app/setup', { replace: true });
         const state = await fetchOnboardingState(session.token);
         if (state.status === 'completed') return navigate('/app', { replace: true });
-        setStep(state.status === 'not_started' ? 'welcome' : state.currentStep);
+        setStep(state.status === 'not_started' ? 'welcome' : state.currentStep ?? 'welcome');
       } catch {
         setError('Could not load onboarding');
       } finally {

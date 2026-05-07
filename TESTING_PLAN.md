@@ -51,7 +51,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/api test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Добавить web service-тесты onboarding.**
+- [x] **Добавить web service-тесты onboarding.**
   Описание: проверить отправку шагов, обработку неполных данных и то, что frontend не считает onboarding завершённым до финального API-ответа.
   Достаточно: покрыты happy path и 1-2 ошибки валидации.
   Проверка: `pnpm --filter @newsroom/web test`.

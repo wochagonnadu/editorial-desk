@@ -15,7 +15,7 @@ export type OnboardingStep =
 
 export type OnboardingState = {
   status: OnboardingStatus;
-  currentStep: OnboardingStep;
+  currentStep: OnboardingStep | null;
   startedAt?: string | null;
   skippedAt?: string | null;
   completedAt?: string | null;
@@ -23,15 +23,52 @@ export type OnboardingState = {
 
 type OnboardingResponse = {
   status: OnboardingStatus;
-  currentStep: OnboardingStep;
+  currentStep?: OnboardingStep | null;
   startedAt?: string | null;
   skippedAt?: string | null;
   completedAt?: string | null;
 };
 
+const onboardingStatuses: OnboardingStatus[] = [
+  'not_started',
+  'in_progress',
+  'skipped',
+  'completed',
+];
+
+const onboardingSteps: OnboardingStep[] = [
+  'welcome',
+  'workspace_basics',
+  'team_setup',
+  'experts_and_first_workflow',
+];
+
+const isOnboardingStatus = (value: unknown): value is OnboardingStatus =>
+  typeof value === 'string' && onboardingStatuses.includes(value as OnboardingStatus);
+
+const isOnboardingStep = (value: unknown): value is OnboardingStep =>
+  typeof value === 'string' && onboardingSteps.includes(value as OnboardingStep);
+
+const parseOnboardingState = (raw: unknown): OnboardingState => {
+  const state = mapDto<OnboardingResponse>(raw);
+  if (!isOnboardingStatus(state.status)) {
+    throw new Error('Invalid onboarding status');
+  }
+  if (state.currentStep !== null && state.currentStep !== undefined && !isOnboardingStep(state.currentStep)) {
+    throw new Error('Invalid onboarding step');
+  }
+  if (state.status !== 'completed' && !isOnboardingStep(state.currentStep)) {
+    throw new Error('Invalid onboarding step');
+  }
+  return {
+    ...state,
+    currentStep: state.currentStep ?? null,
+  };
+};
+
 export const fetchOnboardingState = async (token: string): Promise<OnboardingState> => {
   const raw = await apiRequest<unknown>('/api/v1/users/me/onboarding', { token });
-  return mapDto<OnboardingResponse>(raw);
+  return parseOnboardingState(raw);
 };
 
 export const updateOnboardingState = async (
@@ -43,5 +80,5 @@ export const updateOnboardingState = async (
     token,
     body: input,
   });
-  return mapDto<OnboardingResponse>(raw);
+  return parseOnboardingState(raw);
 };
