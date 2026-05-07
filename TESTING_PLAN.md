@@ -57,13 +57,13 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/web test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Расширить service-тест основного content flow.**
+- [x] **Расширить service-тест основного content flow.**
   Описание: проверить путь `generate strategy plan -> create topic -> approve topic -> create draft`; добавить негативный сценарий, где ошибка одного шага не запускает следующий.
   Достаточно: порядок API-вызовов и тела запросов проверяются без UI.
   Проверка: `pnpm --filter @newsroom/web test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Укрепить API integration-тест content cycle.**
+- [x] **Укрепить API integration-тест content cycle.**
   Описание: проверить backend-путь от topic до draft и approval/public-doc состояния, включая статусы, ids и один конфликт/ошибку состояния.
   Достаточно: есть один happy path и один негативный сценарий.
   Проверка: `pnpm --filter @newsroom/api test`.
