@@ -87,7 +87,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/api test && pnpm --filter @newsroom/web test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Покрыть settings, team и expert profile.**
+- [x] **Покрыть settings, team и expert profile.**
   Описание: проверить сохранение workspace settings, generation controls, team member и expert profile, переиспользуя текущие `settings-team` и `experts-profile` тесты.
   Достаточно: после сохранения данные читаются обратно в нормализованной форме.
   Проверка: `pnpm --filter @newsroom/web test && pnpm --filter @newsroom/api test`.

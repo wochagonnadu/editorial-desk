@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-const mockWindowAndFetch = () => {
+const mockWindowAndFetch = (responses: unknown[] = []) => {
   const originalFetch = globalThis.fetch;
   const hadWindow = Object.prototype.hasOwnProperty.call(globalThis, 'window');
   const originalWindow = (globalThis as { window?: unknown }).window;
@@ -17,7 +17,8 @@ const mockWindowAndFetch = () => {
   });
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     calls.push({ url: String(input), init });
-    return new Response(JSON.stringify({ data: [], invite_id: 'inv-1', reused: false }), {
+    const payload = responses.shift() ?? { data: [], invite_id: 'inv-1', reused: false };
+    return new Response(JSON.stringify(payload), {
       status: 200,
       headers: { 'content-type': 'application/json' },
     });
@@ -34,21 +35,42 @@ const mockWindowAndFetch = () => {
 };
 
 test('updateCompanySettings sends PATCH /companies/me with body', async (t) => {
-  const { calls, restore } = mockWindowAndFetch();
+  const { calls, restore } = mockWindowAndFetch([
+    {
+      id: 'c1',
+      name: 'Desk',
+      domain: 'medical',
+      description: 'Clinical newsroom',
+      language: 'ru',
+      generation_policy: {
+        tone: 'calm',
+        default_audience: 'practitioners',
+        guardrails: { must_include: ['evidence'], avoid: ['hype'], banned_phrases: ['guaranteed'] },
+      },
+    },
+  ]);
   t.after(restore);
   const { updateCompanySettings } = await import('../company');
 
-  await updateCompanySettings('token-1', {
+  const settings = await updateCompanySettings('token-1', {
     name: 'Desk',
     domain: 'medical',
     description: 'Clinical newsroom',
     language: 'ru',
+    generation_policy: {
+      tone: 'calm',
+      default_audience: 'practitioners',
+      guardrails: { must_include: ['evidence'], avoid: ['hype'], banned_phrases: ['guaranteed'] },
+    },
   });
   assert.equal(calls.length, 1);
   assert.equal(calls[0]?.url, 'http://localhost:3000/api/v1/companies/me');
   assert.equal(calls[0]?.init?.method, 'PATCH');
   assert.match(String(calls[0]?.init?.body), /"name":"Desk"/);
   assert.match(String(calls[0]?.init?.body), /"description":"Clinical newsroom"/);
+  assert.equal(settings.name, 'Desk');
+  assert.equal(settings.generation_policy.default_audience, 'practitioners');
+  assert.deepEqual(settings.generation_policy.guardrails.banned_phrases, ['guaranteed']);
 });
 
 test('user setup services hit profile and setup-status contracts', async (t) => {
@@ -84,13 +106,21 @@ test('previewCompanyGeneration sends POST /companies/me/generation-preview', asy
 });
 
 test('team actions hit users/role/invites contracts', async (t) => {
-  const { calls, restore } = mockWindowAndFetch();
+  const { calls, restore } = mockWindowAndFetch([
+    { data: [{ id: 'u-1', email: 'owner@desk.dev', name: 'Owner', role: 'owner', status: 'active' }] },
+    { id: 'u-1', role: 'manager', unchanged: false },
+    { invite_id: 'inv-1', email: 'new@desk.dev', role: 'manager', status: 'pending', reused: false },
+  ]);
   t.after(restore);
   const { fetchTeamUsers, updateTeamUserRole, inviteTeamUser } = await import('../team');
 
-  await fetchTeamUsers('token-1');
+  const team = await fetchTeamUsers('token-1');
   await updateTeamUserRole('token-1', 'u-1', 'manager');
-  await inviteTeamUser('token-1', { email: 'new@desk.dev', role: 'manager', name: 'New' });
+  const invite = await inviteTeamUser('token-1', {
+    email: 'new@desk.dev',
+    role: 'manager',
+    name: 'New',
+  });
 
   assert.equal(calls.length, 3);
   assert.equal(calls[0]?.url, 'http://localhost:3000/api/v1/team/users');
@@ -98,4 +128,18 @@ test('team actions hit users/role/invites contracts', async (t) => {
   assert.equal(calls[1]?.init?.method, 'PATCH');
   assert.equal(calls[2]?.url, 'http://localhost:3000/api/v1/team/invites');
   assert.equal(calls[2]?.init?.method, 'POST');
+  assert.deepEqual(team[0], {
+    id: 'u-1',
+    email: 'owner@desk.dev',
+    name: 'Owner',
+    role: 'owner',
+    status: 'active',
+  });
+  assert.deepEqual(invite, {
+    inviteId: 'inv-1',
+    email: 'new@desk.dev',
+    role: 'manager',
+    status: 'pending',
+    reused: false,
+  });
 });

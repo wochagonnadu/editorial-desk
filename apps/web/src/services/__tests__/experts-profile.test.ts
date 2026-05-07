@@ -34,25 +34,45 @@ const mockWindowAndFetch = (responses: unknown[]) => {
   };
 };
 
-test('saveExpertProfile sends PATCH profile payload', async (t) => {
+test('saveExpertProfile sends PATCH profile payload and maps normalized response', async (t) => {
   const { calls, restore } = mockWindowAndFetch([
-    { id: 'e1', profile: {}, updated_at: '2026-03-05T10:20:30.000Z' },
+    {
+      id: 'e1',
+      profile: {
+        role: 'Dentist',
+        tone: { primary: 'calm', secondary: ['plain language'] },
+        contacts: { email: 'dr@example.com' },
+        tags: ['oral health'],
+        sources: ['https://example.com/a'],
+        background: 'Private clinic',
+      },
+      updated_at: '2026-03-05T10:20:30.000Z',
+    },
   ]);
   t.after(restore);
   const { saveExpertProfile } = await import('../experts');
 
-  await saveExpertProfile('token-1', 'e1', {
+  const saved = await saveExpertProfile('token-1', 'e1', {
     role: 'Dentist',
-    tone: { primary: 'calm', secondary: [] },
-    contacts: {},
-    tags: [],
+    tone: { primary: 'calm', secondary: ['plain language'] },
+    contacts: { email: 'dr@example.com' },
+    tags: ['oral health'],
     sources: ['https://example.com/a'],
-    background: '',
+    background: 'Private clinic',
   });
 
   assert.equal(calls[0]?.url, 'http://localhost:3000/api/v1/experts/e1/profile');
   assert.equal(calls[0]?.init?.method, 'PATCH');
   assert.match(String(calls[0]?.init?.body), /"profile"/);
+  assert.equal(saved.updatedAt, '2026-03-05T10:20:30.000Z');
+  assert.deepEqual(saved.profile, {
+    role: 'Dentist',
+    tone: { primary: 'calm', secondary: ['plain language'] },
+    contacts: { email: 'dr@example.com' },
+    tags: ['oral health'],
+    sources: ['https://example.com/a'],
+    background: 'Private clinic',
+  });
 });
 
 test('fetchExpertDetail maps normalized profile from API', async (t) => {

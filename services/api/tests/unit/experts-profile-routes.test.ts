@@ -75,6 +75,14 @@ const createApp = (deps: RouteDeps) => {
 
 describe('expert profile routes', () => {
   it('saves rich profile, reads profile, writes audit', async () => {
+    const normalizedProfile = {
+      role: 'Dentist',
+      tone: { primary: 'calm', secondary: ['plain language'] },
+      contacts: { email: 'dr@example.com', website: 'https://example.com/' },
+      tags: ['oral health'],
+      sources: ['https://example.com/a'],
+      background: 'Private clinic',
+    };
     const { deps, audits } = createDeps([
       [expert],
       [],
@@ -82,14 +90,7 @@ describe('expert profile routes', () => {
       [
         {
           profileData: {
-            expert_setup_profile: {
-              role: 'Dentist',
-              tone: { primary: 'calm', secondary: [] },
-              contacts: {},
-              tags: [],
-              sources: [],
-              background: '',
-            },
+            expert_setup_profile: normalizedProfile,
           },
           status: 'draft',
         },
@@ -101,19 +102,20 @@ describe('expert profile routes', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         profile: {
-          role: 'Dentist',
-          tone: { primary: 'calm', secondary: [] },
-          contacts: {},
-          tags: [],
+          role: ' Dentist ',
+          tone: { primary: ' calm ', secondary: ['plain language', 'Plain Language'] },
+          contacts: { email: 'DR@EXAMPLE.COM', website: 'https://example.com' },
+          tags: ['oral health', 'Oral Health'],
           sources: ['https://example.com/a'],
-          background: '',
+          background: ' Private clinic ',
         },
       }),
     });
     expect(save.status).toBe(200);
+    await expect(save.json()).resolves.toMatchObject({ profile: normalizedProfile });
     const read = await app.request('http://local/experts/e1');
     await expect(read.json()).resolves.toMatchObject({
-      profile: { role: 'Dentist', tone: { primary: 'calm' } },
+      profile: normalizedProfile,
     });
     expect(audits.length).toBe(1);
   });

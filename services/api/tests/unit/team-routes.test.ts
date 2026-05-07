@@ -73,6 +73,7 @@ describe('team routes', () => {
     const { deps } = createDeps([
       [{ id: 'u-manager', name: 'M', email: 'm@x.com', role: 'manager' }],
       [{ id: 'u-manager', name: 'M', email: 'm@x.com', role: 'manager' }],
+      [{ id: 'u-manager', name: 'M', email: 'm@x.com', role: 'owner' }],
     ]);
     const app = createApp(deps);
 
@@ -86,6 +87,13 @@ describe('team routes', () => {
       body: JSON.stringify({ role: 'owner' }),
     });
     expect(roleResponse.status).toBe(200);
+    await expect(roleResponse.json()).resolves.toMatchObject({ id: 'u-manager', role: 'owner' });
+
+    const readResponse = await app.request('http://local/team/users');
+    expect(readResponse.status).toBe(200);
+    await expect(readResponse.json()).resolves.toMatchObject({
+      data: [{ id: 'u-manager', name: 'M', email: 'm@x.com', role: 'owner', status: 'active' }],
+    });
   });
 
   it('reuses pending invite and blocks self role change', async () => {
@@ -108,7 +116,13 @@ describe('team routes', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email: 'new@x.com', role: 'manager', name: 'New User' }),
     });
-    await expect(secondInvite.json()).resolves.toMatchObject({ reused: true });
+    await expect(secondInvite.json()).resolves.toMatchObject({
+      invite_id: 'inv-1',
+      email: 'new@x.com',
+      role: 'manager',
+      status: 'pending',
+      reused: true,
+    });
 
     const selfRole = await app.request('http://local/team/users/u-owner/role', {
       method: 'PATCH',

@@ -147,6 +147,24 @@ describe('companies settings endpoint', () => {
       'tone',
       'guardrails.banned_phrases',
     ]);
+
+    const readResponse = await app.request('http://local/companies/me');
+    expect(readResponse.status).toBe(200);
+    await expect(readResponse.json()).resolves.toMatchObject({
+      name: 'New Name',
+      domain: 'medical',
+      description: 'Clinical newsroom for regulated patient education',
+      language: 'ru',
+      generation_policy: {
+        tone: 'calm, practical, no hype for regulated readers',
+        default_audience: 'general',
+        guardrails: {
+          must_include: ['actionable advice'],
+          avoid: ['hype wording'],
+          banned_phrases: ['always works'],
+        },
+      },
+    });
   });
 
   it('returns FORBIDDEN for manager role', async () => {
