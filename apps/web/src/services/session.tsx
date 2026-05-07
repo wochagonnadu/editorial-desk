@@ -16,7 +16,7 @@ type SessionContextValue = {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
-const readStoredSession = (): SessionData | null => {
+export const readStoredSession = (): SessionData | null => {
   const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
   if (!raw) return null;
   try {
@@ -27,17 +27,25 @@ const readStoredSession = (): SessionData | null => {
   }
 };
 
+export const writeStoredSession = (value: SessionData): void => {
+  window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(value));
+};
+
+export const clearStoredSession = (): void => {
+  window.localStorage.removeItem(SESSION_STORAGE_KEY);
+};
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSessionState] = useState<SessionData | null>(readStoredSession);
 
   const setSession = useCallback((value: SessionData) => {
     setSessionState(value);
-    window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(value));
+    writeStoredSession(value);
   }, []);
 
   const clearSession = useCallback(() => {
     setSessionState(null);
-    window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    clearStoredSession();
   }, []);
 
   const value = useMemo(

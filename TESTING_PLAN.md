@@ -33,7 +33,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm test`.
   GPT-5.5 reasoning: `low`.
 
-- [ ] **Покрыть web auth service.**
+- [x] **Покрыть web auth service.**
   Описание: проверить magic-link login через `X-Auth-Email`, отсутствие email в query/body, logout, очистку сессии и понятное пробрасывание ошибок API в UI-слой. Backend мокать через `fetch`.
   Достаточно: сценарии входа/выхода проверяются без реального API.
   Проверка: `pnpm --filter @newsroom/web test`.
