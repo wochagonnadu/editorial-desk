@@ -19,6 +19,24 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
 - Закрывать чекбокс только после указанной проверки.
 - Уровни GPT-5.5 reasoning: `low`, `medium`, `high`, `xhigh`.
 
+## Быстрые команды
+
+- `pnpm --filter @newsroom/api test:watch` - быстрый watch для API-тестов на Vitest.
+- `pnpm --filter @newsroom/web test:watch` - быстрый watch для web service/unit-тестов на `node:test`.
+- `pnpm test` - полный локальный прогон всех пакетных тестов через Turbo.
+- `pnpm check` - typecheck и lint по всем пакетам.
+- `pnpm check:ci` - обязательная финальная проверка перед PR: `pnpm check` + `pnpm test`.
+
+## Правило PR
+
+Перед PR запускай минимальный набор по изменённому сценарию, а затем `pnpm check:ci`.
+
+- Auth: `pnpm --filter @newsroom/api test` и `pnpm --filter @newsroom/web test`; если менялся вход через UI, добавить `pnpm --filter @newsroom/web smoke:login-onboarding`.
+- Onboarding: `pnpm --filter @newsroom/api test` и `pnpm --filter @newsroom/web test`; для UI-пути добавить `pnpm --filter @newsroom/web smoke:login-onboarding`.
+- Content flow: `pnpm --filter @newsroom/api test`, `pnpm --filter @newsroom/web test`, `pnpm --filter @newsroom/web smoke:create-topic-draft-editor`.
+- Draft editor: `pnpm --filter @newsroom/api test`, `pnpm --filter @newsroom/web test`; если менялось сохранение через UI, добавить `pnpm --filter @newsroom/web smoke:edit-draft-save`.
+- Approvals/settings: `pnpm --filter @newsroom/api test` и `pnpm --filter @newsroom/web test`; smoke не нужен, пока не меняется сквозной UI-путь.
+
 ## План
 
 - [x] **Подключить существующие web-тесты.**
@@ -111,17 +129,17 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/web smoke:edit-draft-save`.
   GPT-5.5 reasoning: `high`.
 
-- [ ] **Задокументировать быстрые команды и правило PR.**
+- [x] **Задокументировать быстрые команды и правило PR.**
   Описание: добавить команды для `api test:watch`, `web test:watch`, `pnpm test`, `pnpm check`, `pnpm check:ci` и описать, какие тесты обязательны для auth, onboarding, content flow, draft editor, approvals/settings.
   Достаточно: по изменённому сценарию понятно, какой минимальный набор тестов запускать.
-  Проверка: сверить команды с `package.json`, затем выполнить `pnpm check:ci`.
+  Проверка: команды сверены с `package.json`; `pnpm check:ci` проходит.
   GPT-5.5 reasoning: `medium`.
 
 ## Done criteria
 
 - [x] `pnpm --filter @newsroom/web test` запускает реальные web-тесты.
-- [ ] `pnpm --filter @newsroom/api test` проходит.
+- [x] `pnpm --filter @newsroom/api test` проходит.
 - [x] `pnpm test` запускает все пакетные тесты.
 - [x] Главный content flow покрыт service/API/browser smoke-тестами.
 - [ ] Browser smoke-тестов не больше необходимого минимума.
-- [ ] В документации есть быстрые команды для ежедневной разработки.
+- [x] В документации есть быстрые команды для ежедневной разработки.
