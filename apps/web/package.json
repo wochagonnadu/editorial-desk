@@ -8,6 +8,7 @@
     "dev": "vite",
     "lint": "eslint src --ext .ts,.tsx",
     "preview": "vite preview",
+    "smoke:login-onboarding": "node scripts/smoke-login-onboarding.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test 'src/**/*.test.ts'",
     "test:watch": "node --watch --import tsx --test 'src/**/*.test.ts'"
