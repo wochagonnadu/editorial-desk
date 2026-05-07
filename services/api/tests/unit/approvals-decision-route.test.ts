@@ -1,13 +1,14 @@
 // PATH: services/api/tests/unit/approvals-decision-route.test.ts
-// WHAT: Route tests for manager decision flow from approvals queue
-// WHY:  Verifies approve/request_changes paths and stale-version guard
-// RELEVANT: services/api/src/routes/approvals/decision.ts,services/api/src/core/approval.ts
+// WHAT: Route tests for manager approval queue and decision flow
+// WHY:  Verifies list, approve/request_changes, repeated action, and stale-version guard
+// RELEVANT: services/api/src/routes/approvals/list.ts,services/api/src/routes/approvals/decision.ts
 
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { toErrorResponse } from '../../src/core/errors';
+import { AppError, toErrorResponse } from '../../src/core/errors';
 import { createLogger } from '../../src/providers/logger';
 import { decideApprovalStep } from '../../src/routes/approvals/decision';
+import { getApprovals } from '../../src/routes/approvals/list';
 import type { RouteDeps } from '../../src/routes/deps';
 
 const coreMock = vi.hoisted(() => ({
@@ -61,12 +62,51 @@ const createApp = (deps: RouteDeps) => {
     await next();
   });
   app.onError((error, context) => toErrorResponse(context, error));
+  app.get('/approvals', getApprovals(deps));
   app.post('/approvals/:stepId/decision', decideApprovalStep(deps));
   return app;
 };
 
 describe('approvals decision route', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('returns pending approval items for the manager company', async () => {
+    const app = createApp(
+      createDeps([
+        [
+          {
+            id: 'step-1',
+            approvalFlowId: 'flow-1',
+            approverType: 'user',
+            approverId: 'u2',
+            status: 'pending',
+            createdAt: new Date(Date.now() - 120_000),
+            deadlineAt: new Date('2026-05-08T12:00:00.000Z'),
+          },
+        ],
+        [{ id: 'flow-1', draftId: 'draft-1' }],
+        [{ id: 'draft-1', companyId: 'c1', topicId: 'topic-1', currentVersionId: 'v-1' }],
+        [{ id: 'topic-1', title: 'Approval queue guide' }],
+        [{ id: 'u2', name: 'Reviewer One' }],
+      ]),
+    );
+
+    const response = await app.request('http://local/approvals?view=stuck');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toEqual([
+      expect.objectContaining({
+        stepId: 'step-1',
+        draftId: 'draft-1',
+        currentVersionId: 'v-1',
+        draftTitle: 'Approval queue guide',
+        reviewer: 'Reviewer One',
+        status: 'pending',
+        deadline: '2026-05-08T12:00:00.000Z',
+      }),
+    ]);
+  });
 
   it('send for review -> approve from queue sets draft approved', async () => {
     const app = createApp(
@@ -156,6 +196,39 @@ describe('approvals decision route', () => {
       expect.anything(),
       expect.objectContaining({ action: 'approval.changes_requested' }),
     );
+  });
+
+  it('returns conflict for repeated decision without completing flow again', async () => {
+    coreMock.recordDecision.mockRejectedValueOnce(
+      new AppError(409, 'CONFLICT', 'Step already processed'),
+    );
+    const app = createApp(
+      createDeps([
+        [{ id: 'step-1', approvalFlowId: 'flow-1' }],
+        [
+          {
+            id: 'flow-1',
+            status: 'active',
+            flowType: 'sequential',
+            deadlineHours: 48,
+            draftId: 'draft-1',
+          },
+        ],
+        [{ id: 'draft-1', companyId: 'c1', currentVersionId: 'v-1', status: 'approved' }],
+      ]),
+    );
+
+    const response = await app.request('http://local/approvals/step-1/decision', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'approve', expected_current_version_id: 'v-1' }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body).toMatchObject({ error: { code: 'CONFLICT' } });
+    expect(coreMock.completeFlowAndDraft).not.toHaveBeenCalled();
+    expect(auditMock.logAudit).not.toHaveBeenCalled();
   });
 
   it('returns stale-version conflict when current version changed', async () => {

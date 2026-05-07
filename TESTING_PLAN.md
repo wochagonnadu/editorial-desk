@@ -81,7 +81,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/web test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Покрыть approvals.**
+- [x] **Покрыть approvals.**
   Описание: проверить список approval items, approve, reject, повторное решение и ошибку API. Статусы держать в API-тестах, клиентскую обвязку в web service-тестах.
   Достаточно: повторное действие не ломает состояние, ошибки видны клиенту.
   Проверка: `pnpm --filter @newsroom/api test && pnpm --filter @newsroom/web test`.
