@@ -93,7 +93,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/web test && pnpm --filter @newsroom/api test`.
   GPT-5.5 reasoning: `medium`.
 
-- [ ] **Добавить browser smoke `login/onboarding`.**
+- [x] **Добавить browser smoke `login/onboarding`.**
   Описание: открыть приложение в браузере, пройти минимальный вход/первый запуск на тестовых моках или локальном API, без проверки всех полей.
   Достаточно: пользователь попадает из login/onboarding в рабочую область.
   Проверка: локальный dev server + browser smoke command.
