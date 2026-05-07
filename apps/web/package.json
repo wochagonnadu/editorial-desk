@@ -9,7 +9,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node -e \"console.log('web: no tests yet')\""
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
+    "test:watch": "node --watch --import tsx --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -27,6 +28,7 @@
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^5.0.4",
     "tailwindcss": "^4.1.14",
+    "tsx": "^4.19.3",
     "vite": "^6.2.0"
   }
 }

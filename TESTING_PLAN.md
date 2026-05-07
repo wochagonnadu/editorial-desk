@@ -21,7 +21,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
 
 ## План
 
-- [ ] **Подключить существующие web-тесты.**
+- [x] **Подключить существующие web-тесты.**
   Описание: в `apps/web/src/services/__tests__` и `apps/web/src/pages/create-draft/__tests__` уже есть тесты, но `apps/web/package.json` сейчас выводит `web: no tests yet`. Нужно заменить заглушку на реальный запуск и добавить `test:watch`, если выбранный runner это поддерживает.
   Достаточно: `pnpm --filter @newsroom/web test` реально запускает web-тесты и падает при регрессии.
   Проверка: `pnpm --filter @newsroom/web test`.
@@ -119,7 +119,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
 
 ## Done criteria
 
-- [ ] `pnpm --filter @newsroom/web test` запускает реальные web-тесты.
+- [x] `pnpm --filter @newsroom/web test` запускает реальные web-тесты.
 - [ ] `pnpm --filter @newsroom/api test` проходит.
 - [ ] `pnpm test` запускает все пакетные тесты.
 - [ ] Главный content flow покрыт service/API/browser smoke-тестами.
