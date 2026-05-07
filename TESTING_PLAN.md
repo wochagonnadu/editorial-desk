@@ -75,7 +75,7 @@ RELEVANT: package.json,apps/web/package.json,services/api/package.json,services/
   Проверка: `pnpm --filter @newsroom/api test`.
   GPT-5.5 reasoning: `high`.
 
-- [ ] **Добавить web service-тесты draft editor.**
+- [x] **Добавить web service-тесты draft editor.**
   Описание: проверить загрузку драфта, сохранение, ошибку сохранения и сохранность текста в клиентском состоянии после ошибки API.
   Достаточно: frontend не теряет текст драфта при неуспешном save.
   Проверка: `pnpm --filter @newsroom/web test`.

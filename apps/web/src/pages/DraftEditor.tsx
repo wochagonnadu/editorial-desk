@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Clock, MessageSquare, ShieldAlert, CheckCircle2, History } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { buildDraftDiffSummary } from '../lib/draft-diff';
+import { saveDraftEditorContent } from './draft-editor/save-draft-editor-content';
 import {
   confirmDraftClaim,
   createDraftComment,
@@ -248,20 +249,19 @@ export function DraftEditor() {
 
   const handleSave = async () => {
     if (!session || !detail) return;
-    try {
-      setError(null);
-      setIsSaving(true);
-      await saveDraftVersion(session.token, detail.id, {
-        content,
-        summary: detail.summary || content.slice(0, 180),
-        expectedCurrentVersionId: detail.currentVersionId,
-      });
-      await load();
-    } catch {
-      setError('Could not save draft version');
-    } finally {
-      setIsSaving(false);
+    setError(null);
+    setIsSaving(true);
+    const result = await saveDraftEditorContent({
+      token: session.token,
+      detail,
+      content,
+      saveVersion: saveDraftVersion,
+      reload: load,
+    });
+    if (result.ok === false) {
+      setError(result.error);
     }
+    setIsSaving(false);
   };
 
   const handleSendForReview = async () => {
